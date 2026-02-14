@@ -2,28 +2,119 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Моя визитка</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 700px;
-            margin: 60px auto;
-            line-height: 1.6;
-        }
-        h1 {
-            color: #333;
-        }
-        .card {
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padej_</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="card">
-    <h1>Привет 👋</h1>
-    <p>Я разработчик.</p>
-</div>
+    <div class="fan-container">
+        <!-- Карта 1: Главная (самая левая в веере) -->
+        <div class="card">
+            <div class="card-avatar"></div>
+            <h1 class="card-name">Padej_</h1>
+            
+            <div class="card-content">
+                <div class="card-section">
+                    <p class="card-text">Разработчик, решающий задачи правильными инструментами</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text">Опыт с сентября 2023</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text">"Ты должен делать качественно"</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карта 2: Технологии -->
+        <div class="card">
+            <h1 class="card-name">Технологии</h1>
+            
+            <div class="card-content">
+                <div class="card-section">
+                    <p class="card-text"><strong>Java/Kotlin</strong>Minecraft моды<br>Fabric API, Paper MC</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>Rust</strong>Backend, Tokio, Axum<br>WebSocket</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>Web</strong>HTML, CSS, JS/TS<br>Node.js</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>Инструменты</strong>Git, Docker, Kubernetes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карта 3: Проекты (центральная) -->
+        <div class="card">
+            <h1 class="card-name">Проекты</h1>
+            
+            <div class="card-content">
+                <div class="card-section">
+                    <p class="card-text"><strong>Soup Visuals</strong>Мод для Minecraft<br>~2000 пользователей</p>
+                    <button class="card-button" onclick="window.open('https://modrinth.com/mod/soup-api', '_blank')">Modrinth</button>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>DisplayAPI</strong>Интерактивные экраны<br>Java + Paper MC</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>HashChecker</strong>Проверка модов<br>Java + Modrinth API</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карта 4: Контакты -->
+        <div class="card">
+            <h1 class="card-name">Контакты</h1>
+            
+            <div class="card-content">
+                <div class="card-section">
+                    <p class="card-text"><strong>GitHub</strong>Pa-dej</p>
+                    <button class="card-button" onclick="window.open('https://github.com/Pa-dej', '_blank')">Открыть</button>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>Discord</strong>Padej_#6951</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text"><strong>Статус</strong>Открыт для фриланса<br>Удаленная работа</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карта 5: Философия (самая правая) -->
+        <div class="card">
+            <h1 class="card-name">Философия</h1>
+            
+            <div class="card-content">
+                <div class="card-section">
+                    <p class="card-text">"Разработчик должен решать задачи данными ему инструментами"</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text">Выбираю правильный стек под задачу</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text">Если работает - надо разобрать и починить</p>
+                </div>
+
+                <div class="card-section">
+                    <p class="card-text">Нет предела совершенству</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
 </body>
 </html>
