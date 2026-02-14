@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="270.93332mm"
+   height="270.93332mm"
+   viewBox="0 0 270.93332 270.93332"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="penrose_triangle_raw.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="1"
+     inkscape:cx="347.5"
+     inkscape:cy="490.5"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="sides" />
+  <g
+     id="sides">
+    <!-- Светлая грань -->
+    <path
+       style="fill:#b3b3b3;fill-opacity:1;stroke:none"
+       d="M 44.10325,224.826 27.669321,196.82019 118.25836,42.51303 l 73.70186,127.09798 -32.92879,0.0101 -41.08236,-70.677148 z"
+       id="path1" />
+    <!-- Средняя грань -->
+    <path
+       style="fill:#999999;fill-opacity:1;stroke:none"
+       d="m 96.499771,197.1903 16.163729,-27.55728 82.6616,-0.023 -74.91015,-128.029523 35.94188,0.329352 87.03028,155.205131 z"
+       id="path2"
+       sodipodi:nodetypes="ccccccc" />
+    <!-- Тёмная грань -->
+    <path
+       style="fill:#7f7f7f;fill-opacity:1;stroke:none"
+       d="m 243.18059,199.75103 -15.47746,26.32212 -181.420576,0.0859 73.223596,-124.53957 16.46071,28.28403 -40.949204,69.81362 z"
+       id="path3" />
+  </g>
+</svg>
