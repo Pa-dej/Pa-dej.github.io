@@ -1,5 +1,12 @@
 // Управление веером карт
 let isFocused = false;
+let isMobile = false;
+
+// Проверка мобильного устройства
+function checkMobile() {
+    isMobile = window.innerWidth <= 900;
+    return isMobile;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.fan-container');
@@ -7,23 +14,30 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Изначально показываем веер
     container.classList.add('fan-mode');
+    
+    // Проверяем размер экрана
+    checkMobile();
 
-    // Отслеживание позиции мыши для предотвращения цикла hover
+    // Отслеживание позиции мыши для предотвращения цикла hover (только для десктопа)
     cards.forEach((card, index) => {
         let isHovering = false;
         
         card.addEventListener('mouseenter', (e) => {
-            isHovering = true;
-            card.classList.add('hovering');
+            if (!isMobile) {
+                isHovering = true;
+                card.classList.add('hovering');
+            }
         });
         
         card.addEventListener('mouseleave', (e) => {
-            isHovering = false;
-            card.classList.remove('hovering');
+            if (!isMobile) {
+                isHovering = false;
+                card.classList.remove('hovering');
+            }
         });
         
         card.addEventListener('mousemove', (e) => {
-            if (!isFocused && isHovering) {
+            if (!isFocused && isHovering && !isMobile) {
                 const rect = card.getBoundingClientRect();
                 const mouseY = e.clientY;
                 const cardBottom = rect.bottom;
@@ -36,25 +50,38 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Клик по карте - фокус
+        // Клик по карте - фокус (только для десктопа)
         card.addEventListener('click', (e) => {
-            e.stopPropagation(); // Предотвращаем всплытие
-            if (!isFocused) {
-                focusCard(card, container, index);
+            if (!isMobile) {
+                e.stopPropagation();
+                if (!isFocused) {
+                    focusCard(card, container, index);
+                }
             }
         });
     });
 
-    // Клик по контейнеру (мимо карты) - вернуться к вееру
+    // Клик по контейнеру (мимо карты) - вернуться к вееру (только для десктопа)
     container.addEventListener('click', (e) => {
-        if (isFocused && e.target === container) {
+        if (!isMobile && isFocused && e.target === container) {
             unfocusCards(container, cards);
         }
     });
 
-    // ESC - вернуться к вееру
+    // ESC - вернуться к вееру (только для десктопа)
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isFocused) {
+        if (!isMobile && e.key === 'Escape' && isFocused) {
+            unfocusCards(container, cards);
+        }
+    });
+    
+    // Отслеживание изменения размера окна
+    window.addEventListener('resize', () => {
+        const wasMobile = isMobile;
+        checkMobile();
+        
+        // Если переключились с десктопа на мобильный, сбрасываем фокус
+        if (!wasMobile && isMobile && isFocused) {
             unfocusCards(container, cards);
         }
     });
