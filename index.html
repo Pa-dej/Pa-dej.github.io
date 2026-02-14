@@ -4,117 +4,171 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Padej_</title>
-    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <div class="fan-container">
         <!-- Карта 1: Главная (самая левая в веере) -->
-        <div class="card">
+        <div class="card" data-theme="main">
             <div class="card-avatar" style="background-image: url('https://github.com/Pa-dej.png'); background-size: cover; background-position: center;"></div>
             <h1 class="card-name">Padej_</h1>
             
             <div class="card-content">
-                <div class="card-section">
+                <div class="card-section" data-color="code">
+                    <div class="card-icons">
+                        <img src="/icons/code.svg" class="card-icon" alt="Code">
+                    </div>
                     <p class="card-text"><strong>Independent Software Developer</strong></p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="tools">
+                    <div class="card-icons">
+                        <img src="/icons/tools.svg" class="card-icon" alt="Tools">
+                    </div>
                     <p class="card-text">I build tools, backend systems, and mods</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="target">
+                    <div class="card-icons">
+                        <img src="/icons/target.svg" class="card-icon" alt="Target">
+                    </div>
                     <p class="card-text">Focused on performance and understanding systems</p>
                 </div>
             </div>
         </div>
 
         <!-- Карта 2: Технологии -->
-        <div class="card">
+        <div class="card" data-theme="tech">
             <h1 class="card-name">Technologies</h1>
             
             <div class="card-content">
-                <div class="card-section">
+                <div class="card-section" data-color="java">
+                    <div class="card-icons">
+                        <img src="/icons/java.svg" class="card-icon" alt="Java">
+                    </div>
                     <p class="card-text"><strong>Languages</strong>Java • Kotlin • Rust<br>TypeScript • JavaScript</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="rust">
+                    <div class="card-icons">
+                        <img src="/icons/server.svg" class="card-icon" alt="Backend">
+                    </div>
                     <p class="card-text"><strong>Backend</strong>Tokio • Axum<br>WebSocket</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="web">
+                    <div class="card-icons">
+                        <img src="/icons/web.svg" class="card-icon" alt="Web">
+                    </div>
                     <p class="card-text"><strong>Web</strong>HTML • CSS • JavaScript</p>
                 </div>
 
                 <div class="card-section">
+                    <div class="card-icons">
+                        <img src="/icons/github.svg" class="card-icon" alt="Git">
+                    </div>
                     <p class="card-text"><strong>Other</strong>Git • OpenGL • Fabric API</p>
                 </div>
             </div>
         </div>
 
         <!-- Карта 3: Проекты (центральная) -->
-        <div class="card">
+        <div class="card" data-theme="projects">
             <h1 class="card-name">Projects</h1>
             
             <div class="card-content">
-                <div class="card-section">
+                <div class="card-section" data-color="modrinth">
+                    <div class="card-icons">
+                        <img src="/icons/modrinth.svg" class="card-icon" alt="Modrinth">
+                    </div>
                     <p class="card-text"><strong>Soup Visuals</strong>Visual Minecraft mod with backend infrastructure<br><br>Handles up to 5000 concurrent users on a $2 server<br><br>Stack: Java • Rust • Tokio • Axum • WebSocket<br><br>Users: 2000+</p>
                     <button class="card-button" onclick="window.open('https://modrinth.com/mod/soup-api', '_blank')">Modrinth</button>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="java">
+                    <div class="card-icons">
+                        <img src="/icons/java.svg" class="card-icon" alt="Java">
+                    </div>
                     <p class="card-text"><strong>DisplayAPI</strong>Interactive display system<br>Java • Paper MC</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="java">
+                    <div class="card-icons">
+                        <img src="/icons/java.svg" class="card-icon" alt="Java">
+                    </div>
                     <p class="card-text"><strong>HashChecker</strong>Mod verification utility<br>Java • Modrinth API</p>
                 </div>
             </div>
         </div>
 
         <!-- Карта 4: Контакты -->
-        <div class="card">
+        <div class="card" data-theme="contact">
             <h1 class="card-name">Contact</h1>
             
             <div class="card-content">
-                <div class="card-section">
+                <div class="card-section" data-color="github">
+                    <div class="card-icons">
+                        <img src="/icons/github.svg" class="card-icon" alt="GitHub">
+                    </div>
                     <p class="card-text"><strong>GitHub</strong>Pa-dej</p>
                     <button class="card-button" onclick="window.open('https://github.com/Pa-dej', '_blank')">Open</button>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="modrinth">
+                    <div class="card-icons">
+                        <img src="/icons/modrinth.svg" class="card-icon" alt="Modrinth">
+                    </div>
                     <p class="card-text"><strong>Modrinth</strong>soup-api</p>
                     <button class="card-button" onclick="window.open('https://modrinth.com/mod/soup-api', '_blank')">Open</button>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="discord">
+                    <div class="card-icons">
+                        <img src="/icons/discord.svg" class="card-icon" alt="Discord">
+                    </div>
                     <p class="card-text"><strong>Discord</strong>Padej_</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="briefcase">
+                    <div class="card-icons">
+                        <img src="/icons/briefcase.svg" class="card-icon" alt="Freelance">
+                    </div>
                     <p class="card-text">Open for freelance<br>Remote work</p>
                 </div>
             </div>
         </div>
 
         <!-- Карта 5: Философия (самая правая) -->
-        <div class="card">
+        <div class="card" data-theme="philosophy">
             <h1 class="card-name">Philosophy</h1>
             
             <div class="card-content">
-                <div class="card-section">
+                <div class="card-section" data-color="lightbulb">
+                    <div class="card-icons">
+                        <img src="/icons/lightbulb.svg" class="card-icon" alt="Ideas">
+                    </div>
                     <p class="card-text">I don't specialize in tools.<br>I specialize in solving problems.</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="layers">
+                    <div class="card-icons">
+                        <img src="/icons/layers.svg" class="card-icon" alt="Stack">
+                    </div>
                     <p class="card-text">I choose the stack based on the task.</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="search">
+                    <div class="card-icons">
+                        <img src="/icons/search.svg" class="card-icon" alt="Search">
+                    </div>
                     <p class="card-text">If something works — I want to understand why.</p>
                 </div>
 
-                <div class="card-section">
+                <div class="card-section" data-color="setting">
+                    <div class="card-icons">
+                        <img src="/icons/setting.svg" class="card-icon" alt="Fix">
+                    </div>
                     <p class="card-text">If something breaks — I want to fix it.</p>
                 </div>
             </div>

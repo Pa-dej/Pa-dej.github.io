@@ -95,6 +95,18 @@ function focusCard(card, container, index) {
     
     // Сохраняем z-index карты
     card.style.zIndex = 5 - index;
+    
+    // Анимация иконок с задержкой
+    const sections = card.querySelectorAll('.card-section');
+    sections.forEach((section, i) => {
+        const icons = section.querySelector('.card-icons');
+        if (icons) {
+            setTimeout(() => {
+                icons.style.opacity = '1';
+                icons.style.transform = 'translateY(0) scale(1)';
+            }, 100 + (i * 100));
+        }
+    });
 }
 
 function unfocusCards(container, cards) {
@@ -105,6 +117,13 @@ function unfocusCards(container, cards) {
     cards.forEach(card => {
         card.classList.remove('focused');
         card.style.zIndex = '';
+        
+        // Сброс анимации иконок
+        const icons = card.querySelectorAll('.card-icons');
+        icons.forEach(icon => {
+            icon.style.opacity = '';
+            icon.style.transform = '';
+        });
     });
 }
 
