@@ -4,7 +4,7 @@
 // ScreenInstance.resolveLocation(float[] pos):
 //   base = screenLocation
 //   right = dir.crossProduct(up).normalize()   // горизонталь
-//   up = right.crossProduct(dir).normalize()   // вертикаль
+//   up = right.crossProduct(dir).normalize()   // вертикаль  
 //   base.add(right * pos[0])   // X YAML → горизонталь
 //   base.add(up * pos[1])      // Y YAML → вертикаль  
 //   base.add(dir * pos[2])     // Z YAML → глубина
@@ -72,12 +72,22 @@ const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const cwrap = document.getElementById('cwrap');
 
+console.log('Canvas element:', cv);
+console.log('Canvas context:', ctx);
+console.log('Canvas wrapper:', cwrap);
 function resize() {
-  cv.width = cwrap.clientWidth;
-  cv.height = cwrap.clientHeight;
-  CC.x = cv.width / 2;
-  CC.y = cv.height / 2;
-  render();
+  // Wait for layout to be ready
+  requestAnimationFrame(() => {
+    const rect = cwrap.getBoundingClientRect();
+    console.log('cwrap dimensions:', rect.width, 'x', rect.height);
+    
+    cv.width = Math.max(rect.width, 100); // Minimum width of 100px
+    cv.height = Math.max(rect.height, 100); // Minimum height of 100px
+    CC.x = cv.width / 2;
+    CC.y = cv.height / 2;
+    console.log('Canvas resized:', cv.width, 'x', cv.height);
+    render();
+  });
 }
 window.addEventListener('resize', resize);
 setTimeout(resize, 50);
@@ -159,7 +169,6 @@ function wVisualRect(w) {
   }
   return { px, py, pw, ph };
 }
-
 // ═══════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════
@@ -169,7 +178,14 @@ function hexRgb(h) {
 
 function render() {
   const W = cv.width, H = cv.height;
+  console.log('Rendering canvas:', W, 'x', H);
+  
+  // Clear canvas
   ctx.clearRect(0,0,W,H);
+  
+  // Fill with background color
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, W, H);
 
   // Grid
   if (document.getElementById('gridToggle').checked) {
@@ -184,13 +200,13 @@ function render() {
   }
 
   // Center axes
-  ctx.strokeStyle='rgba(0,212,255,0.15)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(100,150,255,0.15)'; ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(CC.x,0);ctx.lineTo(CC.x,H);ctx.stroke();
   ctx.beginPath();ctx.moveTo(0,CC.y);ctx.lineTo(W,CC.y);ctx.stroke();
-  ctx.strokeStyle='rgba(0,212,255,0.65)'; ctx.lineWidth=1.5;
+  ctx.strokeStyle='rgba(100,150,255,0.65)'; ctx.lineWidth=1.5;
   ctx.beginPath();ctx.moveTo(CC.x-8,CC.y);ctx.lineTo(CC.x+8,CC.y);ctx.stroke();
   ctx.beginPath();ctx.moveTo(CC.x,CC.y-8);ctx.lineTo(CC.x,CC.y+8);ctx.stroke();
-  ctx.fillStyle='rgba(0,212,255,0.4)'; ctx.font='8px Cascadia Code';
+  ctx.fillStyle='rgba(100,150,255,0.4)'; ctx.font='8px Cascadia Code';
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.fillText('[0,0]', CC.x+4, CC.y+3);
 
@@ -202,7 +218,7 @@ function render() {
     ctx.fillRect(g.px, g.py, g.pw, g.ph);
 
     const sel = selectedId==='__bg__';
-    ctx.strokeStyle = sel ? '#10b981' : 'rgba(16,185,129,0.3)';
+    ctx.strokeStyle = sel ? '#1cee72' : 'rgba(28,238,114,0.3)';
     ctx.lineWidth = sel ? 1.5 : 1;
     if (!sel) ctx.setLineDash([3,3]);
     ctx.strokeRect(g.px, g.py, g.pw, g.ph);
@@ -210,29 +226,28 @@ function render() {
 
     // Центр фона (визуальный)
     const bgCX = g.px + g.pw/2, bgCY = g.py + g.ph/2;
-    ctx.strokeStyle='rgba(16,185,129,0.4)'; ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(28,238,114,0.4)'; ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(bgCX-4,bgCY);ctx.lineTo(bgCX+4,bgCY);ctx.stroke();
     ctx.beginPath();ctx.moveTo(bgCX,bgCY-4);ctx.lineTo(bgCX,bgCY+4);ctx.stroke();
 
     // Точка entity (где стоит сама сущность в мире = position)
     const epx = b2cx(background.posX), epy = b2cy(background.posY);
-    ctx.fillStyle='rgba(16,185,129,0.6)';
+    ctx.fillStyle='rgba(28,238,114,0.6)';
     ctx.beginPath();ctx.arc(epx, epy, 3, 0, Math.PI*2);ctx.fill();
     if (sel) {
-      ctx.fillStyle='rgba(16,185,129,0.85)'; ctx.font='9px Cascadia Code';
+      ctx.fillStyle='rgba(28,238,114,0.85)'; ctx.font='9px Cascadia Code';
       ctx.textAlign='left'; ctx.textBaseline='bottom';
       ctx.fillText(`BG ${background.w}×${background.h} blocks`, g.px, g.py-3);
       // Показываем стрелку от entity до visual если есть смещение
       const tx = background.transX + g.autoX;
       if (Math.abs(tx) > 0.01 || Math.abs(background.transY) > 0.01) {
-        ctx.strokeStyle='rgba(16,185,129,0.4)'; ctx.lineWidth=1;
+        ctx.strokeStyle='rgba(28,238,114,0.4)'; ctx.lineWidth=1;
         ctx.setLineDash([2,2]);
         ctx.beginPath();ctx.moveTo(epx,epy);ctx.lineTo(bgCX,bgCY);ctx.stroke();
         ctx.setLineDash([]);
       }
     }
   }
-
   // Widgets sorted by zIndex
   const sorted = [...widgets].sort((a,b)=>a.zIndex-b.zIndex);
   for (const w of sorted) {
@@ -245,7 +260,7 @@ function render() {
     ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
 
     // Граница
-    ctx.strokeStyle = sel ? '#00d4ff' : 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
     ctx.lineWidth = sel ? 1.5 : 0.5;
     ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.stroke();
 
@@ -263,14 +278,14 @@ function render() {
     // Для TEXT: это низ объекта по Y, центр по X
     const isText = w.type==='TEXT_BUTTON';
     const epx = b2cx(w.x), epy = b2cy(w.y);
-    ctx.fillStyle = sel ? '#00d4ff' : 'rgba(255,255,255,0.3)';
+    ctx.fillStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.3)';
     ctx.beginPath();ctx.arc(epx, epy, 2.5, 0, Math.PI*2);ctx.fill();
 
     // Если есть translation — показываем стрелку entity→visual
     if (sel && (Math.abs(w.transX||0) > 0.01 || Math.abs(w.transY||0) > 0.01)) {
       const vcx = g.px + g.pw/2;
       const vcy = isText ? g.py+g.ph : g.py+g.ph/2;
-      ctx.strokeStyle='rgba(0,212,255,0.35)'; ctx.lineWidth=1;
+      ctx.strokeStyle='rgba(100,150,255,0.35)'; ctx.lineWidth=1;
       ctx.setLineDash([2,2]);
       ctx.beginPath();ctx.moveTo(epx,epy);ctx.lineTo(vcx,vcy);ctx.stroke();
       ctx.setLineDash([]);
@@ -278,7 +293,7 @@ function render() {
 
     // Метка + handles когда выбран
     if (sel) {
-      ctx.fillStyle='rgba(0,212,255,0.9)'; ctx.font='9px Cascadia Code';
+      ctx.fillStyle='rgba(100,150,255,0.9)'; ctx.font='9px Cascadia Code';
       ctx.textAlign='left'; ctx.textBaseline='bottom';
       ctx.fillText(`${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]`, g.px, g.py-3);
 
@@ -288,7 +303,7 @@ function render() {
         {n:'bl',x:g.px,y:g.py+g.ph},{n:'bm',x:g.px+g.pw/2,y:g.py+g.ph},{n:'br',x:g.px+g.pw,y:g.py+g.ph}
       ];
       for (const h of hpts) {
-        ctx.fillStyle='#00d4ff';ctx.strokeStyle='#000';ctx.lineWidth=1;
+        ctx.fillStyle='#6496ff';ctx.strokeStyle='#000';ctx.lineWidth=1;
         ctx.fillRect(h.x-4,h.y-4,8,8);ctx.strokeRect(h.x-4,h.y-4,8,8);
       }
     }
@@ -379,7 +394,6 @@ cv.addEventListener('contextmenu',e=>{
   const hw=hitWidget(mx,my);
   if(hw){selectedId=hw.id;render();updateProps();showCtx(e.clientX,e.clientY);}
 });
-
 // ═══════════════════════════════════════════════════════════════
 // DRAG FROM PALETTE
 // ═══════════════════════════════════════════════════════════════
@@ -528,7 +542,6 @@ function renderBgProps(p){
   bind('bg_tx',v=>{background.transX=parseFloat(v)||0;render();});
   bind('bg_ty',v=>{background.transY=parseFloat(v)||0;render();updateProps();});
 }
-
 const MATS=['RED_STAINED_GLASS_PANE','BLUE_STAINED_GLASS_PANE','GREEN_STAINED_GLASS_PANE',
   'YELLOW_STAINED_GLASS_PANE','PURPLE_STAINED_GLASS_PANE','WHITE_STAINED_GLASS_PANE',
   'BLACK_STAINED_GLASS_PANE','STONE','DIAMOND','GOLD_BLOCK','IRON_BLOCK','EMERALD_BLOCK',
@@ -615,14 +628,14 @@ function updateLayers(){
   const sorted=[...widgets].sort((a,b)=>b.zIndex-a.zIndex);
   const html=sorted.map(w=>{
     const s=w.id===selectedId;
-    return `<div class="litem" data-id="${w.id}" style="border:1px solid ${s?'var(--accent)':'var(--border)'};background:${s?'rgba(0,212,255,0.08)':'var(--bg3)'};color:${s?'var(--accent)':'var(--text2)'};">
+    return `<div class="litem" data-id="${w.id}" style="border:1px solid ${s?'var(--accent)':'var(--border)'};background:${s?'rgba(100,150,255,0.08)':'var(--bg3)'};color:${s?'var(--accent)':'var(--text2)'};">
       ${w.type==='TEXT_BUTTON'?'🔤':w.type==='BLOCK_BUTTON'?'🧱':'🎯'}
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${w.id}</span>
     </div>`;
   });
   if(background){
     const s=selectedId==='__bg__';
-    html.push(`<div class="litem" data-id="__bg__" style="border:1px solid ${s?'var(--accent3)':'var(--border)'};background:${s?'rgba(16,185,129,0.08)':'var(--bg3)'};color:${s?'var(--accent3)':'var(--text3)'};font-size:10px;">🟩 background</div>`);
+    html.push(`<div class="litem" data-id="__bg__" style="border:1px solid ${s?'var(--accent3)':'var(--border)'};background:${s?'rgba(28,238,114,0.08)':'var(--bg3)'};color:${s?'var(--accent3)':'var(--text3)'};font-size:10px;">🟩 background</div>`);
   }
   list.innerHTML=html.join('')||'<div style="font-size:9px;color:var(--text3);padding:4px">Пусто</div>';
   list.querySelectorAll('.litem').forEach(el=>el.addEventListener('click',()=>{selectedId=el.dataset.id;render();updateProps();}));
@@ -683,7 +696,6 @@ function updateYaml(){
   }
   document.getElementById('yamlOut').innerHTML=L.join('\n');
 }
-
 function plainYaml(){
   const sid=document.getElementById('screenId').value||'my_screen';
   const L=[];
@@ -784,4 +796,20 @@ function loadDemo(){
   ];
   nextId=10;selectedId=null;render();updateProps();
 }
-loadDemo();
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing canvas...');
+  // Wait a bit longer for CSS to be applied
+  setTimeout(() => {
+    resize();
+    loadDemo();
+  }, 200);
+});
+
+// Also initialize on window load as backup
+window.addEventListener('load', function() {
+  console.log('Window loaded, ensuring canvas is initialized...');
+  setTimeout(() => {
+    resize();
+  }, 100);
+});
