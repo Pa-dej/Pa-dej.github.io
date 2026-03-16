@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DisplayLib UI Constructor</title>
 <link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="../../icons-minecraft-244.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cascadia+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,18 +14,22 @@
 <div class="topbar">
   <div class="logo">Display<span>Lib</span></div>
   <div class="tsep"></div>
-  <button class="btn" id="btnAddBg">＋ Фон</button>
-  <button class="btn" id="btnClear">✕ Очистить</button>
+  <button class="btn" id="btnClear">× Очистить</button>
   <div class="tsep"></div>
   <label class="tl"><input type="checkbox" id="gridToggle" checked style="accent-color:var(--accent)"> Сетка</label>
-  <label class="tl">Шаг: <input type="number" id="gridStep" value="0.25" step="0.05" min="0.05" max="2" class="tinput" style="width:44px"></label>
-  <label class="tl">Zoom: <select id="zoomSel" class="tinput" style="cursor:pointer">
-    <option value="40">×40</option><option value="60">×60</option>
-    <option value="80" selected>×80</option><option value="100">×100</option><option value="120">×120</option>
-  </select></label>
+  <label class="tl">Шаг: 
+    <select id="gridStepSelect" class="tinput" style="cursor:pointer;width:60px">
+      <option value="0.125">1/8</option>
+      <option value="0.25" selected>1/4</option>
+      <option value="0.5">1/2</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
+  </label>
+  <label class="tl">Zoom: <span id="zoomDisplay" style="color:var(--accent);font-weight:bold;" title="Используйте колесико мыши для изменения масштаба">×120</span></label>
   <div class="tright">
     <input id="screenId" class="tinput" style="width:120px" placeholder="screen id" value="my_screen">
-    <button class="btn primary" id="btnCopy">⎘ Копировать YAML</button>
+    <button class="btn primary" id="btnCopy">Копировать YAML</button>
   </div>
 </div>
 <div class="workspace">
@@ -32,17 +37,12 @@
     <div class="ptitle">Виджеты</div>
     <div class="wlist">
       <div class="witem" draggable="true" data-type="ITEM_BUTTON" data-material="RED_STAINED_GLASS_PANE">
-        <div class="wicon">🎯</div>
+        <div class="wicon" id="item-button-icon"></div>
         <div class="winfo"><div class="wname">Item Button</div><div class="wdesc">anchor: центр</div></div>
         <div class="tbadge ti">ITEM</div>
       </div>
-      <div class="witem" draggable="true" data-type="BLOCK_BUTTON" data-material="STONE">
-        <div class="wicon">🧱</div>
-        <div class="winfo"><div class="wname">Block Button</div><div class="wdesc">anchor: центр</div></div>
-        <div class="tbadge ti">BLOCK</div>
-      </div>
       <div class="witem" draggable="true" data-type="TEXT_BUTTON" data-material="">
-        <div class="wicon">🔤</div>
+        <div class="wicon" style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;background:var(--accent);color:#000;border-radius:3px;font-weight:bold;font-size:12px;">T</div>
         <div class="winfo"><div class="wname">Text Button</div><div class="wdesc">anchor: центр-X низ-Y</div></div>
         <div class="tbadge tt">TEXT</div>
       </div>
@@ -52,6 +52,7 @@
   </div>
   <div class="cwrap" id="cwrap">
     <canvas id="cv"></canvas>
+    <div id="widget-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></div>
     <div id="estate" class="estate"><h3>Холст пуст</h3><p>Перетащите виджет или добавьте фон</p></div>
     <div class="cov">
       Курсор: X <span id="curX">0.00</span> Y <span id="curY">0.00</span>
@@ -65,17 +66,17 @@
 </div>
 <div class="ypanel">
   <div class="yhead">
-    <div class="ytitle">⬡ YAML</div>
+    <div class="ytitle">YAML</div>
     <button class="btn primary" id="btnCopy2" style="font-size:10px;padding:4px 10px">Копировать</button>
   </div>
   <div class="ybody"><pre class="ycode" id="yamlOut"></pre></div>
 </div>
 <div class="cmenu" id="ctxMenu">
-  <div class="citem" id="ctxDup">⧉ Дублировать</div>
+  <div class="citem" id="ctxDup">Дублировать</div>
   <div class="citem" id="ctxUp">↑ Выше</div>
   <div class="citem" id="ctxDown">↓ Ниже</div>
   <div class="csep"></div>
-  <div class="citem danger" id="ctxDel">✕ Удалить</div>
+  <div class="citem danger" id="ctxDel">× Удалить</div>
 </div>
 <div class="dghost" id="dghost" style="display:none;width:52px;height:52px;"></div>
 

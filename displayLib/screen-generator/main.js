@@ -49,8 +49,23 @@
 //   - Визуально фон центрирован по Y
 // ═══════════════════════════════════════════════════════════════
 
-const PPB = () => parseInt(document.getElementById('zoomSel').value);
-const GSTEP = () => parseFloat(document.getElementById('gridStep').value) || 0.25;
+const PPB = () => currentZoom;
+const GSTEP = () => parseFloat(document.getElementById('gridStepSelect').value) || 0.25;
+
+// Zoom управление
+let currentZoom = 120; // Дефолтный zoom 120
+const MIN_ZOOM = 20;
+const MAX_ZOOM = 200;
+
+function updateZoomDisplay() {
+  document.getElementById('zoomDisplay').textContent = `×${currentZoom}`;
+}
+
+function setZoom(newZoom) {
+  currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+  updateZoomDisplay();
+  render();
+}
 
 // Хранение виджетов:
 // x,y        = position[0], position[1] из YAML (мировое смещение от центра)
@@ -78,11 +93,18 @@ console.log('Canvas wrapper:', cwrap);
 function resize() {
   // Wait for layout to be ready
   requestAnimationFrame(() => {
+    // Force layout recalculation
+    cwrap.style.display = 'block';
+    
     const rect = cwrap.getBoundingClientRect();
     console.log('cwrap dimensions:', rect.width, 'x', rect.height);
     
-    cv.width = Math.max(rect.width, 100); // Minimum width of 100px
-    cv.height = Math.max(rect.height, 100); // Minimum height of 100px
+    // Ensure minimum dimensions and handle edge cases
+    const width = Math.max(rect.width || 800, 400);
+    const height = Math.max(rect.height || 600, 300);
+    
+    cv.width = width;
+    cv.height = height;
     CC.x = cv.width / 2;
     CC.y = cv.height / 2;
     console.log('Canvas resized:', cv.width, 'x', cv.height);
@@ -90,6 +112,13 @@ function resize() {
   });
 }
 window.addEventListener('resize', resize);
+// Add additional resize triggers
+window.addEventListener('orientationchange', () => setTimeout(resize, 100));
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    setTimeout(resize, 50);
+  }
+});
 setTimeout(resize, 50);
 
 const b2p = b => b * PPB();
@@ -170,8 +199,152 @@ function wVisualRect(w) {
   return { px, py, pw, ph };
 }
 // ═══════════════════════════════════════════════════════════════
-// RENDER
+// MINECRAFT VISUAL RENDERS - Using GamerGeeks CSS Icons
 // ═══════════════════════════════════════════════════════════════
+
+// Маппинг материалов к CSS классам GamerGeeks
+const MATERIAL_TO_ICON = {
+  'RED_STAINED_GLASS_PANE': 'red-stained-glass-pane',
+  'BLUE_STAINED_GLASS_PANE': 'blue-stained-glass-pane', 
+  'GREEN_STAINED_GLASS_PANE': 'green-stained-glass-pane',
+  'YELLOW_STAINED_GLASS_PANE': 'yellow-stained-glass-pane',
+  'PURPLE_STAINED_GLASS_PANE': 'purple-stained-glass-pane',
+  'WHITE_STAINED_GLASS_PANE': 'white-stained-glass-pane',
+  'BLACK_STAINED_GLASS_PANE': 'black-stained-glass-pane',
+  'STONE': 'stone',
+  'DIAMOND': 'diamond',
+  'GOLD_BLOCK': 'gold-block',
+  'IRON_BLOCK': 'iron-block',
+  'EMERALD_BLOCK': 'emerald-block',
+  'GRASS_BLOCK': 'grass-block',
+  'OAK_LOG': 'oak-log',
+  'BEACON': 'beacon',
+  'NETHERITE_BLOCK': 'netherite-block',
+  'COMMAND_BLOCK': 'command-block',
+  'EMERALD': 'emerald',
+  'GOLDEN_APPLE': 'golden-apple',
+  'DIAMOND_SWORD': 'diamond-sword',
+  'IRON_SWORD': 'iron-sword',
+  'BOW': 'bow',
+  'ARROW': 'arrow',
+  'ENDER_PEARL': 'ender-pearl',
+  'CRAFTING_TABLE': 'crafting-table',
+  'FURNACE': 'furnace',
+  'TNT': 'tnt',
+  'END_PORTAL_FRAME': 'end-portal-frame'
+};
+
+// Цветовая схема для материалов (как fallback)
+const MATERIAL_COLORS = {
+  'RED_STAINED_GLASS_PANE': '#cc3333',
+  'BLUE_STAINED_GLASS_PANE': '#3366cc',
+  'GREEN_STAINED_GLASS_PANE': '#33aa44',
+  'YELLOW_STAINED_GLASS_PANE': '#ddcc33',
+  'PURPLE_STAINED_GLASS_PANE': '#883399',
+  'WHITE_STAINED_GLASS_PANE': '#cccccc',
+  'BLACK_STAINED_GLASS_PANE': '#111111',
+  'STONE': '#888888',
+  'DIAMOND': '#44ddcc',
+  'GOLD_BLOCK': '#ddaa00',
+  'IRON_BLOCK': '#aaaaaa',
+  'EMERALD_BLOCK': '#00cc55',
+  'GRASS_BLOCK': '#558833',
+  'OAK_LOG': '#8a6a3c',
+  'BEACON': '#55ddcc',
+  'NETHERITE_BLOCK': '#3a2a3a',
+  'COMMAND_BLOCK': '#7c3aed',
+  'EMERALD': '#00cc55',
+  'GOLDEN_APPLE': '#ddaa00',
+  'DIAMOND_SWORD': '#44ddcc',
+  'IRON_SWORD': '#aaaaaa',
+  'BOW': '#8a6a3c',
+  'ARROW': '#cccccc',
+  'ENDER_PEARL': '#2a4d3a',
+  'CRAFTING_TABLE': '#8a6a3c',
+  'FURNACE': '#666666',
+  'TNT': '#cc3333'
+};
+
+// Функция для получения цвета материала
+function getMaterialColor(material) {
+  return MATERIAL_COLORS[material.toUpperCase()] || '#7c3aed';
+}
+
+// Функция для получения короткого названия материала
+function getShortName(material) {
+  const name = material.replace(/_/g, ' ').toLowerCase();
+  const words = name.split(' ');
+  if (words.length === 1) {
+    return words[0].slice(0, 4).toUpperCase();
+  }
+  return words.map(w => w.charAt(0)).join('').toUpperCase().slice(0, 4);
+}
+
+// Функция для определения светлый ли цвет
+function isLightColor(color) {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return brightness > 155;
+}
+
+// Функция для создания цветной иконки с текстом (fallback)
+function createColoredIcon(material, size = 32) {
+  const color = getMaterialColor(material);
+  const shortName = getShortName(material);
+  const textColor = isLightColor(color) ? '#000' : '#fff';
+  
+  return `
+    <div style="
+      width: ${size}px;
+      height: ${size}px;
+      background: ${color};
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cascadia Code', monospace;
+      font-size: ${Math.max(6, size/5)}px;
+      font-weight: bold;
+      color: ${textColor};
+      text-align: center;
+      line-height: 1;
+      image-rendering: pixelated;
+    " title="${material}">${shortName}</div>
+  `;
+}
+
+// Основная функция для получения визуального рендера
+function getMinecraftRender(material, size = 32) {
+  if (!material) {
+    return `<div style="width:${size}px;height:${size}px;background:#666;border-radius:2px;"></div>`;
+  }
+  
+  // Проверяем, есть ли CSS иконка для этого материала
+  const iconClass = MATERIAL_TO_ICON[material.toUpperCase()];
+  
+  if (iconClass) {
+    // Используем CSS иконку GamerGeeks в естественном размере
+    if (size <= 16) {
+      // Для маленьких размеров используем icon-minecraft-sm (16px)
+      return `<i class="icon-minecraft-sm icon-minecraft-${iconClass}" title="${material}"></i>`;
+    } else {
+      // Для всех остальных размеров используем стандартную иконку (32px)
+      return `<i class="icon-minecraft icon-minecraft-${iconClass}" title="${material}"></i>`;
+    }
+  } else {
+    // Fallback к цветной иконке
+    return createColoredIcon(material, size);
+  }
+}
+
+// Функция для получения блока (для совместимости)
+function getMinecraftBlock(material) {
+  return getMinecraftRender(material, 32);
+}
 function hexRgb(h) {
   return { r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16) };
 }
@@ -255,23 +428,32 @@ function render() {
     const sel = w.id===selectedId;
 
     // Тело виджета
-    const {r:rr,g:rg,b:rb} = hexRgb(w.color);
-    ctx.fillStyle=`rgba(${rr},${rg},${rb},0.88)`;
-    ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
+    if (w.type === 'TEXT_BUTTON') {
+      // Для TEXT_BUTTON показываем цветной фон
+      const {r:rr,g:rg,b:rb} = hexRgb(w.color);
+      ctx.fillStyle=`rgba(${rr},${rg},${rb},0.88)`;
+      ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
+    } else {
+      // Для ITEM_BUTTON показываем только прозрачную границу
+      ctx.fillStyle='rgba(0,0,0,0.1)'; // Очень слабый фон для видимости границ
+      ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
+    }
 
     // Граница
     ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
     ctx.lineWidth = sel ? 1.5 : 0.5;
     ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.stroke();
 
-    // Текст
-    if (g.pw > 16) {
+    // Текст/Рендер в виджете
+    if (g.pw > 16 && w.type === 'TEXT_BUTTON') {
+      // Только для текстовых кнопок показываем текст
       ctx.fillStyle = sel ? '#fff' : 'rgba(255,255,255,0.85)';
       ctx.font=`bold ${Math.min(g.pw/5,11)}px Cascadia Code`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
-      const lbl = w.type==='TEXT_BUTTON'?(w.label||w.text||'TEXT'):(w.material||'ITEM').replace(/_/g,' ').slice(0,9);
+      const lbl = w.label||w.text||'TEXT';
       ctx.fillText(lbl, g.px+g.pw/2, g.py+g.ph/2);
     }
+    // Для ITEM_BUTTON текст не показываем - будет иконка в overlay
 
     // Точка entity (где стоит сущность в мире = position[x,y])
     // Для ITEM: это центр объекта
@@ -309,10 +491,121 @@ function render() {
     }
   }
 
+  // Update widget overlays to show Minecraft renders
+  updateWidgetOverlays();
+  // Update tolerance zones overlay (поверх иконок)
+  updateToleranceOverlay();
   updateLayers();
   updateYaml();
   updateEmpty();
 }
+// ═══════════════════════════════════════════════════════════════
+// TOLERANCE OVERLAY - Display tolerance zones on top of icons
+// ═══════════════════════════════════════════════════════════════
+function updateToleranceOverlay() {
+  // Найдем или создадим overlay для зон толерантности
+  let toleranceOverlay = document.getElementById('tolerance-overlay');
+  if (!toleranceOverlay) {
+    toleranceOverlay = document.createElement('div');
+    toleranceOverlay.id = 'tolerance-overlay';
+    toleranceOverlay.style.position = 'absolute';
+    toleranceOverlay.style.top = '0';
+    toleranceOverlay.style.left = '0';
+    toleranceOverlay.style.width = '100%';
+    toleranceOverlay.style.height = '100%';
+    toleranceOverlay.style.pointerEvents = 'none';
+    toleranceOverlay.style.zIndex = '15'; // Выше чем иконки (z-index: 10)
+    document.getElementById('cwrap').appendChild(toleranceOverlay);
+  }
+  
+  // Очищаем предыдущие зоны толерантности
+  toleranceOverlay.innerHTML = '';
+  
+  // Добавляем зону толерантности для выбранного виджета
+  if (selectedId && selectedId !== '__bg__') {
+    const w = widgets.find(x => x.id === selectedId);
+    if (w && (w.tolerance[0] > 0 || w.tolerance[1] > 0)) {
+      const g = wVisualRect(w);
+      
+      const tolW = b2p(w.tolerance[0] * 2); // tolerance в обе стороны
+      const tolH = b2p(w.tolerance[1] * 2);
+      const centerX = g.px + g.pw/2;
+      const centerY = g.py + g.ph/2;
+      
+      // Создаем SVG для эллипса
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.style.position = 'absolute';
+      svg.style.left = '0';
+      svg.style.top = '0';
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+      svg.style.pointerEvents = 'none';
+      
+      const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      ellipse.setAttribute('cx', centerX);
+      ellipse.setAttribute('cy', centerY);
+      ellipse.setAttribute('rx', tolW/2);
+      ellipse.setAttribute('ry', tolH/2);
+      ellipse.setAttribute('fill', 'none');
+      ellipse.setAttribute('stroke', 'rgba(255,165,0,0.8)');
+      ellipse.setAttribute('stroke-width', '2');
+      ellipse.setAttribute('stroke-dasharray', '6,4');
+      
+      svg.appendChild(ellipse);
+      toleranceOverlay.appendChild(svg);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WIDGET OVERLAYS - Display Minecraft renders on top of canvas
+// ═══════════════════════════════════════════════════════════════
+function updateWidgetOverlays() {
+  const overlay = document.getElementById('widget-overlay');
+  if (!overlay) return;
+  
+  // Clear existing overlays
+  overlay.innerHTML = '';
+  
+  // Add overlays for each ITEM_BUTTON widget
+  const sorted = [...widgets].sort((a,b)=>a.zIndex-b.zIndex);
+  for (const w of sorted) {
+    if (w.type !== 'ITEM_BUTTON' || !w.material) continue;
+    
+    const g = wVisualRect(w);
+    
+    // Create overlay element that covers the entire widget
+    const overlayEl = document.createElement('div');
+    overlayEl.style.position = 'absolute';
+    overlayEl.style.left = g.px + 'px';
+    overlayEl.style.top = g.py + 'px';
+    overlayEl.style.width = g.pw + 'px';
+    overlayEl.style.height = g.ph + 'px';
+    overlayEl.style.pointerEvents = 'none';
+    overlayEl.style.zIndex = '10';
+    overlayEl.style.display = 'flex';
+    overlayEl.style.alignItems = 'center';
+    overlayEl.style.justifyContent = 'center';
+    
+    // Масштабируем иконку под размер виджета
+    const iconClass = MATERIAL_TO_ICON[w.material.toUpperCase()];
+    if (iconClass) {
+      // Вычисляем масштаб для заполнения виджета
+      const targetSize = Math.min(g.pw, g.ph) * 0.8; // 80% от размера виджета
+      const baseSize = 32; // Базовый размер CSS иконки
+      const scale = targetSize / baseSize;
+      
+      overlayEl.innerHTML = `<i class="icon-minecraft icon-minecraft-${iconClass}" style="transform:scale(${scale});transform-origin:center;" title="${w.material}"></i>`;
+    } else {
+      // Для fallback иконок используем размер виджета
+      const renderSize = Math.min(g.pw, g.ph) * 0.8;
+      overlayEl.innerHTML = createColoredIcon(w.material, renderSize);
+    }
+    
+    overlay.appendChild(overlayEl);
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // HIT TEST — по визуальному прямоугольнику
 // ═══════════════════════════════════════════════════════════════
@@ -394,6 +687,26 @@ cv.addEventListener('contextmenu',e=>{
   const hw=hitWidget(mx,my);
   if(hw){selectedId=hw.id;render();updateProps();showCtx(e.clientX,e.clientY);}
 });
+
+// Обработчик колесика мыши для zoom
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  
+  const delta = e.deltaY > 0 ? -10 : 10; // Инвертируем для естественного направления
+  const newZoom = currentZoom + delta;
+  
+  setZoom(newZoom);
+});
+
+// Также добавляем обработчик для всего cwrap на случай если курсор не на canvas
+cwrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  
+  const delta = e.deltaY > 0 ? -10 : 10;
+  const newZoom = currentZoom + delta;
+  
+  setZoom(newZoom);
+});
 // ═══════════════════════════════════════════════════════════════
 // DRAG FROM PALETTE
 // ═══════════════════════════════════════════════════════════════
@@ -448,12 +761,14 @@ function addWidget(type,mat,x=0,y=0){
   selectedId=id;render();updateProps();
 }
 
-document.getElementById('btnAddBg').addEventListener('click',()=>{
-  if(!background) background={w:4,h:3,colorHex:'#111827',alpha:160,posX:0,posY:0,transX:0,transY:-1.5};
-  selectedId='__bg__';render();updateProps();
-});
 document.getElementById('btnClear').addEventListener('click',()=>{
-  if(confirm('Очистить?')){widgets=[];background=null;selectedId=null;nextId=1;render();updateProps();}
+  if(confirm('Очистить виджеты?')){
+    widgets=[];
+    selectedId=null;
+    nextId=1;
+    render();
+    updateProps();
+  }
 });
 // ═══════════════════════════════════════════════════════════════
 // KEYBOARD
@@ -461,8 +776,14 @@ document.getElementById('btnClear').addEventListener('click',()=>{
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
   if((e.key==='Delete'||e.key==='Backspace')&&selectedId){
-    if(selectedId==='__bg__') background=null; else widgets=widgets.filter(w=>w.id!==selectedId);
-    selectedId=null;render();updateProps();
+    if(selectedId==='__bg__') {
+      // Фон нельзя удалить, только сбрасываем выбор
+      selectedId=null;
+    } else {
+      widgets=widgets.filter(w=>w.id!==selectedId);
+      selectedId=null;
+    }
+    render();updateProps();
   }
   if(e.key==='Escape'){selectedId=null;render();updateProps();}
   const step=e.shiftKey?0.5:GSTEP();
@@ -500,7 +821,7 @@ function renderBgProps(p){
   const finY=(bg.posY+bg.transY).toFixed(3);
   p.innerHTML=`
     <div class="pgroup">
-      <div class="pgtitle">🟩 Background</div>
+      <div class="pgtitle">Background</div>
       <div class="pgbody">
         <div class="phint">
           Anchor: <span class="hl">center-X, bottom-Y</span><br>
@@ -515,7 +836,7 @@ function renderBgProps(p){
       </div>
     </div>
     <div class="pgroup">
-      <div class="pgtitle">📍 position[] — мировая позиция entity</div>
+      <div class="pgtitle">position[] — мировая позиция entity</div>
       <div class="pgbody">
         <div class="phint"><span class="wa">position = где стоит Display entity в мире</span><br>Смещение от центра экрана игрока</div>
         ${row('posX', numIn('bg_px',bg.posX))}
@@ -523,7 +844,7 @@ function renderBgProps(p){
       </div>
     </div>
     <div class="pgroup">
-      <div class="pgtitle">↔ translation[] — Transformation сдвиг</div>
+      <div class="pgtitle">translation[] — Transformation сдвиг</div>
       <div class="pgbody">
         <div class="phint"><span class="ok">translation = локальный сдвиг модели внутри entity</span><br>
         transX: <span class="hl">авто -${((bg.w*8)/80).toFixed(3)}</span> + ${bg.transX}<br>
@@ -542,31 +863,153 @@ function renderBgProps(p){
   bind('bg_tx',v=>{background.transX=parseFloat(v)||0;render();});
   bind('bg_ty',v=>{background.transY=parseFloat(v)||0;render();updateProps();});
 }
-const MATS=['RED_STAINED_GLASS_PANE','BLUE_STAINED_GLASS_PANE','GREEN_STAINED_GLASS_PANE',
-  'YELLOW_STAINED_GLASS_PANE','PURPLE_STAINED_GLASS_PANE','WHITE_STAINED_GLASS_PANE',
-  'BLACK_STAINED_GLASS_PANE','STONE','DIAMOND','GOLD_BLOCK','IRON_BLOCK','EMERALD_BLOCK',
-  'GRASS_BLOCK','OAK_LOG','BEACON','END_PORTAL_FRAME','NETHERITE_BLOCK','COMMAND_BLOCK','EMERALD','GOLDEN_APPLE'];
+const MATS = [
+  // Блоки
+  'STONE', 'GRANITE', 'POLISHED_GRANITE', 'DIORITE', 'POLISHED_DIORITE', 'ANDESITE', 'POLISHED_ANDESITE',
+  'GRASS_BLOCK', 'DIRT', 'COARSE_DIRT', 'PODZOL', 'COBBLESTONE', 'OAK_PLANKS', 'SPRUCE_PLANKS', 'BIRCH_PLANKS',
+  'JUNGLE_PLANKS', 'ACACIA_PLANKS', 'DARK_OAK_PLANKS', 'MANGROVE_PLANKS', 'CHERRY_PLANKS', 'BAMBOO_PLANKS',
+  'CRIMSON_PLANKS', 'WARPED_PLANKS', 'OAK_LOG', 'SPRUCE_LOG', 'BIRCH_LOG', 'JUNGLE_LOG', 'ACACIA_LOG',
+  'DARK_OAK_LOG', 'MANGROVE_LOG', 'CHERRY_LOG', 'CRIMSON_STEM', 'WARPED_STEM', 'STRIPPED_OAK_LOG',
+  'STRIPPED_SPRUCE_LOG', 'STRIPPED_BIRCH_LOG', 'STRIPPED_JUNGLE_LOG', 'STRIPPED_ACACIA_LOG',
+  'STRIPPED_DARK_OAK_LOG', 'STRIPPED_MANGROVE_LOG', 'STRIPPED_CHERRY_LOG', 'STRIPPED_CRIMSON_STEM',
+  'STRIPPED_WARPED_STEM', 'SAND', 'RED_SAND', 'GRAVEL', 'COAL_ORE', 'DEEPSLATE_COAL_ORE', 'IRON_ORE',
+  'DEEPSLATE_IRON_ORE', 'COPPER_ORE', 'DEEPSLATE_COPPER_ORE', 'GOLD_ORE', 'DEEPSLATE_GOLD_ORE',
+  'REDSTONE_ORE', 'DEEPSLATE_REDSTONE_ORE', 'EMERALD_ORE', 'DEEPSLATE_EMERALD_ORE', 'LAPIS_ORE',
+  'DEEPSLATE_LAPIS_ORE', 'DIAMOND_ORE', 'DEEPSLATE_DIAMOND_ORE', 'NETHER_GOLD_ORE', 'NETHER_QUARTZ_ORE',
+  'ANCIENT_DEBRIS', 'COAL_BLOCK', 'RAW_IRON_BLOCK', 'RAW_COPPER_BLOCK', 'RAW_GOLD_BLOCK', 'IRON_BLOCK',
+  'COPPER_BLOCK', 'GOLD_BLOCK', 'DIAMOND_BLOCK', 'EMERALD_BLOCK', 'LAPIS_BLOCK', 'REDSTONE_BLOCK',
+  'NETHERITE_BLOCK', 'OBSIDIAN', 'CRYING_OBSIDIAN', 'BEDROCK', 'SPONGE', 'WET_SPONGE',
+  
+  // Стекло
+  'GLASS', 'TINTED_GLASS', 'WHITE_STAINED_GLASS', 'ORANGE_STAINED_GLASS', 'MAGENTA_STAINED_GLASS',
+  'LIGHT_BLUE_STAINED_GLASS', 'YELLOW_STAINED_GLASS', 'LIME_STAINED_GLASS', 'PINK_STAINED_GLASS',
+  'GRAY_STAINED_GLASS', 'LIGHT_GRAY_STAINED_GLASS', 'CYAN_STAINED_GLASS', 'PURPLE_STAINED_GLASS',
+  'BLUE_STAINED_GLASS', 'BROWN_STAINED_GLASS', 'GREEN_STAINED_GLASS', 'RED_STAINED_GLASS', 'BLACK_STAINED_GLASS',
+  
+  // Стеклянные панели
+  'GLASS_PANE', 'WHITE_STAINED_GLASS_PANE', 'ORANGE_STAINED_GLASS_PANE', 'MAGENTA_STAINED_GLASS_PANE',
+  'LIGHT_BLUE_STAINED_GLASS_PANE', 'YELLOW_STAINED_GLASS_PANE', 'LIME_STAINED_GLASS_PANE', 'PINK_STAINED_GLASS_PANE',
+  'GRAY_STAINED_GLASS_PANE', 'LIGHT_GRAY_STAINED_GLASS_PANE', 'CYAN_STAINED_GLASS_PANE', 'PURPLE_STAINED_GLASS_PANE',
+  'BLUE_STAINED_GLASS_PANE', 'BROWN_STAINED_GLASS_PANE', 'GREEN_STAINED_GLASS_PANE', 'RED_STAINED_GLASS_PANE',
+  'BLACK_STAINED_GLASS_PANE',
+  
+  // Шерсть и терракота
+  'WHITE_WOOL', 'ORANGE_WOOL', 'MAGENTA_WOOL', 'LIGHT_BLUE_WOOL', 'YELLOW_WOOL', 'LIME_WOOL', 'PINK_WOOL',
+  'GRAY_WOOL', 'LIGHT_GRAY_WOOL', 'CYAN_WOOL', 'PURPLE_WOOL', 'BLUE_WOOL', 'BROWN_WOOL', 'GREEN_WOOL',
+  'RED_WOOL', 'BLACK_WOOL', 'TERRACOTTA', 'WHITE_TERRACOTTA', 'ORANGE_TERRACOTTA', 'MAGENTA_TERRACOTTA',
+  'LIGHT_BLUE_TERRACOTTA', 'YELLOW_TERRACOTTA', 'LIME_TERRACOTTA', 'PINK_TERRACOTTA', 'GRAY_TERRACOTTA',
+  'LIGHT_GRAY_TERRACOTTA', 'CYAN_TERRACOTTA', 'PURPLE_TERRACOTTA', 'BLUE_TERRACOTTA', 'BROWN_TERRACOTTA',
+  'GREEN_TERRACOTTA', 'RED_TERRACOTTA', 'BLACK_TERRACOTTA',
+  
+  // Функциональные блоки
+  'CRAFTING_TABLE', 'FURNACE', 'BLAST_FURNACE', 'SMOKER', 'CHEST', 'TRAPPED_CHEST', 'ENDER_CHEST',
+  'BARREL', 'SHULKER_BOX', 'BEACON', 'CONDUIT', 'ANVIL', 'CHIPPED_ANVIL', 'DAMAGED_ANVIL',
+  'ENCHANTING_TABLE', 'BOOKSHELF', 'LECTERN', 'CAULDRON', 'BREWING_STAND', 'HOPPER', 'DISPENSER',
+  'DROPPER', 'OBSERVER', 'PISTON', 'STICKY_PISTON', 'REDSTONE_LAMP', 'TNT', 'SLIME_BLOCK', 'HONEY_BLOCK',
+  'COMMAND_BLOCK', 'REPEATING_COMMAND_BLOCK', 'CHAIN_COMMAND_BLOCK', 'STRUCTURE_BLOCK', 'JIGSAW',
+  'COMPOSTER', 'CARTOGRAPHY_TABLE', 'FLETCHING_TABLE', 'SMITHING_TABLE', 'STONECUTTER', 'LOOM',
+  'GRINDSTONE', 'BELL', 'LANTERN', 'SOUL_LANTERN', 'CAMPFIRE', 'SOUL_CAMPFIRE', 'RESPAWN_ANCHOR',
+  'LODESTONE', 'TARGET', 'LIGHTNING_ROD', 'SCULK_SENSOR', 'CALIBRATED_SCULK_SENSOR',
+  
+  // Предметы
+  'DIAMOND', 'EMERALD', 'IRON_INGOT', 'GOLD_INGOT', 'NETHERITE_INGOT', 'COAL', 'CHARCOAL', 'REDSTONE',
+  'LAPIS_LAZULI', 'QUARTZ', 'AMETHYST_SHARD', 'PRISMARINE_SHARD', 'PRISMARINE_CRYSTALS', 'BLAZE_ROD',
+  'BLAZE_POWDER', 'ENDER_PEARL', 'ENDER_EYE', 'NETHER_STAR', 'TOTEM_OF_UNDYING', 'ELYTRA',
+  'GOLDEN_APPLE', 'ENCHANTED_GOLDEN_APPLE', 'APPLE', 'BREAD', 'COOKED_BEEF', 'COOKED_PORKCHOP',
+  'COOKED_CHICKEN', 'COOKED_COD', 'COOKED_SALMON', 'CAKE', 'COOKIE', 'PUMPKIN_PIE',
+  
+  // Инструменты и оружие
+  'DIAMOND_SWORD', 'IRON_SWORD', 'GOLDEN_SWORD', 'STONE_SWORD', 'WOODEN_SWORD', 'NETHERITE_SWORD',
+  'DIAMOND_PICKAXE', 'IRON_PICKAXE', 'GOLDEN_PICKAXE', 'STONE_PICKAXE', 'WOODEN_PICKAXE', 'NETHERITE_PICKAXE',
+  'DIAMOND_AXE', 'IRON_AXE', 'GOLDEN_AXE', 'STONE_AXE', 'WOODEN_AXE', 'NETHERITE_AXE',
+  'DIAMOND_SHOVEL', 'IRON_SHOVEL', 'GOLDEN_SHOVEL', 'STONE_SHOVEL', 'WOODEN_SHOVEL', 'NETHERITE_SHOVEL',
+  'DIAMOND_HOE', 'IRON_HOE', 'GOLDEN_HOE', 'STONE_HOE', 'WOODEN_HOE', 'NETHERITE_HOE',
+  'BOW', 'CROSSBOW', 'ARROW', 'SPECTRAL_ARROW', 'TIPPED_ARROW', 'TRIDENT', 'SHIELD',
+  'FISHING_ROD', 'CARROT_ON_A_STICK', 'WARPED_FUNGUS_ON_A_STICK', 'FLINT_AND_STEEL', 'SHEARS',
+  'COMPASS', 'CLOCK', 'SPYGLASS', 'MAP', 'FILLED_MAP', 'RECOVERY_COMPASS'
+];
 const ACTS=['CLOSE_SCREEN','OPEN_MENU','RUN_COMMAND','SEND_CHAT','PLAY_SOUND','RUN_SCRIPT','SWITCH_SCREEN','NONE'];
+
+// Функция для создания опции селекта с визуальным рендером
+function createMaterialOption(material, selected = false) {
+  return `<option value="${material}" ${selected ? 'selected' : ''}>${material}</option>`;
+}
+
+// Функция для создания селекта материалов с превью и поиском
+function createMaterialSelect(id, currentValue, materials) {
+  const options = materials.map(mat => createMaterialOption(mat, mat === currentValue)).join('');
+  return `
+    <select class="pselect" id="${id}" style="margin-bottom:4px;">
+      ${options}
+    </select>
+    <div style="text-align:center;margin-top:8px;" id="${id}_preview">
+      ${getMinecraftRender(currentValue, 24)}
+    </div>
+  `;
+}
+
+// Функция для фильтрации материалов по поиску
+function filterMaterials(searchTerm) {
+  if (!searchTerm) return MATS;
+  
+  const term = searchTerm.toLowerCase();
+  return MATS.filter(mat => 
+    mat.toLowerCase().includes(term) ||
+    mat.replace(/_/g, ' ').toLowerCase().includes(term)
+  );
+}
+
+// Функция для обновления списка материалов
+function updateMaterialSelect(selectId, searchTerm, currentValue) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  
+  const filteredMats = filterMaterials(searchTerm);
+  const options = filteredMats.map(mat => createMaterialOption(mat, mat === currentValue)).join('');
+  
+  select.innerHTML = options;
+  
+  // Если текущий материал не найден в фильтре, выбираем первый
+  if (filteredMats.length > 0 && !filteredMats.includes(currentValue)) {
+    select.value = filteredMats[0];
+    // Обновляем превью
+    const preview = document.getElementById(selectId + '_preview');
+    if (preview) {
+      preview.innerHTML = getMinecraftRender(filteredMats[0], 24);
+    }
+  }
+}
 
 function renderWProps(p,w){
   const isText=w.type==='TEXT_BUTTON';
   const yamlScaleStr=isText?`[${+(w.w*8).toFixed(2)}, ${+(w.h*4).toFixed(2)}, 1]`:`[${+w.w.toFixed(2)}, ${+w.h.toFixed(2)}, ${+w.w.toFixed(2)}]`;
-  // Вычисляем визуальный anchor — куда смотрит голубая точка на холсте
-  const anchorDesc = isText
-    ? `Entity pos: [${w.x.toFixed(2)}, ${w.y.toFixed(2)}] = bottom-center\nВизуал = pos + trans = [${(w.x+(w.transX||0)).toFixed(2)}, ${(w.y+(w.transY||0)).toFixed(2)}]`
-    : `Entity pos: [${w.x.toFixed(2)}, ${w.y.toFixed(2)}] = center\nВизуал = pos + trans = [${(w.x+(w.transX||0)).toFixed(2)}, ${(w.y+(w.transY||0)).toFixed(2)}]`;
+  
+  // Материал с визуальным селектом
+  const materialSelect = !isText ? `
+    <div class="prow">
+      <div class="plabel">Material</div>
+      <div style="flex:1;">
+        <input type="text" class="pinput" id="w_mat_search" placeholder="Поиск материала..." style="margin-bottom:4px;">
+        ${createMaterialSelect('w_mat', w.material, MATS)}
+      </div>
+    </div>
+  ` : '';
+  
+  // Заголовок без эмодзи
+  const widgetTitle = isText ? 'TEXT_BUTTON' : 'ITEM_BUTTON';
+  
   p.innerHTML=`
     <div class="pgroup">
-      <div class="pgtitle">${isText?'🔤':'🎯'} ${w.type}</div>
+      <div class="pgtitle">${widgetTitle}</div>
       <div class="pgbody">
         ${row('ID', txtIn('w_id',w.id))}
-        ${!isText?row('Material',selIn('w_mat',w.material,MATS)):''}
+        ${materialSelect}
         ${isText?row('Текст',txtIn('w_txt',w.text)):''}
         ${isText?row('Цвет BG',colIn('w_col',w.color)):''}
       </div>
     </div>
     <div class="pgroup">
-      <div class="pgtitle">📍 position[] — мировая позиция entity</div>
+      <div class="pgtitle">position[] — мировая позиция entity</div>
       <div class="pgbody">
         <div class="phint">
           <span class="wa">Где стоит Display entity в мире</span><br>
@@ -578,7 +1021,7 @@ function renderWProps(p,w){
       </div>
     </div>
     <div class="pgroup">
-      <div class="pgtitle">↔ translation[] — Transformation сдвиг</div>
+      <div class="pgtitle">translation[] — Transformation сдвиг</div>
       <div class="pgbody">
         <div class="phint">
           <span class="ok">Локальный сдвиг модели внутри entity</span><br>
@@ -589,7 +1032,7 @@ function renderWProps(p,w){
       </div>
     </div>
     <div class="pgroup">
-      <div class="pgtitle">📏 Размер (блоки)</div>
+      <div class="pgtitle">Размер (блоки)</div>
       <div class="pgbody">
         ${row('Ширина', numIn('w_w',w.w,0.125,0.125))}
         ${row('Высота', numIn('w_h',w.h,0.125,0.125))}
@@ -597,18 +1040,43 @@ function renderWProps(p,w){
       </div>
     </div>
     <div class="pgroup">
-      <div class="pgtitle">⚡ onClick</div>
+      <div class="pgtitle">Зона толерантности</div>
+      <div class="pgbody">
+        <div class="phint">
+          <span class="ok">Эллипс вокруг кнопки</span><br>
+          Показывается <span class="hl">оранжевым пунктиром</span> при выборе
+        </div>
+        ${row('Гориз.', numIn('w_tolH',w.tolerance[0],0.05,0))}
+        ${row('Верт.', numIn('w_tolV',w.tolerance[1],0.05,0))}
+      </div>
+    </div>
+    <div class="pgroup">
+      <div class="pgtitle">onClick</div>
       <div class="pgbody">
         ${row('action', selIn('w_act',w.onClick,ACTS))}
-        <div class="prow">
-          <div class="plabel">tolH</div>${numIn('w_tolH',w.tolerance[0],0.05,0)}
-          <div class="plabel" style="margin-left:4px">tolV</div>${numIn('w_tolV',w.tolerance[1],0.05,0)}
-        </div>
       </div>
     </div>`;
 
   bind('w_id',v=>{w.id=v||w.id;render();});
-  if(!isText) bind('w_mat',v=>{w.material=v;w.color=matCol(v);render();});
+  if(!isText) {
+    // Обработчик поиска материалов
+    bind('w_mat_search', v => {
+      updateMaterialSelect('w_mat', v, w.material);
+    });
+    
+    bind('w_mat',v=>{
+      w.material=v;
+      w.color=matCol(v);
+      // Обновляем превью материала
+      const preview = document.getElementById('w_mat_preview');
+      if (preview) {
+        const iconHtml = getMinecraftRender(v, 24);
+        preview.innerHTML = iconHtml;
+      }
+      render();
+      updateProps();
+    });
+  }
   if(isText){bind('w_txt',v=>{w.text=v;w.label=v;render();});bind('w_col',v=>{w.color=v;render();});}
   bind('w_x',v=>{w.x=parseFloat(v)||0;render();updateProps();});
   bind('w_y',v=>{w.y=parseFloat(v)||0;render();updateProps();});
@@ -617,8 +1085,8 @@ function renderWProps(p,w){
   bind('w_w',v=>{w.w=Math.max(0.125,parseFloat(v)||1);render();updateProps();});
   bind('w_h',v=>{w.h=Math.max(0.125,parseFloat(v)||1);render();updateProps();});
   bind('w_act',v=>{w.onClick=v;updateYaml();});
-  bind('w_tolH',v=>{w.tolerance[0]=parseFloat(v)||0;updateYaml();});
-  bind('w_tolV',v=>{w.tolerance[1]=parseFloat(v)||0;updateYaml();});
+  bind('w_tolH',v=>{w.tolerance[0]=parseFloat(v)||0;updateYaml();render();});
+  bind('w_tolV',v=>{w.tolerance[1]=parseFloat(v)||0;updateYaml();render();});
 }
 // ═══════════════════════════════════════════════════════════════
 // LAYERS
@@ -628,15 +1096,30 @@ function updateLayers(){
   const sorted=[...widgets].sort((a,b)=>b.zIndex-a.zIndex);
   const html=sorted.map(w=>{
     const s=w.id===selectedId;
+    let icon;
+    
+    if (w.type==='TEXT_BUTTON') {
+      icon = '<div style="width:16px;height:16px;background:var(--accent);color:#000;border-radius:2px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:10px;">T</div>';
+    } else {
+      // Для ITEM_BUTTON показываем рендер материала
+      const iconHtml = getMinecraftRender(w.material || 'STONE', 16);
+      icon = `<div style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;">${iconHtml}</div>`;
+    }
+    
     return `<div class="litem" data-id="${w.id}" style="border:1px solid ${s?'var(--accent)':'var(--border)'};background:${s?'rgba(100,150,255,0.08)':'var(--bg3)'};color:${s?'var(--accent)':'var(--text2)'};">
-      ${w.type==='TEXT_BUTTON'?'🔤':w.type==='BLOCK_BUTTON'?'🧱':'🎯'}
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${w.id}</span>
+      ${icon}
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;margin-left:4px;">${w.id}</span>
     </div>`;
   });
+  
   if(background){
     const s=selectedId==='__bg__';
-    html.push(`<div class="litem" data-id="__bg__" style="border:1px solid ${s?'var(--accent3)':'var(--border)'};background:${s?'rgba(28,238,114,0.08)':'var(--bg3)'};color:${s?'var(--accent3)':'var(--text3)'};font-size:10px;">🟩 background</div>`);
+    html.push(`<div class="litem" data-id="__bg__" style="border:1px solid ${s?'var(--accent3)':'var(--border)'};background:${s?'rgba(28,238,114,0.08)':'var(--bg3)'};color:${s?'var(--accent3)':'var(--text3)'};font-size:10px;">
+      <div style="width:16px;height:16px;background:${background.colorHex};border:1px solid var(--border);border-radius:2px;flex-shrink:0;"></div>
+      <span style="margin-left:4px;">background</span>
+    </div>`);
   }
+  
   list.innerHTML=html.join('')||'<div style="font-size:9px;color:var(--text3);padding:4px">Пусто</div>';
   list.querySelectorAll('.litem').forEach(el=>el.addEventListener('click',()=>{selectedId=el.dataset.id;render();updateProps();}));
 }
@@ -753,16 +1236,20 @@ document.getElementById('ctxDup').addEventListener('click',()=>{
 document.getElementById('ctxUp').addEventListener('click',()=>{const w=widgets.find(x=>x.id===selectedId);if(w){w.zIndex=Math.min(w.zIndex+1,widgets.length);render();}});
 document.getElementById('ctxDown').addEventListener('click',()=>{const w=widgets.find(x=>x.id===selectedId);if(w){w.zIndex=Math.max(w.zIndex-1,0);render();}});
 document.getElementById('ctxDel').addEventListener('click',()=>{
-  if(selectedId==='__bg__') background=null; else widgets=widgets.filter(w=>w.id!==selectedId);
+  if(selectedId==='__bg__') {
+    // Фон нельзя удалить
+    return;
+  } else {
+    widgets=widgets.filter(w=>w.id!==selectedId);
+  }
   selectedId=null;render();updateProps();
 });
 
 document.getElementById('gridToggle').addEventListener('change',render);
-document.getElementById('zoomSel').addEventListener('change',render);
-document.getElementById('gridStep').addEventListener('input',render);
+document.getElementById('gridStepSelect').addEventListener('change',render);
 
 function updateEmpty(){
-  document.getElementById('estate').style.display=(widgets.length===0&&!background)?'block':'none';
+  document.getElementById('estate').style.display=(widgets.length===0)?'block':'none';
   const bx=Math.floor(cv.width/PPB()),by=Math.floor(cv.height/PPB());
   document.getElementById('screenInfo').textContent=`${bx}×${by} блоков`;
 }
@@ -774,7 +1261,9 @@ function updateEmpty(){
 //   Widget: position=[0,0,0], scale=[0.5,0.5,0.5], translation=[0,0,0]
 // ═══════════════════════════════════════════════════════════════
 function loadDemo(){
+  // Фон всегда присутствует
   background={w:4,h:3,colorHex:'#0d1117',alpha:180,posX:0,posY:0,transX:0,transY:-1.5};
+  
   widgets=[
     // ITEM_BUTTON: anchor=CENTER, position=[0,0] → стоит в центре экрана
     {id:'btn_center',type:'ITEM_BUTTON',material:'DIAMOND',label:'',text:'',
@@ -783,7 +1272,7 @@ function loadDemo(){
     // Правый верхний
     {id:'btn_close',type:'ITEM_BUTTON',material:'RED_STAINED_GLASS_PANE',label:'',text:'',
       x:1.5,y:1.2,transX:0,transY:0,w:0.5,h:0.5,color:'#cc3333',
-      onClick:'CLOSE_SCREEN',tolerance:[0.15,0.15],zIndex:2},
+      onClick:'CLOSE_SCREEN',tolerance:[0.1,0.1],zIndex:2},
     // TEXT_BUTTON: anchor=center-X,bottom-Y
     // position=[0,0.8] → entity стоит на Y=0.8
     // translation=[0,-0.25] → модель сдвинута вниз на 0.25 (чтобы центрировать h=0.5)
@@ -795,15 +1284,72 @@ function loadDemo(){
       onClick:'CLOSE_SCREEN',tolerance:[0.1,0.1],zIndex:3},
   ];
   nextId=10;selectedId=null;render();updateProps();
+  
+  // Принудительно обновляем иконки после загрузки демо
+  setTimeout(() => {
+    initVisualRenders();
+  }, 100);
 }
+// Инициализация визуальных рендеров в интерфейсе
+function initVisualRenders() {
+  console.log('Initializing visual renders...');
+  
+  // Обновляем иконку Item Button в палитре
+  const itemButtonIcon = document.getElementById('item-button-icon');
+  if (itemButtonIcon) {
+    const iconHtml = getMinecraftRender('RED_STAINED_GLASS_PANE', 20);
+    console.log('Generated icon HTML:', iconHtml);
+    itemButtonIcon.innerHTML = iconHtml;
+    console.log('Item button icon updated');
+  } else {
+    console.log('Item button icon element not found');
+  }
+  
+  // Обновляем все виджеты в палитре
+  document.querySelectorAll('.witem').forEach((item, index) => {
+    const material = item.dataset.material;
+    const icon = item.querySelector('.wicon');
+    console.log(`Processing palette item ${index}:`, {material, icon, hasIcon: !!icon});
+    
+    if (material && icon) {
+      const iconHtml = getMinecraftRender(material, 20);
+      console.log('Setting palette icon for', material, ':', iconHtml);
+      icon.innerHTML = iconHtml;
+    } else if (icon && !material) {
+      // Для Text Button показываем T
+      icon.innerHTML = '<div style="width:20px;height:20px;background:var(--accent);color:#000;border-radius:3px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;">T</div>';
+    }
+  });
+  
+  console.log('Visual renders initialization complete');
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing canvas...');
-  // Wait a bit longer for CSS to be applied
+  
+  // Ensure the canvas wrapper has proper dimensions
+  const cwrap = document.getElementById('cwrap');
+  if (cwrap) {
+    // Force a layout recalculation
+    cwrap.style.minWidth = '400px';
+    cwrap.style.flex = '1';
+  }
+  
+  // Инициализируем zoom
+  updateZoomDisplay();
+  
+  // Wait for CSS to be applied and layout to stabilize
   setTimeout(() => {
     resize();
     loadDemo();
-  }, 200);
+    
+    // Инициализируем визуальные рендеры после всего остального
+    setTimeout(() => {
+      console.log('Initializing visual renders after demo load...');
+      initVisualRenders();
+    }, 200);
+  }, 300);
 });
 
 // Also initialize on window load as backup
@@ -811,5 +1357,9 @@ window.addEventListener('load', function() {
   console.log('Window loaded, ensuring canvas is initialized...');
   setTimeout(() => {
     resize();
+    // Еще одна попытка инициализации иконок
+    setTimeout(() => {
+      initVisualRenders();
+    }, 100);
   }, 100);
 });

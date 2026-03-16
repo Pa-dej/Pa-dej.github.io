@@ -978,8 +978,9 @@ body.displaylib-body .cwrap {
   overflow: hidden !important;
   background: var(--bg) !important;
   min-height: 0 !important;
-  min-width: 0 !important;
+  min-width: 400px !important;
   width: 100% !important;
+  display: flex !important;
 }
 
 body.displaylib-body #cv {
@@ -989,6 +990,55 @@ body.displaylib-body #cv {
   width: 100% !important;
   height: 100% !important;
   display: block !important;
+}
+
+/* Widget overlay for Minecraft renders */
+#widget-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Убираем фоны и отступы у иконок в оверлеях */
+#widget-overlay .icon-minecraft,
+#widget-overlay .icon-minecraft-sm {
+  background-color: transparent !important;
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: block;
+}
+
+/* Стили для иконок Minecraft в интерфейсе */
+body.displaylib-body .icon-minecraft,
+body.displaylib-body .icon-minecraft-sm {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Исправляем отображение иконок в палитре */
+body.displaylib-body .wicon .icon-minecraft,
+body.displaylib-body .wicon .icon-minecraft-sm {
+  margin: 0;
+  vertical-align: top;
+}
+
+/* Исправляем отображение иконок в слоях */
+body.displaylib-body .litem .icon-minecraft,
+body.displaylib-body .litem .icon-minecraft-sm {
+  margin: 0;
+  vertical-align: top;
+}
+
+/* Исправляем отображение иконок в свойствах */
+body.displaylib-body .pgroup .icon-minecraft,
+body.displaylib-body .pgroup .icon-minecraft-sm {
+  margin: 0;
+  vertical-align: top;
 }
 
 .cov {
@@ -1317,6 +1367,103 @@ pre.ycode {
 .displaylib-body ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 3px;
+}
+
+/* 3D Minecraft Block Styles */
+.mc-block {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  transform: rotateX(60deg) rotateZ(45deg);
+  transform-style: preserve-3d;
+  margin: 8px auto;
+}
+
+.mc-block div {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background-size: cover;
+  image-rendering: pixelated;
+}
+
+.mc-block .top {
+  transform: translateZ(16px);
+}
+
+.mc-block .left {
+  transform: rotateY(90deg) translateZ(16px);
+}
+
+.mc-block .right {
+  transform: rotateX(90deg) translateZ(16px);
+}
+
+/* Minecraft Item Styles */
+.mc-item {
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Стили для иконок в палитре */
+body.displaylib-body .wicon .mc-block {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+body.displaylib-body .wicon .mc-block div {
+  width: 20px;
+  height: 20px;
+}
+
+body.displaylib-body .wicon .mc-block .top {
+  transform: translateZ(10px);
+}
+
+body.displaylib-body .wicon .mc-block .left {
+  transform: rotateY(90deg) translateZ(10px);
+}
+
+body.displaylib-body .wicon .mc-block .right {
+  transform: rotateX(90deg) translateZ(10px);
+}
+
+body.displaylib-body .wicon .mc-item {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+/* Стили для рендеров в слоях */
+body.displaylib-body .litem .mc-block {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+body.displaylib-body .litem .mc-block div {
+  width: 16px;
+  height: 16px;
+}
+
+body.displaylib-body .litem .mc-block .top {
+  transform: translateZ(8px);
+}
+
+body.displaylib-body .litem .mc-block .left {
+  transform: rotateY(90deg) translateZ(8px);
+}
+
+body.displaylib-body .litem .mc-block .right {
+  transform: rotateX(90deg) translateZ(8px);
+}
+
+body.displaylib-body .litem .mc-item {
+  width: 16px;
+  height: 16px;
+  margin: 0;
 }
 
 /* ==================================================
