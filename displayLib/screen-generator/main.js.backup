@@ -199,42 +199,232 @@ function wVisualRect(w) {
   return { px, py, pw, ph };
 }
 // ═══════════════════════════════════════════════════════════════
-// MINECRAFT VISUAL RENDERS - Using GamerGeeks CSS Icons
+// MATERIAL SEARCH DATABASE
 // ═══════════════════════════════════════════════════════════════
 
-// Маппинг материалов к CSS классам GamerGeeks
-const MATERIAL_TO_ICON = {
-  'RED_STAINED_GLASS_PANE': 'red-stained-glass-pane',
-  'BLUE_STAINED_GLASS_PANE': 'blue-stained-glass-pane', 
-  'GREEN_STAINED_GLASS_PANE': 'green-stained-glass-pane',
-  'YELLOW_STAINED_GLASS_PANE': 'yellow-stained-glass-pane',
-  'PURPLE_STAINED_GLASS_PANE': 'purple-stained-glass-pane',
-  'WHITE_STAINED_GLASS_PANE': 'white-stained-glass-pane',
-  'BLACK_STAINED_GLASS_PANE': 'black-stained-glass-pane',
-  'STONE': 'stone',
-  'DIAMOND': 'diamond',
-  'GOLD_BLOCK': 'gold-block',
-  'IRON_BLOCK': 'iron-block',
-  'EMERALD_BLOCK': 'emerald-block',
-  'GRASS_BLOCK': 'grass-block',
-  'OAK_LOG': 'oak-log',
-  'BEACON': 'beacon',
-  'NETHERITE_BLOCK': 'netherite-block',
-  'COMMAND_BLOCK': 'command-block',
-  'EMERALD': 'emerald',
-  'GOLDEN_APPLE': 'golden-apple',
-  'DIAMOND_SWORD': 'diamond-sword',
-  'IRON_SWORD': 'iron-sword',
-  'BOW': 'bow',
-  'ARROW': 'arrow',
-  'ENDER_PEARL': 'ender-pearl',
-  'CRAFTING_TABLE': 'crafting-table',
-  'FURNACE': 'furnace',
-  'TNT': 'tnt',
-  'END_PORTAL_FRAME': 'end-portal-frame'
-};
+// ═══════════════════════════════════════════════════════════════
+// MATERIAL SEARCH DATABASE
+// ═══════════════════════════════════════════════════════════════
+// База данных материалов вынесена в отдельный файл materials.js
+// для лучшей организации кода (1751+ материалов)
 
-// Цветовая схема для материалов (как fallback)
+// Функция поиска материалов
+function searchMaterials(query) {
+  if (!query || query.length < 1) return [];
+  
+  const searchTerm = query.toLowerCase();
+  const results = [];
+  
+  for (const material of MATERIALS_DATABASE) {
+    let score = 0;
+    
+    // Поиск в названии (высокий приоритет)
+    if (material.name.toLowerCase().includes(searchTerm)) {
+      score += 10;
+      if (material.name.toLowerCase().startsWith(searchTerm)) {
+        score += 5; // Бонус за начало названия
+      }
+    }
+    
+    // Поиск в ID (средний приоритет)
+    if (material.id.toLowerCase().includes(searchTerm)) {
+      score += 5;
+    }
+    
+    // Поиск в тегах (низкий приоритет)
+    for (const tag of material.tags) {
+      if (tag.includes(searchTerm)) {
+        score += 2;
+      }
+    }
+    
+    if (score > 0) {
+      results.push({ ...material, score });
+    }
+  }
+  
+  // Сортируем по релевантности
+  results.sort((a, b) => b.score - a.score);
+  
+  // Возвращаем максимум 15 результатов
+  return results.slice(0, 15);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MATERIAL SEARCH UI - только для панели свойств
+// ═══════════════════════════════════════════════════════════════
+
+// Функция для инициализации поиска материала в панели свойств
+function initMaterialSearchForWidget(id, widget) {
+  const searchInput = document.getElementById(`${id}_search`);
+  const searchResults = document.getElementById(`${id}_results`);
+  const hiddenInput = document.getElementById(id);
+  const inputGroup = searchInput?.closest('.input-group');
+  
+  if (!searchInput || !searchResults || !hiddenInput) return;
+  
+  let searchTimeout;
+  
+  // Управление классом focused для правильной обводки
+  searchInput.addEventListener('focus', (e) => {
+    if (inputGroup) inputGroup.classList.add('focused');
+    
+    if (e.target.value.trim().length > 0) {
+      const results = searchMaterials(e.target.value.trim());
+      displaySearchResultsForWidget(results, e.target.value.trim(), id, widget);
+    }
+  });
+  
+  searchInput.addEventListener('blur', (e) => {
+    if (inputGroup) inputGroup.classList.remove('focused');
+  });
+  
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    const query = e.target.value.trim();
+    
+    if (query.length === 0) {
+      searchResults.style.display = 'none';
+      return;
+    }
+    
+    // Debounce поиска
+    searchTimeout = setTimeout(() => {
+      const results = searchMaterials(query);
+      displaySearchResultsForWidget(results, query, id, widget);
+    }, 150);
+  });
+  
+  // Скрываем результаты при клике вне поиска
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.material-search-container')) {
+      searchResults.style.display = 'none';
+    }
+  });
+  
+  // Перепозиционируем dropdown при скролле или изменении размера окна
+  const repositionHandler = () => {
+    if (searchResults.style.display === 'block') {
+      positionDropdown(searchInput, searchResults);
+    }
+  };
+  
+  window.addEventListener('scroll', repositionHandler);
+  window.addEventListener('resize', repositionHandler);
+  
+  // Скрываем dropdown при скролле панели свойств
+  const propPanel = document.getElementById('propPanel');
+  if (propPanel) {
+    propPanel.addEventListener('scroll', () => {
+      searchResults.style.display = 'none';
+    });
+  }
+}
+
+function displaySearchResultsForWidget(results, query, id, widget) {
+  const searchResults = document.getElementById(`${id}_results`);
+  const searchInput = document.getElementById(`${id}_search`);
+  
+  if (results.length === 0) {
+    searchResults.innerHTML = '<div class="search-more">Ничего не найдено</div>';
+    searchResults.style.display = 'block';
+    positionDropdown(searchInput, searchResults);
+    return;
+  }
+  
+  let html = '';
+  
+  for (const result of results) {
+    const iconHtml = getMinecraftRender(result.id, 16);
+    html += `
+      <li>
+        <a href="#" data-v="${result.id}">
+          ${iconHtml} ${result.name}
+        </a>
+      </li>
+    `;
+  }
+  
+  if (results.length === 15) {
+    html += '<div class="search-more"><em>there are more results<br>refine search</em></div>';
+  }
+  
+  searchResults.innerHTML = html;
+  searchResults.style.display = 'block';
+  
+  // Позиционируем dropdown
+  positionDropdown(searchInput, searchResults);
+  
+  // Добавляем обработчики клика
+  searchResults.querySelectorAll('a[data-v]').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const material = item.dataset.v;
+      
+      // Обновляем виджет
+      widget.material = material;
+      widget.color = matCol(material);
+      
+      // Обновляем скрытое поле
+      document.getElementById(id).value = material;
+      
+      // Обновляем превью
+      const preview = document.getElementById(`${id}_preview`);
+      if (preview) {
+        preview.innerHTML = getMinecraftRender(material, 24);
+      }
+      
+      // Очищаем поиск и скрываем результаты
+      document.getElementById(`${id}_search`).value = '';
+      searchResults.style.display = 'none';
+      
+      // Обновляем интерфейс
+      render();
+      updateProps();
+    });
+  });
+}
+
+// Функция для правильного позиционирования dropdown
+function positionDropdown(inputElement, dropdownElement) {
+  const inputRect = inputElement.getBoundingClientRect();
+  const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  
+  // Позиционируем dropdown
+  dropdownElement.style.position = 'fixed';
+  dropdownElement.style.left = inputRect.left + 'px';
+  
+  // Ограничиваем ширину dropdown размером input или минимальной шириной
+  const dropdownWidth = Math.max(inputRect.width, 200);
+  dropdownElement.style.width = dropdownWidth + 'px';
+  
+  // Проверяем, не выходит ли dropdown за правый край экрана
+  if (inputRect.left + dropdownWidth > viewportWidth) {
+    const adjustedLeft = viewportWidth - dropdownWidth - 10; // 10px отступ от края
+    dropdownElement.style.left = Math.max(10, adjustedLeft) + 'px';
+  }
+  
+  // Проверяем, помещается ли dropdown снизу
+  const spaceBelow = viewportHeight - inputRect.bottom;
+  const dropdownHeight = 200; // max-height из CSS
+  
+  if (spaceBelow >= dropdownHeight) {
+    // Показываем снизу
+    dropdownElement.style.top = inputRect.bottom + 'px';
+    dropdownElement.style.bottom = 'auto';
+  } else {
+    // Показываем сверху
+    dropdownElement.style.top = 'auto';
+    dropdownElement.style.bottom = (viewportHeight - inputRect.top) + 'px';
+  }
+}
+
+
+// Маппинг материалов к CSS классам GamerGeeks
+// Вынесен в materials.js
+
+// Цветовая схема для материаловЦветовая схема для материаловЦветовая схема для материалов (как fallback)
 const MATERIAL_COLORS = {
   'RED_STAINED_GLASS_PANE': '#cc3333',
   'BLUE_STAINED_GLASS_PANE': '#3366cc',
@@ -391,11 +581,30 @@ function render() {
     ctx.fillRect(g.px, g.py, g.pw, g.ph);
 
     const sel = selectedId==='__bg__';
-    ctx.strokeStyle = sel ? '#1cee72' : 'rgba(28,238,114,0.3)';
-    ctx.lineWidth = sel ? 1.5 : 1;
+    // Цвет границы: красный если заблокирован, зеленый если выбран, серый если нет
+    let borderColor, borderWidth;
+    if (background.locked) {
+      borderColor = sel ? '#ef4444' : 'rgba(239,68,68,0.6)'; // Красный для заблокированного
+      borderWidth = sel ? 2 : 1.5;
+    } else {
+      borderColor = sel ? '#1cee72' : 'rgba(28,238,114,0.3)'; // Зеленый как обычно
+      borderWidth = sel ? 1.5 : 1;
+    }
+    
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
     if (!sel) ctx.setLineDash([3,3]);
     ctx.strokeRect(g.px, g.py, g.pw, g.ph);
     ctx.setLineDash([]);
+    
+    // Иконка замка для заблокированного фона
+    if (background.locked && sel) {
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '12px Cascadia Code';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('🔒', g.px + g.pw - 20, g.py + 15);
+    }
 
     // Центр фона (визуальный)
     const bgCX = g.px + g.pw/2, bgCY = g.py + g.ph/2;
@@ -645,7 +854,13 @@ cv.addEventListener('mousemove', e => {
 
   if (dragging) {
     const dx=p2b(mx-dragging.smx), dy=p2b(-(my-dragging.smy));
-    if (dragging.id==='__bg__') { background.posX=snap(dragging.sx+dx); background.posY=snap(dragging.sy+dy); }
+    if (dragging.id==='__bg__') { 
+      // Проверяем блокировку фона
+      if (!background.locked) {
+        background.posX=snap(dragging.sx+dx); 
+        background.posY=snap(dragging.sy+dy); 
+      }
+    }
     else { const w=widgets.find(x=>x.id===dragging.id); if(w){w.x=snap(dragging.sx+dx);w.y=snap(dragging.sy+dy);} }
     render(); if(selectedId) updateProps();
   }
@@ -676,7 +891,14 @@ cv.addEventListener('mousedown', e => {
   }
   const hw=hitWidget(mx,my);
   if(hw){selectedId=hw.id;dragging={id:hw.id,smx:mx,smy:my,sx:hw.x,sy:hw.y};render();updateProps();return;}
-  if(hitBg(mx,my)){selectedId='__bg__';dragging={id:'__bg__',smx:mx,smy:my,sx:background.posX,sy:background.posY};render();updateProps();return;}
+  if(hitBg(mx,my)){
+    selectedId='__bg__';
+    // Начинаем перетаскивание только если фон не заблокирован
+    if (!background.locked) {
+      dragging={id:'__bg__',smx:mx,smy:my,sx:background.posX,sy:background.posY};
+    }
+    render();updateProps();return;
+  }
   selectedId=null;render();updateProps();
 });
 cv.addEventListener('mouseup',()=>{dragging=null;resizing=null;});
@@ -831,14 +1053,24 @@ function renderBgProps(p){
         ${row('Ширина', numIn('bg_w',bg.w,0.5,0.5))}
         ${row('Высота', numIn('bg_h',bg.h,0.5,0.5))}
         ${row('Цвет', colIn('bg_col',bg.colorHex))}
-        ${row('Alpha', `<input class="pinput" type="range" id="bg_al" min="0" max="255" value="${bg.alpha}" style="flex:1">`)}
-        <div style="font-size:9px;color:var(--text3);text-align:right">alpha: ${bg.alpha}</div>
+        ${row('Alpha', `
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <input class="pinput" type="range" id="bg_al" min="0" max="255" value="${bg.alpha}" style="flex:1;min-width:0;">
+            <input class="pinput" type="number" id="bg_al_num" min="0" max="255" value="${bg.alpha}" style="width:40px;flex-shrink:0;font-size:9px;">
+          </div>
+        `)}
       </div>
     </div>
     <div class="pgroup">
       <div class="pgtitle">position[] — мировая позиция entity</div>
       <div class="pgbody">
         <div class="phint"><span class="wa">position = где стоит Display entity в мире</span><br>Смещение от центра экрана игрока</div>
+        <div class="prow">
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);cursor:pointer;">
+            <input type="checkbox" id="bg_lock" ${bg.locked ? 'checked' : ''} style="accent-color:var(--accent)">
+            🔒 Заблокировать перемещение
+          </label>
+        </div>
         ${row('posX', numIn('bg_px',bg.posX))}
         ${row('posY', numIn('bg_py',bg.posY))}
       </div>
@@ -857,11 +1089,42 @@ function renderBgProps(p){
   bind('bg_w',v=>{background.w=Math.max(0.5,parseFloat(v)||1);render();updateProps();});
   bind('bg_h',v=>{background.h=Math.max(0.5,parseFloat(v)||1);render();updateProps();});
   bind('bg_col',v=>{background.colorHex=v;render();});
-  bind('bg_al',v=>{background.alpha=parseInt(v);render();updateProps();});
+  
+  // Улучшенные обработчики для alpha слайдера
+  const alphaSlider = document.getElementById('bg_al');
+  const alphaNumber = document.getElementById('bg_al_num');
+  
+  if (alphaSlider && alphaNumber) {
+    // Обработчик слайдера
+    alphaSlider.addEventListener('input', e => {
+      const value = parseInt(e.target.value);
+      background.alpha = value;
+      alphaNumber.value = value;
+      render();
+    });
+    
+    // Обработчик числового поля
+    alphaNumber.addEventListener('input', e => {
+      const value = Math.max(0, Math.min(255, parseInt(e.target.value) || 0));
+      background.alpha = value;
+      alphaSlider.value = value;
+      alphaNumber.value = value; // Корректируем значение если вышло за границы
+      render();
+    });
+  }
+  
   bind('bg_px',v=>{background.posX=parseFloat(v)||0;render();});
   bind('bg_py',v=>{background.posY=parseFloat(v)||0;render();});
   bind('bg_tx',v=>{background.transX=parseFloat(v)||0;render();});
   bind('bg_ty',v=>{background.transY=parseFloat(v)||0;render();updateProps();});
+  
+  // Обработчик для галочки блокировки
+  const lockCheckbox = document.getElementById('bg_lock');
+  if (lockCheckbox) {
+    lockCheckbox.addEventListener('change', e => {
+      background.locked = e.target.checked;
+    });
+  }
 }
 const MATS = [
   // Блоки
@@ -935,13 +1198,19 @@ function createMaterialOption(material, selected = false) {
   return `<option value="${material}" ${selected ? 'selected' : ''}>${material}</option>`;
 }
 
-// Функция для создания селекта материалов с превью и поиском
-function createMaterialSelect(id, currentValue, materials) {
-  const options = materials.map(mat => createMaterialOption(mat, mat === currentValue)).join('');
+// Функция для создания селекта материалов с превью и поиском - ОБНОВЛЕННАЯ
+function createMaterialSelect(id, currentValue) {
   return `
-    <select class="pselect" id="${id}" style="margin-bottom:4px;">
-      ${options}
-    </select>
+    <div class="material-search-container">
+      <div class="input-group">
+        <div class="input-group-addon">
+          <i class="fa-fw fas fa-search"></i>
+        </div>
+        <input type="text" id="${id}_search" class="form-control" placeholder="Search..." autocomplete="off">
+        <ul class="dropdown-menu" id="${id}_results" style="display: none;"></ul>
+      </div>
+      <input type="hidden" id="${id}" value="${currentValue}">
+    </div>
     <div style="text-align:center;margin-top:8px;" id="${id}_preview">
       ${getMinecraftRender(currentValue, 24)}
     </div>
@@ -989,8 +1258,7 @@ function renderWProps(p,w){
     <div class="prow">
       <div class="plabel">Material</div>
       <div style="flex:1;">
-        <input type="text" class="pinput" id="w_mat_search" placeholder="Поиск материала..." style="margin-bottom:4px;">
-        ${createMaterialSelect('w_mat', w.material, MATS)}
+        ${createMaterialSelect('w_mat', w.material)}
       </div>
     </div>
   ` : '';
@@ -1059,23 +1327,10 @@ function renderWProps(p,w){
 
   bind('w_id',v=>{w.id=v||w.id;render();});
   if(!isText) {
-    // Обработчик поиска материалов
-    bind('w_mat_search', v => {
-      updateMaterialSelect('w_mat', v, w.material);
-    });
-    
-    bind('w_mat',v=>{
-      w.material=v;
-      w.color=matCol(v);
-      // Обновляем превью материала
-      const preview = document.getElementById('w_mat_preview');
-      if (preview) {
-        const iconHtml = getMinecraftRender(v, 24);
-        preview.innerHTML = iconHtml;
-      }
-      render();
-      updateProps();
-    });
+    // Инициализируем поиск материала в панели свойств
+    setTimeout(() => {
+      initMaterialSearchForWidget('w_mat', w);
+    }, 50);
   }
   if(isText){bind('w_txt',v=>{w.text=v;w.label=v;render();});bind('w_col',v=>{w.color=v;render();});}
   bind('w_x',v=>{w.x=parseFloat(v)||0;render();updateProps();});
@@ -1262,7 +1517,7 @@ function updateEmpty(){
 // ═══════════════════════════════════════════════════════════════
 function loadDemo(){
   // Фон всегда присутствует
-  background={w:4,h:3,colorHex:'#0d1117',alpha:180,posX:0,posY:0,transX:0,transY:-1.5};
+  background={w:4,h:3,colorHex:'#0d1117',alpha:180,posX:0,posY:0,transX:0,transY:-1.5,locked:false};
   
   widgets=[
     // ITEM_BUTTON: anchor=CENTER, position=[0,0] → стоит в центре экрана

@@ -1,0 +1,111 @@
+// ═══════════════════════════════════════════════════════════════
+// GEOMETRY AND WIDGET POSITIONING
+// ═══════════════════════════════════════════════════════════════
+
+// Функции будут доступны через window.ScreenGenerator после загрузки core.js
+
+// ═══════════════════════════════════════════════════════════════
+// ГЕОМЕТРИЯ ВИДЖЕТОВ
+// 
+// Позиция entity в мире = position[x,y] (это то что рисуем как точку)
+// Визуальная позиция = позиция entity + translation (локальный сдвиг)
+//
+// ITEM_BUTTON:
+//   Entity anchor = CENTER
+//   Отображаем rect: center = entity_pos + translation
+//   (translation обычно [0,0] для item)
+//
+// TEXT_BUTTON (и фон):
+//   Entity anchor = CENTER по X, НИЗ по Y (TextDisplay специфика)
+//   translation для фона: autoX = -scaleX/80; transY сдвигает вниз
+//   Реально: entity стоит в pos, текстура рисуется от bottom вверх
+//   translation[0] смещает по X, translation[1] смещает по Y
+//   (для центрирования по Y → transY = -h/2)
+//
+// Визуальный left-top прямоугольника:
+//   ITEM: left = b2cx(pos.x + trans.x) - pw/2
+//         top  = b2cy(pos.y + trans.y) - ph/2
+//   TEXT: left = b2cx(pos.x + trans.x) - pw/2  [anchor X = center]
+//         bottom_px = b2cy(pos.y + trans.y)     [anchor Y = bottom]
+//         top = bottom_px - ph
+//
+//   Для фона autoX = -(w*8)/80 = -w/10 добавляется к transX
+// ═══════════════════════════════════════════════════════════════
+
+function bgVisualRect(bg) {
+  const { b2p, b2cx, b2cy } = window.ScreenGenerator;
+  // В игре: TextDisplay с scale=[8,4,1] имеет autoX = -scaleX/80 = -w/10
+  // Это ВНУТРЕННЯЯ коррекция рендера TextDisplay, она компенсирует то что
+  // текстовый дисплей с пробелом " " не идеально центрирован.
+  // Эффект autoX в пикселях: -w/10 блока = очень маленький сдвиг (~3px при zoom=80).
+  // Для превью его учитывать не нужно — визуально он незаметен.
+  // Фон рендерится центрированным по posX + transX.
+  const autoX = -(bg.w * 8) / 80; // сохраняем только для YAML hint
+  const vx = bg.posX + bg.transX;  // визуальный CENTER X (без autoX в превью)
+  const vy = bg.posY + bg.transY;  // визуальный BOTTOM Y
+  const pw = b2p(bg.w), ph = b2p(bg.h);
+  const cx = b2cx(vx);
+  const bot = b2cy(vy);
+  return { px: cx - pw/2, py: bot - ph, pw, ph,
+           entityX: bg.posX, entityY: bg.posY,
+           autoX };
+}
+
+function wVisualRect(w) {
+  const { b2p, b2cx, b2cy } = window.ScreenGenerator;
+  const pw = b2p(w.w), ph = b2p(w.h);
+  const isText = w.type === 'TEXT_BUTTON';
+  const vx = w.x + (w.transX || 0);
+  const vy = w.y + (w.transY || 0);
+  let px, py;
+  if (isText) {
+    // TextDisplay: anchor = CENTER по X, НИЗ по Y
+    px = b2cx(vx) - pw/2;
+    py = b2cy(vy) - ph;
+  } else {
+    // ItemDisplay / BlockDisplay: anchor = CENTER
+    px = b2cx(vx) - pw/2;
+    py = b2cy(vy) - ph/2;
+  }
+  return { px, py, pw, ph };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HIT TEST — по визуальному прямоугольнику
+// ═══════════════════════════════════════════════════════════════
+function hitHandle(mx,my) {
+  const { selectedId, widgets } = window.ScreenGenerator;
+  if (!selectedId || selectedId==='__bg__') return null;
+  const w = widgets.find(x=>x.id===selectedId); if (!w) return null;
+  const g = wVisualRect(w);
+  const hpts=[
+    {n:'tl',x:g.px,y:g.py},{n:'tm',x:g.px+g.pw/2,y:g.py},{n:'tr',x:g.px+g.pw,y:g.py},
+    {n:'ml',x:g.px,y:g.py+g.ph/2},{n:'mr',x:g.px+g.pw,y:g.py+g.ph/2},
+    {n:'bl',x:g.px,y:g.py+g.ph},{n:'bm',x:g.px+g.pw/2,y:g.py+g.ph},{n:'br',x:g.px+g.pw,y:g.py+g.ph}
+  ];
+  for (const h of hpts) if (Math.abs(mx-h.x)<7&&Math.abs(my-h.y)<7) return h.n;
+  return null;
+}
+
+function hitWidget(mx,my) {
+  const { widgets } = window.ScreenGenerator;
+  const sorted=[...widgets].sort((a,b)=>b.zIndex-a.zIndex);
+  for (const w of sorted) { const g=wVisualRect(w); if(mx>=g.px&&mx<=g.px+g.pw&&my>=g.py&&my<=g.py+g.ph) return w; }
+  return null;
+}
+
+function hitBg(mx,my) {
+  const { background } = window.ScreenGenerator;
+  if (!background) return false;
+  const g=bgVisualRect(background);
+  return mx>=g.px&&mx<=g.px+g.pw&&my>=g.py&&my<=g.py+g.ph;
+}
+
+// Экспорт функций
+Object.assign(window.ScreenGenerator, {
+  bgVisualRect,
+  wVisualRect,
+  hitHandle,
+  hitWidget,
+  hitBg
+});

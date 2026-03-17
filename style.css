@@ -768,16 +768,44 @@ body.displaylib-body {
   height: 100vh !important;
   overflow: hidden !important;
   display: flex !important;
-  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
   user-select: none !important;
   margin: 0 !important;
-  padding: 0 !important;
+  padding: 20px !important;
+  gap: 20px !important;
+}
+
+/* Главный контейнер приложения (редактор) */
+.app-container {
+  width: 66.67%; /* 2/3 */
+  height: calc(100vh - 40px);
+  background: var(--bg2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Контейнер для YAML превью */
+.yaml-container {
+  width: 33.33%; /* 1/3 */
+  height: calc(100vh - 40px);
+  background: var(--bg2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Topbar */
 .topbar {
   height: 48px;
-  background: var(--bg2);
+  background: transparent;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -884,7 +912,7 @@ body.displaylib-body .workspace {
 
 body.displaylib-body .pleft {
   width: 190px !important;
-  background: var(--bg2) !important;
+  background: transparent !important;
   border-right: 1px solid var(--border) !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1041,6 +1069,157 @@ body.displaylib-body .pgroup .icon-minecraft-sm {
   vertical-align: top;
 }
 
+/* GamerGeeks-style Material Search */
+.input-group {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.input-group-addon {
+  display: flex;
+  align-items: center;
+  padding: 3px 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  color: var(--text3);
+  font-size: 10px;
+  flex-shrink: 0;
+  width: 24px;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.input-group .form-control {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  color: var(--text);
+  font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 10px;
+  padding: 3px 6px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+  width: 0; /* Force flex sizing */
+  box-sizing: border-box;
+}
+
+.input-group .form-control:focus {
+  border-color: var(--accent);
+}
+
+.input-group .form-control:focus ~ .input-group-addon,
+.input-group .input-group-addon:has(+ .form-control:focus) {
+  border-color: var(--accent);
+}
+
+/* Альтернативный способ для браузеров без поддержки :has() */
+.input-group.focused .input-group-addon {
+  border-color: var(--accent);
+}
+
+.dropdown-menu {
+  position: fixed;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  min-width: 200px;
+}
+
+.dropdown-menu li {
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-menu li a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 9px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.1s;
+  cursor: pointer;
+}
+
+.dropdown-menu li a:hover {
+  background: var(--bg4);
+  color: var(--text);
+}
+
+.dropdown-menu li:last-child a {
+  border-bottom: none;
+}
+
+.dropdown-menu .search-more {
+  padding: 6px 8px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 8px;
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+/* Font Awesome search icon fallback */
+.fa-search:before, .fas.fa-search:before {
+  content: "🔍";
+  font-family: inherit;
+  font-style: normal;
+  font-weight: normal;
+}
+
+/* Стили для поиска материалов в панели свойств */
+.material-search-container {
+  position: relative;
+  margin-bottom: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.material-search-container .input-group {
+  margin-bottom: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.material-search-container .dropdown-menu li a {
+  padding: 6px 8px;
+  font-size: 9px;
+}
+
+/* Обеспечиваем правильную ширину как у .pinput */
+.prow .material-search-container {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.prow .material-search-container .input-group {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .cov {
   position: absolute;
   bottom: 10px;
@@ -1064,7 +1243,7 @@ body.displaylib-body .pgroup .icon-minecraft-sm {
 
 body.displaylib-body .pright {
   width: 258px !important;
-  background: var(--bg2) !important;
+  background: transparent !important;
   border-left: 1px solid var(--border) !important;
   display: flex !important;
   flex-direction: column !important;
@@ -1142,6 +1321,23 @@ body.displaylib-body .pright {
   border-color: var(--accent);
 }
 
+.pinput[type=number] {
+  -moz-appearance: textfield; /* Убираем стрелки в Firefox */
+}
+
+.pinput[type=number]::-webkit-outer-spin-button,
+.pinput[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Убираем стрелки в Chrome/Safari */
+  margin: 0;
+}
+
+/* Специальные стили для маленьких числовых полей */
+.pinput[type=number][style*="width:40px"] {
+  text-align: center;
+  padding: 2px 3px;
+  font-size: 9px;
+}
+
 .pinput[type=color] {
   padding: 1px 3px;
   height: 24px;
@@ -1152,6 +1348,7 @@ body.displaylib-body .pright {
   padding: 0;
   cursor: pointer;
   accent-color: var(--accent);
+  height: 20px;
 }
 
 .pselect {
@@ -1196,19 +1393,10 @@ body.displaylib-body .pright {
   line-height: 1.9;
 }
 
-/* YAML Panel */
-.ypanel {
-  height: 205px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-}
-
-.yhead {
+/* YAML Container Styles */
+.yaml-container .yhead {
   padding: 6px 12px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -1216,7 +1404,7 @@ body.displaylib-body .pright {
   flex-shrink: 0;
 }
 
-.ytitle {
+.yaml-container .ytitle {
   font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -1225,18 +1413,19 @@ body.displaylib-body .pright {
   color: var(--accent3);
 }
 
-.ybody {
+.yaml-container .ybody {
   flex: 1;
   overflow: auto;
   padding: 8px 12px;
+  background: var(--bg);
 }
 
-.ybody::-webkit-scrollbar {
+.yaml-container .ybody::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
-.ybody::-webkit-scrollbar-thumb {
+.yaml-container .ybody::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 2px;
 }
