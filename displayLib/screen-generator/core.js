@@ -56,6 +56,10 @@ function setZoom(newZoom) {
 
 // Утилиты для цвета
 function hexRgb(h) {
+  if (!h || typeof h !== 'string') {
+    console.warn('hexRgb received invalid color:', h);
+    return { r: 13, g: 17, b: 23 }; // Дефолтный цвет
+  }
   return { r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16) };
 }
 

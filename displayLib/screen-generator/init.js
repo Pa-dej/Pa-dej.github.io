@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Инициализируем YAML обработчики
     window.ScreenGenerator.initYamlHandlers();
     
+    // Инициализируем YAML редактор
+    window.ScreenGenerator.initYamlEditor();
+    
     // Инициализируем контекстное меню
     window.ScreenGenerator.initContextMenu();
     

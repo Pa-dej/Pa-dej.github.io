@@ -1415,9 +1415,9 @@ body.displaylib-body .pright {
 
 .yaml-container .ybody {
   flex: 1;
-  overflow: auto;
-  padding: 8px 12px;
+  overflow: hidden;
   background: var(--bg);
+  position: relative;
 }
 
 .yaml-container .ybody::-webkit-scrollbar {
@@ -1438,20 +1438,99 @@ pre.ycode {
   white-space: pre;
 }
 
-.yk {
-  color: #6496ff;
+/* YAML Editor Styles */
+.yaml-editor-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
-.yv {
-  color: #1cee72;
+.yaml-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px;
+  margin: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.02);
+  caret-color: #ffffff;
+  selection-color: rgba(79, 192, 255, 0.3);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  resize: none;
+  z-index: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+  tab-size: 2;
+  -moz-tab-size: 2;
 }
 
-.yn {
-  color: #fbbf24;
+.yaml-textarea::selection {
+  background: rgba(79, 192, 255, 0.3);
 }
 
-.yc {
-  color: var(--text3);
+.yaml-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px;
+  margin: 0;
+  border: none;
+  background: var(--bg);
+  color: var(--text1);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+  z-index: 1;
+  pointer-events: none;
+  tab-size: 2;
+  -moz-tab-size: 2;
+}
+
+/* YAML Syntax Highlighting */
+.yk { 
+  color: #79c0ff; 
+  font-weight: 500;
+}
+
+.yk-special { 
+  color: #ff7b72; 
+  font-weight: 600; 
+}
+
+.yv { 
+  color: #a5d6ff; 
+}
+
+.yn { 
+  color: #79c0ff; 
+  font-weight: 500;
+}
+
+.yl { 
+  color: #ffa657; 
+  font-weight: 600;
+}
+
+.yc { 
+  color: #8b949e; 
+  font-style: italic; 
 }
 
 .litem {
