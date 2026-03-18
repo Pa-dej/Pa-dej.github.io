@@ -197,8 +197,10 @@ function updateYamlEditor() {
   }, 10);
 }
 
-// Подсветка синтаксиса в стиле GitHub
+// Подсветка синтаксиса с выделением блоков виджетов
 function highlightYaml(text) {
+  const { selectedId } = window.ScreenGenerator || {};
+  
   // Экранируем HTML символы
   let highlighted = text
     .replace(/&/g, '&amp;')
@@ -207,29 +209,90 @@ function highlightYaml(text) {
   
   // Разбиваем на строки для построчной обработки
   const lines = highlighted.split('\n');
-  const processedLines = lines.map(line => {
-    // Пропускаем пустые строки
-    if (!line.trim()) return line;
+  let currentSection = null;
+  let currentWidgetId = null;
+  let currentBlockLines = [];
+  let isInSelectedBlock = false;
+  const result = [];
+  
+  // Функция для завершения текущего блока
+  function finishCurrentBlock() {
+    if (currentBlockLines.length > 0) {
+      if (isInSelectedBlock) {
+        result.push(`<div class="yaml-block-selected">${currentBlockLines.join('\n')}</div>`);
+      } else {
+        result.push(currentBlockLines.join('\n'));
+      }
+      currentBlockLines = [];
+    }
+  }
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const indent = line.length - line.trimLeft().length;
     
-    // Комментарии (включая inline комментарии)
-    if (line.trim().startsWith('#')) {
-      return line.replace(/^(\s*)(#.*)$/, '$1<span class="yc">$2</span>');
+    // Определяем начало нового блока
+    let isNewBlock = false;
+    let newBlockSelected = false;
+    
+    if (line.trim().startsWith('background:')) {
+      finishCurrentBlock();
+      currentSection = 'background';
+      currentWidgetId = null;
+      newBlockSelected = selectedId === '__bg__';
+      isNewBlock = true;
+    } else if (line.trim().startsWith('widgets:')) {
+      finishCurrentBlock();
+      currentSection = 'widgets';
+      currentWidgetId = null;
+      newBlockSelected = false;
+      isNewBlock = true;
+    } else if (line.trim().startsWith('- id:')) {
+      finishCurrentBlock();
+      const widgetIdMatch = line.match(/- id:\s*(\w+)/);
+      if (widgetIdMatch) {
+        currentWidgetId = widgetIdMatch[1];
+        newBlockSelected = selectedId === currentWidgetId;
+        isNewBlock = true;
+      }
+    } else if (indent === 0 && line.trim()) {
+      // Любая другая строка на нулевом уровне начинает новый блок
+      finishCurrentBlock();
+      currentSection = null;
+      currentWidgetId = null;
+      newBlockSelected = false;
+      isNewBlock = true;
     }
     
-    // Inline комментарии
-    if (line.includes('#')) {
-      const parts = line.split('#');
-      if (parts.length > 1) {
-        const beforeComment = parts[0];
-        const comment = '#' + parts.slice(1).join('#');
-        return processLine(beforeComment) + '<span class="yc">' + comment + '</span>';
+    if (isNewBlock) {
+      isInSelectedBlock = newBlockSelected;
+    }
+    
+    // Обрабатываем строку
+    let processedLine = line;
+    if (line.trim()) {
+      // Inline комментарии
+      if (line.includes('#')) {
+        const parts = line.split('#');
+        if (parts.length > 1) {
+          const beforeComment = parts[0];
+          const comment = '#' + parts.slice(1).join('#');
+          processedLine = processLine(beforeComment) + '<span class="yc">' + comment + '</span>';
+        } else {
+          processedLine = processLine(line);
+        }
+      } else {
+        processedLine = processLine(line);
       }
     }
     
-    return processLine(line);
-  });
+    currentBlockLines.push(processedLine);
+  }
   
-  return processedLines.join('\n');
+  // Завершаем последний блок
+  finishCurrentBlock();
+  
+  return result.join('\n');
 }
 
 // Обработка отдельной строки
@@ -286,9 +349,22 @@ function processValue(value) {
     .replace(/(\s*)([🎮⏺🔒])/g, '$1<span class="ye">$2</span>');
 }
 
+// Обновление выделения в YAML редакторе
+function updateYamlSelection() {
+  if (!yamlEditor) return;
+  
+  // Обновляем подсветку с учетом нового выбранного элемента
+  const yamlHighlight = document.getElementById('yamlHighlight');
+  if (yamlHighlight) {
+    const text = yamlEditor.value;
+    yamlHighlight.innerHTML = highlightYaml(text);
+  }
+}
+
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   initYamlEditor,
   updateYamlEditor,
+  updateYamlSelection,
   highlightYaml
 });

@@ -1568,6 +1568,15 @@ pre.ycode {
   color: #a2bfcd; /* Светло-голубой для эмодзи */
 }
 
+/* Выделение выбранного виджета в YAML */
+.yaml-block-selected {
+  background: rgba(95, 179, 212, 0.15) !important; /* Полупрозрачный голубой фон */
+  border-left: 3px solid #5fb3d4 !important; /* Голубая полоска слева */
+  padding-left: 9px !important; /* Компенсируем ширину полоски */
+  margin-left: -12px !important; /* Выравниваем с остальным текстом */
+  padding-right: 12px !important; /* Добавляем отступ справа */
+}
+
 .litem {
   padding: 4px 7px;
   border-radius: 5px;

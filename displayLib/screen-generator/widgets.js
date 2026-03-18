@@ -81,6 +81,7 @@ function updateWidgetList(){
     window.ScreenGenerator.selectedId = el.dataset.id;
     if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
   }));
 }
 

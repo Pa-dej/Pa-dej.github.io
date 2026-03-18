@@ -70,10 +70,12 @@ function initEventHandlers() {
       window.ScreenGenerator.dragging={id:hw.id,smx:mx,smy:my,sx:hw.x,sy:hw.y};
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
       return;
     }
     if(hitBg(mx,my)){
       window.ScreenGenerator.selectedId='__bg__';
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
       // Начинаем перетаскивание только если фон не заблокирован
       if (!window.ScreenGenerator.background.locked) {
         window.ScreenGenerator.dragging={id:'__bg__',smx:mx,smy:my,sx:window.ScreenGenerator.background.posX,sy:window.ScreenGenerator.background.posY};
@@ -83,6 +85,7 @@ function initEventHandlers() {
       return;
     }
     window.ScreenGenerator.selectedId=null;
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
   });
@@ -105,6 +108,7 @@ function initEventHandlers() {
       window.ScreenGenerator.selectedId=hw.id;
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.showCtx === 'function') window.ScreenGenerator.showCtx(e.clientX,e.clientY);
     }
   });
@@ -193,11 +197,13 @@ function initKeyboardHandlers() {
       }
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
     }
     if(e.key==='Escape'){
       window.ScreenGenerator.selectedId=null;
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
     }
     const step=e.shiftKey?0.5:window.ScreenGenerator.GSTEP();
     if(window.ScreenGenerator.selectedId&&window.ScreenGenerator.selectedId!=='__bg__'){
