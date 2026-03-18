@@ -197,7 +197,7 @@ function updateYamlEditor() {
   }, 10);
 }
 
-// Подсветка синтаксиса
+// Подсветка синтаксиса в стиле GitHub
 function highlightYaml(text) {
   // Экранируем HTML символы
   let highlighted = text
@@ -211,36 +211,51 @@ function highlightYaml(text) {
     // Пропускаем пустые строки
     if (!line.trim()) return line;
     
-    // Комментарии
+    // Комментарии (включая inline комментарии)
     if (line.trim().startsWith('#')) {
       return line.replace(/^(\s*)(#.*)$/, '$1<span class="yc">$2</span>');
     }
     
-    // Элементы списка
-    if (line.match(/^\s*-\s/)) {
-      return line.replace(/^(\s*)(-\s*)(.*)$/, (match, indent, dash, rest) => {
-        return indent + '<span class="yl">' + dash + '</span>' + processKeyValue(rest);
-      });
+    // Inline комментарии
+    if (line.includes('#')) {
+      const parts = line.split('#');
+      if (parts.length > 1) {
+        const beforeComment = parts[0];
+        const comment = '#' + parts.slice(1).join('#');
+        return processLine(beforeComment) + '<span class="yc">' + comment + '</span>';
+      }
     }
     
-    // Обычные ключи
-    if (line.includes(':')) {
-      return processKeyValue(line);
-    }
-    
-    return line;
+    return processLine(line);
   });
   
   return processedLines.join('\n');
 }
 
-// Обработка ключ-значение пар
+// Обработка отдельной строки
+function processLine(line) {
+  // Элементы списка
+  if (line.match(/^\s*-\s/)) {
+    return line.replace(/^(\s*)(-\s*)(.*)$/, (match, indent, dash, rest) => {
+      return indent + '<span class="yl">' + dash + '</span>' + processKeyValue(rest);
+    });
+  }
+  
+  // Обычные ключи
+  if (line.includes(':')) {
+    return processKeyValue(line);
+  }
+  
+  return line;
+}
+
+// Обработка ключ-значение пар в стиле VS Code
 function processKeyValue(line) {
   return line.replace(/^(\s*)([\w-]+)(\s*)(:)(.*)$/, (match, indent, key, space, colon, value) => {
     let keyClass = 'yk';
     
-    // Специальные ключи
-    if (['id', 'type', 'material', 'text', 'action', 'hoveredText', 'backgroundColor', 'backgroundAlpha'].includes(key)) {
+    // Специальные ключи (розовые) - как в VS Code
+    if (['type', 'text', 'material', 'action', 'hoveredText', 'backgroundColor', 'backgroundAlpha'].includes(key)) {
       keyClass = 'yk-special';
     }
     
@@ -250,21 +265,25 @@ function processKeyValue(line) {
       processedValue = processValue(value);
     }
     
-    return `${indent}<span class="${keyClass}">${key}</span>${space}${colon}${processedValue}`;
+    return `${indent}<span class="${keyClass}">${key}</span>${space}<span class="yk">${colon}</span>${processedValue}`;
   });
 }
 
-// Обработка значений
+// Обработка значений в стиле VS Code
 function processValue(value) {
   return value
-    // Строки в кавычках
-    .replace(/(".*?")/g, '<span class="yv">$1</span>')
-    // Числовые массивы [1.0, 2.0, 3.0]
+    // Строки в кавычках (светло-синие)
+    .replace(/(".*?")/g, '<span class="ys">$1</span>')
+    // Булевые значения (фиолетовые)
+    .replace(/(\s+)(true|false|null)(\s*$)/g, '$1<span class="yb">$2</span>$3')
+    // Числовые массивы [1.0, 2.0, 3.0] (синие)
     .replace(/(\[[\d\s,.-]+\])/g, '<span class="yn">$1</span>')
-    // Отдельные числа в конце строки
-    .replace(/(\s+)(\d+(?:\.\d+)?)(\s*)$/, '$1<span class="yn">$2</span>$3')
-    // Значения типов (заглавные буквы с подчеркиваниями)
-    .replace(/(\s+)([A-Z][A-Z_]*[A-Z])(\s*)$/, '$1<span class="yv">$2</span>$3');
+    // Отдельные числа (синие)
+    .replace(/(\s+)(\d+(?:\.\d+)?)(\s*)$/g, '$1<span class="yn">$2</span>$3')
+    // Значения типов и действий (синие)
+    .replace(/(\s+)([A-Z][A-Z_]*[A-Z]|NONE|CLOSE_SCREEN|SWITCH_SCREEN)(\s*)$/g, '$1<span class="yv">$2</span>$3')
+    // Эмодзи и специальные символы (зеленые)
+    .replace(/(\s*)([🎮⏺🔒])/g, '$1<span class="ye">$2</span>');
 }
 
 // Экспорт функций

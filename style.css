@@ -1454,8 +1454,8 @@ pre.ycode {
   left: 0;
   right: 0;
   height: 24px;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid var(--border);
+  background: #374151; /* Темно-серый фон заголовка */
+  border-bottom: 1px solid #4b5563; /* Серая граница */
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -1464,8 +1464,8 @@ pre.ycode {
 
 .yaml-hint {
   font-size: 10px;
-  color: var(--text2);
-  opacity: 0.7;
+  color: #9ca3af; /* Серый текст подсказки */
+  opacity: 0.8;
 }
 
 .yaml-textarea {
@@ -1479,9 +1479,9 @@ pre.ycode {
   border: none;
   outline: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.02);
-  caret-color: #ffffff;
-  selection-color: rgba(79, 192, 255, 0.3);
+  color: rgba(229, 231, 235, 0.02); /* Почти прозрачный светло-серый */
+  caret-color: #5fb3d4; /* Голубой курсор */
+  selection-color: rgba(95, 179, 212, 0.3); /* Голубое выделение */
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -1497,7 +1497,7 @@ pre.ycode {
 }
 
 .yaml-textarea::selection {
-  background: rgba(79, 192, 255, 0.3);
+  background: rgba(95, 179, 212, 0.3); /* Голубое выделение */
 }
 
 .yaml-highlight {
@@ -1509,8 +1509,8 @@ pre.ycode {
   padding: 8px 12px;
   margin: 0;
   border: none;
-  background: var(--bg);
-  color: var(--text1);
+  background: #1f2937; /* Темно-синий фон как в Raindrop */
+  color: #e5e7eb; /* Светло-серый основной текст */
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -1525,34 +1525,47 @@ pre.ycode {
   -moz-tab-size: 2;
 }
 
-/* YAML Syntax Highlighting */
+/* YAML Syntax Highlighting - Raindrop Theme */
 .yk { 
-  color: #79c0ff; 
-  font-weight: 500;
+  color: #5fb3d4; /* Голубой для обычных ключей */
+  font-weight: 400;
 }
 
 .yk-special { 
-  color: #ff7b72; 
-  font-weight: 600; 
+  color: #5fb3d4; /* Тот же голубой для специальных ключей */
+  font-weight: 400; 
 }
 
 .yv { 
-  color: #a5d6ff; 
+  color: #a2bfcd; /* Светло-голубой для значений типов */
 }
 
 .yn { 
-  color: #79c0ff; 
-  font-weight: 500;
+  color: #a2bfcd; /* Светло-голубой для чисел */
+  font-weight: 400;
 }
 
 .yl { 
-  color: #ffa657; 
-  font-weight: 600;
+  color: #5fb3d4; /* Голубой для маркеров списков */
+  font-weight: 400;
 }
 
 .yc { 
-  color: #8b949e; 
+  color: #6b7d86; /* Приглушенный серо-голубой для комментариев */
   font-style: italic; 
+}
+
+.ys { 
+  color: #a2bfcd; /* Светло-голубой для строк */
+}
+
+.yb { 
+  color: #a2bfcd; /* Светло-голубой для булевых значений */
+  font-weight: 400;
+}
+
+.ye { 
+  color: #a2bfcd; /* Светло-голубой для эмодзи */
 }
 
 .litem {
