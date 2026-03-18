@@ -180,7 +180,9 @@ function initDragFromPalette() {
 // ═══════════════════════════════════════════════════════════════
 function initKeyboardHandlers() {
   document.addEventListener('keydown',e=>{
-    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+    // Игнорируем события клавиатуры если фокус в полях ввода или YAML редакторе
+    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+    
     if((e.key==='Delete'||e.key==='Backspace')&&window.ScreenGenerator.selectedId){
       if(window.ScreenGenerator.selectedId==='__bg__') {
         // Фон нельзя удалить, только сбрасываем выбор

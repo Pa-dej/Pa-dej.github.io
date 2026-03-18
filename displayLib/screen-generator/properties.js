@@ -232,6 +232,29 @@ function renderWProps(p,w){
     </div>
   ` : '';
   
+  // Дополнительные поля для TEXT_BUTTON
+  const textFields = isText ? `
+    ${row('Текст',txtIn('w_txt',w.text))}
+    ${row('Hover текст',txtIn('w_hover',w.hoveredText||''))}
+    ${row('Цвет BG',colIn('w_col',w.color))}
+  ` : '';
+  
+  // Поля backgroundColor и backgroundAlpha для TEXT_BUTTON
+  const backgroundFields = isText ? `
+    <div class="pgroup">
+      <div class="pgtitle">Фон кнопки</div>
+      <div class="pgbody">
+        <div class="phint">
+          <span class="ok">Цвет и прозрачность фона кнопки</span>
+        </div>
+        ${row('BG R', numIn('w_bgR', w.backgroundColor ? w.backgroundColor[0] : 40, 1, 0, 255))}
+        ${row('BG G', numIn('w_bgG', w.backgroundColor ? w.backgroundColor[1] : 60, 1, 0, 255))}
+        ${row('BG B', numIn('w_bgB', w.backgroundColor ? w.backgroundColor[2] : 80, 1, 0, 255))}
+        ${row('BG Alpha', numIn('w_bgAlpha', w.backgroundAlpha || 150, 1, 0, 255))}
+      </div>
+    </div>
+  ` : '';
+  
   // Заголовок без эмодзи
   const widgetTitle = isText ? 'TEXT_BUTTON' : 'ITEM_BUTTON';
   
@@ -241,8 +264,7 @@ function renderWProps(p,w){
       <div class="pgbody">
         ${row('ID', txtIn('w_id',w.id))}
         ${materialSelect}
-        ${isText?row('Текст',txtIn('w_txt',w.text)):''}
-        ${isText?row('Цвет BG',colIn('w_col',w.color)):''}
+        ${textFields}
       </div>
     </div>
     <div class="pgroup">
@@ -276,6 +298,7 @@ function renderWProps(p,w){
         <div class="phint">YAML scale: <span class="hl">${yamlScaleStr}</span></div>
       </div>
     </div>
+    ${backgroundFields}
     <div class="pgroup">
       <div class="pgtitle">Зона толерантности</div>
       <div class="pgbody">
@@ -305,7 +328,29 @@ function renderWProps(p,w){
   }
   if(isText){
     bind('w_txt',v=>{w.text=v;w.label=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
+    bind('w_hover',v=>{w.hoveredText=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
     bind('w_col',v=>{w.color=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
+    
+    // Обработчики для backgroundColor
+    bind('w_bgR',v=>{
+      if(!w.backgroundColor) w.backgroundColor = [40, 60, 80];
+      w.backgroundColor[0] = Math.max(0, Math.min(255, parseInt(v) || 0));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    bind('w_bgG',v=>{
+      if(!w.backgroundColor) w.backgroundColor = [40, 60, 80];
+      w.backgroundColor[1] = Math.max(0, Math.min(255, parseInt(v) || 0));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    bind('w_bgB',v=>{
+      if(!w.backgroundColor) w.backgroundColor = [40, 60, 80];
+      w.backgroundColor[2] = Math.max(0, Math.min(255, parseInt(v) || 0));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    bind('w_bgAlpha',v=>{
+      w.backgroundAlpha = Math.max(0, Math.min(255, parseInt(v) || 150));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
   }
   bind('w_x',v=>{w.x=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
   bind('w_y',v=>{w.y=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});

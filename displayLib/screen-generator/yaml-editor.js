@@ -19,6 +19,9 @@ function initYamlEditor() {
   // Создаем контейнер для редактора
   yamlContainer.innerHTML = `
     <div class="yaml-editor-container">
+      <div class="yaml-editor-header">
+        <span class="yaml-hint">💡 Изменения применяются при потере фокуса</span>
+      </div>
       <textarea id="yamlEditor" class="yaml-textarea" spellcheck="false"></textarea>
       <div id="yamlHighlight" class="yaml-highlight"></div>
     </div>
@@ -41,10 +44,20 @@ function setupEditor() {
   }
   
   function syncSize() {
-    // Устанавливаем минимальную высоту
-    const minHeight = yamlEditor.clientHeight;
-    const contentHeight = Math.max(minHeight, yamlEditor.scrollHeight);
-    yamlHighlight.style.height = contentHeight + 'px';
+    // Устанавливаем одинаковые размеры для обоих элементов
+    const editorRect = yamlEditor.getBoundingClientRect();
+    const containerRect = yamlEditor.parentElement.getBoundingClientRect();
+    
+    // Синхронизируем размеры
+    yamlHighlight.style.width = yamlEditor.offsetWidth + 'px';
+    yamlHighlight.style.height = yamlEditor.offsetHeight + 'px';
+    
+    // Убеждаемся, что scrollHeight одинаковый
+    const contentHeight = Math.max(yamlEditor.scrollHeight, yamlHighlight.scrollHeight);
+    if (yamlEditor.scrollHeight !== yamlHighlight.scrollHeight) {
+      // Принудительно синхронизируем высоту контента
+      yamlHighlight.style.minHeight = yamlEditor.scrollHeight + 'px';
+    }
   }
   
   // Обновление подсветки с debounce
@@ -53,32 +66,48 @@ function setupEditor() {
     highlightTimeout = setTimeout(() => {
       const text = yamlEditor.value;
       yamlHighlight.innerHTML = highlightYaml(text);
-      syncSize();
+      
+      // Принудительная синхронизация после обновления контента
+      requestAnimationFrame(() => {
+        syncSize();
+        syncScroll();
+      });
     }, 50); // Быстрое обновление подсветки
   }
   
-  // Обработчики событий
-  yamlEditor.addEventListener('input', () => {
-    updateHighlight();
+  // Функция применения YAML к canvas
+  function applyYamlChanges() {
+    if (isUpdatingFromCanvas) return;
     
-    if (!isUpdatingFromCanvas) {
-      // Debounce для применения изменений к canvas
-      clearTimeout(updateTimeout);
-      updateTimeout = setTimeout(() => {
-        try {
-          const parsedData = window.ScreenGenerator.parseYamlToCanvas(yamlEditor.value);
-          if (parsedData) {
-            window.ScreenGenerator.applyYamlToCanvas(parsedData);
-          }
-        } catch (error) {
-          console.error('Error applying YAML to canvas:', error);
-        }
-      }, 500); // 500ms задержка
+    try {
+      const parsedData = window.ScreenGenerator.parseYamlToCanvas(yamlEditor.value);
+      if (parsedData) {
+        window.ScreenGenerator.applyYamlToCanvas(parsedData);
+      }
+    } catch (error) {
+      console.error('Error applying YAML to canvas:', error);
     }
+  }
+
+  // Применение изменений при потере фокуса
+  yamlEditor.addEventListener('blur', () => {
+    applyYamlChanges();
   });
   
   yamlEditor.addEventListener('scroll', syncScroll);
   yamlEditor.addEventListener('keydown', handleKeyDown);
+  
+  // Дополнительные обработчики для лучшей синхронизации
+  yamlEditor.addEventListener('input', () => {
+    updateHighlight();
+    // Убрано автоматическое применение изменений при вводе
+    // Теперь изменения применяются только при потере фокуса
+  });
+  
+  yamlEditor.addEventListener('focus', () => {
+    // При получении фокуса синхронизируем размеры
+    setTimeout(syncSize, 10);
+  });
   
   // Обработчик изменения размера
   const resizeObserver = new ResizeObserver(() => {
@@ -88,6 +117,14 @@ function setupEditor() {
   
   // Обработка специальных клавиш
   function handleKeyDown(e) {
+    // Предотвращаем обработку Delete/Backspace на canvas когда фокус в редакторе
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Останавливаем всплытие события, чтобы canvas не получил его
+      e.stopPropagation();
+      // Позволяем стандартное поведение в текстовом поле
+      return;
+    }
+    
     if (e.key === 'Tab') {
       e.preventDefault();
       const start = yamlEditor.selectionStart;
@@ -127,6 +164,12 @@ function setupEditor() {
 // Обновление редактора из canvas
 function updateYamlEditor() {
   if (!yamlEditor || isUpdatingFromCanvas) return;
+  
+  // Проверяем, есть ли фокус на редакторе (пользователь редактирует)
+  if (document.activeElement === yamlEditor) {
+    console.log('YAML editor has focus, skipping update to avoid interrupting user input');
+    return;
+  }
   
   isUpdatingFromCanvas = true;
   
@@ -197,7 +240,7 @@ function processKeyValue(line) {
     let keyClass = 'yk';
     
     // Специальные ключи
-    if (['id', 'type', 'material', 'text', 'action'].includes(key)) {
+    if (['id', 'type', 'material', 'text', 'action', 'hoveredText', 'backgroundColor', 'backgroundAlpha'].includes(key)) {
       keyClass = 'yk-special';
     }
     

@@ -43,10 +43,24 @@ function plainYaml(){
       L.push(`  - id: ${w.id}`);
       L.push(`    type: ${w.type}`);
       if(!isText&&w.material) L.push(`    material: ${w.material}`);
-      if(isText){L.push(`    text: "${w.text}"`);L.push(`    scale: [${fn(w.w*8)}, ${fn(w.h*4)}, 1]`);}
-      else L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, ${fn(w.w)}]`);
+      if(isText){
+        L.push(`    text: "${w.text}"`);
+        if(w.hoveredText) L.push(`    hoveredText: "${w.hoveredText}"`);
+        L.push(`    scale: [${fn(w.w*8)}, ${fn(w.h*4)}, 1]`);
+      } else {
+        L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, ${fn(w.w)}]`);
+      }
       L.push(`    position: [${fn(w.x)}, ${fn(w.y)}, 0]`);
       if((w.transX||0)!==0||(w.transY||0)!==0) L.push(`    translation: [${fn(w.transX||0)}, ${fn(w.transY||0)}, 0]`);
+      
+      // Добавляем backgroundColor и backgroundAlpha если они есть
+      if(w.backgroundColor) {
+        L.push(`    backgroundColor: [${w.backgroundColor[0]}, ${w.backgroundColor[1]}, ${w.backgroundColor[2]}]`);
+      }
+      if(w.backgroundAlpha !== undefined && w.backgroundAlpha !== 255) {
+        L.push(`    backgroundAlpha: ${w.backgroundAlpha}`);
+      }
+      
       L.push(`    tolerance: [${w.tolerance[0]}, ${w.tolerance[1]}]`);
       L.push(`    onClick:`);
       L.push(`      action: ${w.onClick}`);

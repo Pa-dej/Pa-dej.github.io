@@ -112,6 +112,19 @@ function parseWidgetProperty(line, widget) {
     widget.material = line.split(':')[1].trim();
   } else if (line.startsWith('text:')) {
     widget.text = line.split(':')[1].trim().replace(/"/g, '');
+  } else if (line.startsWith('hoveredText:')) {
+    widget.hoveredText = line.split(':')[1].trim().replace(/"/g, '');
+  } else if (line.startsWith('backgroundColor:')) {
+    const colorMatch = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);
+    if (colorMatch) {
+      const r = parseInt(colorMatch[1]);
+      const g = parseInt(colorMatch[2]);
+      const b = parseInt(colorMatch[3]);
+      widget.backgroundColor = [r, g, b];
+      widget.color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+  } else if (line.startsWith('backgroundAlpha:')) {
+    widget.backgroundAlpha = parseInt(line.split(':')[1].trim()) || 255;
   } else if (line.startsWith('scale:')) {
     const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),/);
     if (scaleMatch) {

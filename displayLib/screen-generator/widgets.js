@@ -14,7 +14,7 @@ function addWidget(type,mat,x=0,y=0){
   const isText=type==='TEXT_BUTTON';
   // По умолчанию translation=[0,0]:
   // для TEXT чтобы центрировать по Y нужно transY=-h/2, но оставим 0 — пользователь настроит
-  widgets.push({
+  const widget = {
     id,type,material:mat||(isText?'':'RED_STAINED_GLASS_PANE'),
     label:isText?'Button':'',text:isText?'Button':'',
     x, y,
@@ -23,7 +23,16 @@ function addWidget(type,mat,x=0,y=0){
     w:1, h:1,
     color:isText?'#2a4d6e':matCol(mat),
     onClick:'CLOSE_SCREEN',tolerance:[0.15,0.15]
-  });
+  };
+  
+  // Добавляем новые поля для TEXT_BUTTON
+  if (isText) {
+    widget.hoveredText = '';
+    widget.backgroundColor = [40, 60, 80]; // Дефолтный цвет фона
+    widget.backgroundAlpha = 150;
+  }
+  
+  widgets.push(widget);
   
   window.ScreenGenerator.selectedId = id;
   
