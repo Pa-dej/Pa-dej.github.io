@@ -351,7 +351,8 @@ function renderWProps(p,w){
       if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
     });
     bind('w_bgAlpha',v=>{
-      w.backgroundAlpha = Math.max(0, Math.min(255, parseInt(v) || 150));
+      const alphaValue = parseInt(v);
+      w.backgroundAlpha = isNaN(alphaValue) ? 150 : Math.max(0, Math.min(255, alphaValue));
       if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
     });
   }

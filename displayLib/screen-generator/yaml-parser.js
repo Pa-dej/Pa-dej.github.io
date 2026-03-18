@@ -125,7 +125,8 @@ function parseWidgetProperty(line, widget) {
       widget.color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
   } else if (line.startsWith('backgroundAlpha:')) {
-    widget.backgroundAlpha = parseInt(line.split(':')[1].trim()) || 255;
+    const alphaValue = parseInt(line.split(':')[1].trim());
+    widget.backgroundAlpha = isNaN(alphaValue) ? 255 : alphaValue;
   } else if (line.startsWith('scale:')) {
     const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),/);
     if (scaleMatch) {

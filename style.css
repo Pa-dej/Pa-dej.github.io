@@ -1509,7 +1509,7 @@ pre.ycode {
   padding: 8px 12px;
   margin: 0;
   border: none;
-  background: #1f2937; /* Темно-синий фон как в Raindrop */
+  background: #2a2a2a; /* Серый фон */
   color: #e5e7eb; /* Светло-серый основной текст */
   font-family: inherit;
   font-size: inherit;
