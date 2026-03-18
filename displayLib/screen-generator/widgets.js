@@ -20,6 +20,7 @@ function addWidget(type,mat,x=0,y=0){
     x, y,
     transX:0,
     transY: isText ? -0.5 : 0, // разумный дефолт для TEXT: -h/2 = -0.5 при h=1
+    transZ: isText ? -0.001 : 0, // смещение по Z для текстовых кнопок
     w:1, h:1,
     color:isText?'#2a4d6e':matCol(mat),
     onClick:'CLOSE_SCREEN',tolerance:[0.15,0.15]

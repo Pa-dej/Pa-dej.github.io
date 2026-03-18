@@ -9,31 +9,118 @@
 //   Widget: position=[0,0,0], scale=[0.5,0.5,0.5], translation=[0,0,0]
 // ═══════════════════════════════════════════════════════════════
 function loadDemo(){
-  // Фон всегда присутствует
-  window.ScreenGenerator.background={w:4,h:3,colorHex:'#0d1117',alpha:180,posX:0,posY:0,transX:0,transY:-1.5,locked:false};
+  // Фон из нового конфига - заблокирован по умолчанию
+  window.ScreenGenerator.background={
+    w: 4,        // 32.0/8 = 4
+    h: 3,        // 12.0/4 = 3  
+    colorHex: '#0d1117',  // [13, 17, 23]
+    alpha: 180,
+    posX: 0,
+    posY: 0,
+    transX: 0,
+    transY: -1.5,
+    transZ: 0,
+    locked: true  // Заблокирован по умолчанию
+  };
   
   window.ScreenGenerator.widgets=[
-    // ITEM_BUTTON: anchor=CENTER, position=[0,0] → стоит в центре экрана
-    {id:'btn_center',type:'ITEM_BUTTON',material:'DIAMOND',label:'',text:'',
-      x:0,y:0,transX:0,transY:0,w:0.5,h:0.5,color:'#44ddcc',
-      onClick:'OPEN_MENU',tolerance:[0.15,0.15]},
-    // Правый верхний
-    {id:'btn_close',type:'ITEM_BUTTON',material:'RED_STAINED_GLASS_PANE',label:'',text:'',
-      x:1.5,y:1.2,transX:0,transY:0,w:0.5,h:0.5,color:'#cc3333',
-      onClick:'CLOSE_SCREEN',tolerance:[0.1,0.1]},
-    // TEXT_BUTTON: anchor=center-X,bottom-Y
-    // position=[0,0.8] → entity стоит на Y=0.8
-    // translation=[0,-0.25] → модель сдвинута вниз на 0.25 (чтобы центрировать h=0.5)
-    {id:'btn_title',type:'TEXT_BUTTON',material:'',label:'Меню',text:'Меню',
-      x:0,y:0.8,transX:0,transY:-0.25,w:2,h:0.5,color:'#1e3a5f',
-      onClick:'CLOSE_SCREEN',tolerance:[0,0]},
-    {id:'btn_back',type:'TEXT_BUTTON',material:'',label:'← Закрыть',text:'← Закрыть',
-      x:0,y:-1.0,transX:0,transY:-0.2,w:1.5,h:0.4,color:'#2a4040',
-      onClick:'CLOSE_SCREEN',tolerance:[0.1,0.1]},
+    // widget_11 - BARRIER кнопка
+    {
+      id: 'widget_11',
+      type: 'ITEM_BUTTON',
+      material: 'BARRIER',
+      label: '',
+      text: '',
+      x: 1.75,
+      y: 1.25,
+      transX: 0,
+      transY: 0,
+      transZ: 0,
+      w: 0.5,
+      h: 0.5,
+      color: '#cc3333',
+      onClick: 'CLOSE_SCREEN',
+      tolerance: [0.2, 0.2]
+    },
+    // widget_12 - TEXT_BUTTON с новыми полями и смещением по Z
+    {
+      id: 'widget_12',
+      type: 'TEXT_BUTTON',
+      material: '',
+      label: 'Example text',
+      text: 'Example text',
+      hoveredText: 'Example!',
+      x: 0.0,
+      y: 1.0,
+      transX: 0.0,
+      transY: -0.5,
+      transZ: -0.001,  // Смещение по Z для текстовых кнопок
+      w: 0.125,    // 1.0/8 = 0.125
+      h: 0.25,     // 1.0/4 = 0.25
+      color: '#2a4d6e',
+      backgroundColor: [40, 60, 80],
+      backgroundAlpha: 0,
+      onClick: 'NONE',
+      tolerance: [0.15, 0.15]
+    },
+    // widget_13 - DIAMOND
+    {
+      id: 'widget_13',
+      type: 'ITEM_BUTTON',
+      material: 'DIAMOND',
+      label: '',
+      text: '',
+      x: -0.5,
+      y: 0.0,
+      transX: 0,
+      transY: 0,
+      transZ: 0,
+      w: 0.5,
+      h: 0.5,
+      color: '#44ddcc',
+      onClick: 'NONE',
+      tolerance: [0.2, 0.2]
+    },
+    // widget_14 - EMERALD
+    {
+      id: 'widget_14',
+      type: 'ITEM_BUTTON',
+      material: 'EMERALD',
+      label: '',
+      text: '',
+      x: 0.0,
+      y: 0.0,
+      transX: 0,
+      transY: 0,
+      transZ: 0,
+      w: 0.5,
+      h: 0.5,
+      color: '#44cc44',
+      onClick: 'NONE',
+      tolerance: [0.2, 0.2]
+    },
+    // widget_15 - GOLD_INGOT
+    {
+      id: 'widget_15',
+      type: 'ITEM_BUTTON',
+      material: 'GOLD_INGOT',
+      label: '',
+      text: '',
+      x: 0.5,
+      y: 0.0,
+      transX: 0,
+      transY: 0,
+      transZ: 0,
+      w: 0.5,
+      h: 0.5,
+      color: '#ffcc44',
+      onClick: 'NONE',
+      tolerance: [0.2, 0.2]
+    }
   ];
   
-  window.ScreenGenerator.nextId=10;
-  window.ScreenGenerator.selectedId=null;
+  window.ScreenGenerator.nextId = 16; // Следующий ID после widget_15
+  window.ScreenGenerator.selectedId = null;
   
   if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
   if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();

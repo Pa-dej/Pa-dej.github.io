@@ -97,10 +97,11 @@ function parseBackgroundProperty(line, background) {
       background.posY = parseFloat(posMatch[2]) || 0;
     }
   } else if (line.startsWith('translation:')) {
-    const transMatch = line.match(/\[([^,]+),\s*([^,]+),/);
+    const transMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
     if (transMatch) {
       background.transX = parseFloat(transMatch[1]) || 0;
       background.transY = parseFloat(transMatch[2]) || 0;
+      background.transZ = parseFloat(transMatch[3]) || 0;
     }
   }
 }
@@ -143,10 +144,11 @@ function parseWidgetProperty(line, widget) {
       widget.y = parseFloat(posMatch[2]) || 0;
     }
   } else if (line.startsWith('translation:')) {
-    const transMatch = line.match(/\[([^,]+),\s*([^,]+),/);
+    const transMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
     if (transMatch) {
       widget.transX = parseFloat(transMatch[1]) || 0;
       widget.transY = parseFloat(transMatch[2]) || 0;
+      widget.transZ = parseFloat(transMatch[3]) || 0;
     }
   } else if (line.startsWith('tolerance:')) {
     const tolMatch = line.match(/\[([^,]+),\s*([^,]+)\]/);

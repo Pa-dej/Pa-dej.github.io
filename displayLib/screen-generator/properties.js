@@ -173,6 +173,7 @@ function renderBgProps(p){
         Для центрирования Y: transY = <span class="hl">-h/2 = ${(-bg.h/2).toFixed(2)}</span></div>
         ${row('transX', numIn('bg_tx',bg.transX))}
         ${row('transY', numIn('bg_ty',bg.transY))}
+        ${row('transZ', numIn('bg_tz',bg.transZ||0))}
         <div class="phint">YAML scale: <span class="hl">[${bg.w*8}, ${bg.h*4}, 1]</span></div>
       </div>
     </div>`;
@@ -208,6 +209,7 @@ function renderBgProps(p){
   bind('bg_py',v=>{background.posY=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
   bind('bg_tx',v=>{background.transX=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
   bind('bg_ty',v=>{background.transY=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
+  bind('bg_tz',v=>{background.transZ=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
   
   // Обработчик для галочки блокировки
   const lockCheckbox = document.getElementById('bg_lock');
@@ -288,6 +290,7 @@ function renderWProps(p,w){
         </div>
         ${row('transX', numIn('w_tx',w.transX||0))}
         ${row('transY', numIn('w_ty',w.transY||0))}
+        ${row('transZ', numIn('w_tz',w.transZ||0))}
       </div>
     </div>
     <div class="pgroup">
@@ -356,6 +359,7 @@ function renderWProps(p,w){
   bind('w_y',v=>{w.y=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
   bind('w_tx',v=>{w.transX=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
   bind('w_ty',v=>{w.transY=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
+  bind('w_tz',v=>{w.transZ=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
   bind('w_w',v=>{w.w=Math.max(0.125,parseFloat(v)||1);if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
   bind('w_h',v=>{w.h=Math.max(0.125,parseFloat(v)||1);if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
   bind('w_act',v=>{w.onClick=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});

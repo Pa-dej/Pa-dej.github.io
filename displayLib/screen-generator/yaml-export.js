@@ -33,7 +33,7 @@ function plainYaml(){
     L.push(`  alpha: ${background.alpha}`);
     L.push(`  scale: [${fn(background.w*8)}, ${fn(background.h*4)}, 1]`);
     if(background.posX!==0||background.posY!==0) L.push(`  position: [${fn(background.posX)}, ${fn(background.posY)}, 0]`);
-    L.push(`  translation: [${fn(background.transX)}, ${fn(background.transY)}, 0]`);
+    L.push(`  translation: [${fn(background.transX)}, ${fn(background.transY)}, ${fn(background.transZ||0)}]`);
     L.push(`  text: " "`);
   }
   if(widgets.length>0){
@@ -51,7 +51,7 @@ function plainYaml(){
         L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, ${fn(w.w)}]`);
       }
       L.push(`    position: [${fn(w.x)}, ${fn(w.y)}, 0]`);
-      if((w.transX||0)!==0||(w.transY||0)!==0) L.push(`    translation: [${fn(w.transX||0)}, ${fn(w.transY||0)}, 0]`);
+      if((w.transX||0)!==0||(w.transY||0)!==0||(w.transZ||0)!==0) L.push(`    translation: [${fn(w.transX||0)}, ${fn(w.transY||0)}, ${fn(w.transZ||0)}]`);
       
       // Добавляем backgroundColor и backgroundAlpha если они есть
       if(w.backgroundColor) {
