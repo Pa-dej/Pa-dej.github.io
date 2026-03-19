@@ -51,7 +51,8 @@ function render() {
   const { 
     widgets, background, selectedId, 
     b2p, GSTEP, b2cx, b2cy, CC, hexRgb,
-    bgVisualRect, wVisualRect 
+    bgVisualRect, wVisualRect,
+    MC_TEXT_SCALE, MC_FONT_HEIGHT, MC_BG_PADDING, PPB
   } = window.ScreenGenerator;
   
   const W = cv.width, H = cv.height;
@@ -152,30 +153,52 @@ function render() {
 
     // Тело виджета
     if (w.type === 'TEXT_BUTTON') {
-      // Для TEXT_BUTTON показываем цветной фон
-      const {r:rr,g:rg,b:rb} = hexRgb(w.color);
-      ctx.fillStyle=`rgba(${rr},${rg},${rb},0.88)`;
-      ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
+      // Фон: цвет из w.color + alpha из w.backgroundAlpha (если есть) или ~88%
+      const {r: cr, g: cg, b: cb} = hexRgb(w.color);
+      const bgAlpha = (w.backgroundAlpha !== undefined ? w.backgroundAlpha : 150) / 255;
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${bgAlpha})`;
+      ctx.fillRect(g.px, g.py, g.pw, g.ph);
+      
+      // Текст — используем canvas-шрифт близкий к Minecraft
+      // Minecraft font: пропорциональный bitmap, нет прямого аналога в браузере
+      // Используем моноширинный шрифт с масштабированием
+      if (g.pw > 10) {
+        // Вычисляем размер шрифта в пикселях холста
+        // 1 font-px = TEXT_SCALE * scaleY блока * PPB() пикселей/блок
+        const scaleY = w.h * 4;
+        const fontPxOnCanvas = MC_TEXT_SCALE * scaleY * PPB() * MC_FONT_HEIGHT;
+        
+        ctx.fillStyle = sel ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.85)';
+        ctx.font = `${Math.max(4, fontPxOnCanvas)}px "Cascadia Code", monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const displayText = w.text || '';
+        // Обрезаем если не влезает
+        const maxW = g.pw - b2p(MC_BG_PADDING * 2 * MC_TEXT_SCALE * w.w * 8);
+        const metrics = ctx.measureText(displayText);
+        const drawText = metrics.width > maxW
+          ? displayText.slice(0, Math.floor(displayText.length * maxW / metrics.width)) + '…'
+          : displayText;
+        
+        ctx.fillText(drawText, g.px + g.pw / 2, g.py + g.ph / 2);
+      }
+      
+      // Граница выделения
+      ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = sel ? 1.5 : 0.5;
+      ctx.strokeRect(g.px, g.py, g.pw, g.ph);
     } else {
       // Для ITEM_BUTTON показываем только прозрачную границу
       ctx.fillStyle='rgba(0,0,0,0.1)'; // Очень слабый фон для видимости границ
       ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
+      
+      // Граница
+      ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = sel ? 1.5 : 0.5;
+      ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.stroke();
     }
 
-    // Граница
-    ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = sel ? 1.5 : 0.5;
-    ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.stroke();
-
-    // Текст/Рендер в виджете
-    if (g.pw > 16 && w.type === 'TEXT_BUTTON') {
-      // Только для текстовых кнопок показываем текст
-      ctx.fillStyle = sel ? '#fff' : 'rgba(255,255,255,0.85)';
-      ctx.font=`bold ${Math.min(g.pw/5,11)}px Cascadia Code`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      const lbl = w.label||w.text||'TEXT';
-      ctx.fillText(lbl, g.px+g.pw/2, g.py+g.ph/2);
-    }
     // Для ITEM_BUTTON текст не показываем - будет иконка в overlay
 
     // Точка entity (где стоит сущность в мире = position[x,y])
@@ -200,7 +223,19 @@ function render() {
     if (sel) {
       ctx.fillStyle='rgba(100,150,255,0.9)'; ctx.font='9px Cascadia Code';
       ctx.textAlign='left'; ctx.textBaseline='bottom';
-      ctx.fillText(`${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]`, g.px, g.py-3);
+      
+      if (w.type === 'TEXT_BUTTON') {
+        // Для TEXT_BUTTON показываем реальный размер фона
+        const scaleX = w.w * 8;
+        const scaleY = w.h * 4;
+        const bg = window.ScreenGenerator.mcBgSize(w.text || ' ', scaleX, scaleY);
+        ctx.fillText(
+          `${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]  bg:${bg.w.toFixed(3)}×${bg.h.toFixed(3)}b`,
+          g.px, g.py - 3
+        );
+      } else {
+        ctx.fillText(`${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]`, g.px, g.py-3);
+      }
 
       const hpts=[
         {n:'tl',x:g.px,y:g.py},{n:'tm',x:g.px+g.pw/2,y:g.py},{n:'tr',x:g.px+g.pw,y:g.py},

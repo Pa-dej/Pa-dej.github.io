@@ -128,7 +128,8 @@ function renderBgProps(p){
   const { background, hexRgb } = window.ScreenGenerator;
   const bg=background;
   const autoX=-(bg.w*8)/80;
-  const finX=(bg.posX+bg.transX+autoX).toFixed(3);
+  const finXInGame=(bg.posX+bg.transX+autoX).toFixed(3); // финальная позиция в игре
+  const finXInEditor=(bg.posX+bg.transX).toFixed(3); // позиция в редакторе
   const finY=(bg.posY+bg.transY).toFixed(3);
   
   p.innerHTML=`
@@ -137,8 +138,9 @@ function renderBgProps(p){
       <div class="pgbody">
         <div class="phint">
           Anchor: <span class="hl">center-X, bottom-Y</span><br>
-          AutoX = -(${bg.w}×8)/80 = <span class="hl">${autoX.toFixed(4)}</span><br>
-          Визуал: X=<span class="hl">${finX}</span> (center) Y=<span class="hl">${finY}</span> (bottom)
+          AutoX = -(${bg.w}×8)/80 = <span class="hl">${autoX.toFixed(4)}</span> (только в игре)<br>
+          Редактор: X=<span class="hl">${finXInEditor}</span> Y=<span class="hl">${finY}</span><br>
+          В игре: X=<span class="hl">${finXInGame}</span> Y=<span class="hl">${finY}</span>
         </div>
         ${row('Ширина', numIn('bg_w',bg.w,0.5,0.5))}
         ${row('Высота', numIn('bg_h',bg.h,0.5,0.5))}
@@ -175,6 +177,14 @@ function renderBgProps(p){
         ${row('transY', numIn('bg_ty',bg.transY))}
         ${row('transZ', numIn('bg_tz',bg.transZ||0))}
         <div class="phint" style="cursor:pointer" onclick="navigator.clipboard.writeText('[${bg.w*8}, ${bg.h*4}, 1]').then(() => showCopyToast())" title="Нажмите чтобы скопировать">YAML scale: <span class="hl">[${bg.w*8}, ${bg.h*4}, 1]</span> 📋</div>
+        <div class="phint">
+          Реальный размер в игре:<br>
+          <span class="hl">${(() => {
+            const bgSize = window.ScreenGenerator.mcBgSize(' ', bg.w * 8, bg.h * 4);
+            return bgSize.w.toFixed(4) + ' × ' + bgSize.h.toFixed(4) + ' блока';
+          })()}</span><br>
+          (space=" " → ${window.ScreenGenerator.mcTextWidth(' ')+2}px ширины, 11px высоты в font-px)
+        </div>
       </div>
     </div>`;
     
@@ -299,6 +309,14 @@ function renderWProps(p,w){
         ${row('Ширина', numIn('w_w',w.w,0.125,0.125))}
         ${row('Высота', numIn('w_h',w.h,0.125,0.125))}
         <div class="phint" style="cursor:pointer" onclick="navigator.clipboard.writeText('${yamlScaleStr}').then(() => showCopyToast())" title="Нажмите чтобы скопировать">YAML scale: <span class="hl">${yamlScaleStr}</span> 📋</div>
+        ${isText ? `<div class="phint">
+          Реальный размер фона в игре:<br>
+          <span class="hl">${(() => {
+            const wSize = window.ScreenGenerator.mcBgSize(w.text || ' ', w.w * 8, w.h * 4);
+            return wSize.w.toFixed(4) + ' × ' + wSize.h.toFixed(4) + ' блока';
+          })()}</span><br>
+          Текст "${w.text || ''}" → ${window.ScreenGenerator.mcTextWidth(w.text || '')}px широкий
+        </div>` : ''}
       </div>
     </div>
     ${backgroundFields}

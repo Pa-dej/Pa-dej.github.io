@@ -33,41 +33,74 @@
 // ═══════════════════════════════════════════════════════════════
 
 function bgVisualRect(bg) {
-  const { b2p, b2cx, b2cy } = window.ScreenGenerator;
-  // В игре: TextDisplay с scale=[8,4,1] имеет autoX = -scaleX/80 = -w/10
-  // Это ВНУТРЕННЯЯ коррекция рендера TextDisplay, она компенсирует то что
-  // текстовый дисплей с пробелом " " не идеально центрирован.
-  // Эффект autoX в пикселях: -w/10 блока = очень маленький сдвиг (~3px при zoom=80).
-  // Для превью его учитывать не нужно — визуально он незаметен.
-  // Фон рендерится центрированным по posX + transX.
-  const autoX = -(bg.w * 8) / 80; // сохраняем только для YAML hint
-  const vx = bg.posX + bg.transX;  // визуальный CENTER X (без autoX в превью)
-  const vy = bg.posY + bg.transY;  // визуальный BOTTOM Y
-  const pw = b2p(bg.w), ph = b2p(bg.h);
+  const { b2p, b2cx, b2cy, mcBgSize, MC_BG_PADDING, MC_TEXT_SCALE } = window.ScreenGenerator;
+  
+  const scaleX = bg.w * 8;
+  const scaleY = bg.h * 4;
+  
+  // Вычисляем реальный размер фона " " как в Minecraft
+  const size = mcBgSize(' ', scaleX, scaleY);
+  const pw = b2p(size.w);
+  const ph = b2p(size.h);
+  
+  // autoX для справки (показываем в панели свойств, но НЕ применяем в редакторе)
+  const autoX = -(scaleX) / 80;
+  
+  // В редакторе показываем фон БЕЗ autoX - пользователь сам управляет позицией
+  const vx = bg.posX + bg.transX; // визуальный центр X без autoX
+  const vy = bg.posY + bg.transY;
+  
+  // Anchor TextDisplay: entity X = центр, entity Y = низ+1px
+  const anchorOffsetY = MC_BG_PADDING * MC_TEXT_SCALE;
   const cx = b2cx(vx);
-  const bot = b2cy(vy);
-  return { px: cx - pw/2, py: bot - ph, pw, ph,
-           entityX: bg.posX, entityY: bg.posY,
-           autoX };
+  const bot = b2cy(vy + anchorOffsetY);
+  
+  return {
+    px: cx - pw / 2,
+    py: bot - ph,
+    pw,
+    ph,
+    entityX: bg.posX,
+    entityY: bg.posY,
+    autoX // сохраняем для отображения в свойствах
+  };
 }
 
 function wVisualRect(w) {
-  const { b2p, b2cx, b2cy } = window.ScreenGenerator;
-  const pw = b2p(w.w), ph = b2p(w.h);
-  const isText = w.type === 'TEXT_BUTTON';
-  const vx = w.x + (w.transX || 0);
-  const vy = w.y + (w.transY || 0);
-  let px, py;
-  if (isText) {
-    // TextDisplay: anchor = CENTER по X, НИЗ по Y
-    px = b2cx(vx) - pw/2;
-    py = b2cy(vy) - ph;
+  const { b2p, b2cx, b2cy, mcBgSize, MC_BG_PADDING, MC_TEXT_SCALE } = window.ScreenGenerator;
+  
+  if (w.type === 'TEXT_BUTTON') {
+    // YAML scale для TEXT_BUTTON = [w*8, h*4, 1]
+    const scaleX = w.w * 8;
+    const scaleY = w.h * 4;
+    
+    // Вычисляем реальный размер фона как в Minecraft
+    const bg = mcBgSize(w.text || ' ', scaleX, scaleY);
+    const pw = b2p(bg.w);
+    const ph = b2p(bg.h);
+    
+    // TextDisplay anchor: entity X = центр по горизонтали, entity Y = низ фона + 1px padding
+    // В блоках: bottom = entityY + MC_BG_PADDING * MC_TEXT_SCALE
+    const anchorOffsetY = MC_BG_PADDING * MC_TEXT_SCALE; // ≈ 0.025 блока
+    
+    const vx = w.x + (w.transX || 0);
+    const vy = w.y + (w.transY || 0);
+    
+    // px/py — верхний левый угол прямоугольника фона на canvas
+    const px = b2cx(vx) - pw / 2;
+    const py = b2cy(vy + anchorOffsetY) - ph; // фон выше точки entity
+    
+    return { px, py, pw, ph };
   } else {
-    // ItemDisplay / BlockDisplay: anchor = CENTER
-    px = b2cx(vx) - pw/2;
-    py = b2cy(vy) - ph/2;
+    // ITEM_BUTTON: anchor = CENTER, размер = w×h блоков напрямую
+    const pw = b2p(w.w);
+    const ph = b2p(w.h);
+    const vx = w.x + (w.transX || 0);
+    const vy = w.y + (w.transY || 0);
+    const px = b2cx(vx) - pw / 2;
+    const py = b2cy(vy) - ph / 2;
+    return { px, py, pw, ph };
   }
-  return { px, py, pw, ph };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -108,4 +141,9 @@ Object.assign(window.ScreenGenerator, {
   hitHandle,
   hitWidget,
   hitBg
+});
+
+console.log('Geometry functions exported:', {
+  bgVisualRect: typeof bgVisualRect,
+  wVisualRect: typeof wVisualRect
 });
