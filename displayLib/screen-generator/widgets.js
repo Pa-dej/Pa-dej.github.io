@@ -46,6 +46,11 @@ function addWidget(type,mat,x=0,y=0){
   
   if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
   if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+  
+  // Сохраняем в историю
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+    window.ScreenGenerator.saveState(`Add ${type} (${id})`);
+  }
 }
 
 // Widget list management (без концепции слоев)
@@ -117,6 +122,11 @@ document.getElementById('btnClear').addEventListener('click',()=>{
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
     updateAddBgButton();
+    
+    // Сохраняем в историю
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+      window.ScreenGenerator.saveState('Clear all');
+    }
   }
 });
 
@@ -151,6 +161,11 @@ document.getElementById('btnAddBg').addEventListener('click', () => {
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
     
     updateAddBgButton();
+    
+    // Сохраняем в историю
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+      window.ScreenGenerator.saveState('Add background');
+    }
   }
 });
 

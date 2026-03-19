@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Инициализируем zoom
   window.ScreenGenerator.updateZoomDisplay();
   
+  // Инициализируем систему истории
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.initHistory === 'function') {
+    window.ScreenGenerator.initHistory();
+  }
+  
   // Wait for CSS to be applied and layout to stabilize
   setTimeout(() => {
     window.ScreenGenerator.resize();

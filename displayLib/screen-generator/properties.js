@@ -77,7 +77,21 @@ const numIn=(id,v,step=0.05,min='')=>`<input class="pinput" type="number" id="${
 const txtIn=(id,v)=>`<input class="pinput" type="text" id="${id}" value="${v}">`;
 const selIn=(id,v,opts)=>`<select class="pselect" id="${id}">${opts.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
 const colIn=(id,v)=>`<input class="pinput" type="color" id="${id}" value="${v}">`;
-const bind=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener('input',e=>fn(e.target.value));};
+const bind=(id,fn)=>{
+  const el=document.getElementById(id);
+  if(el) {
+    el.addEventListener('input',e=>{
+      fn(e.target.value);
+      // Сохраняем в историю с debounce
+      clearTimeout(window.ScreenGenerator._propertyChangeTimeout);
+      window.ScreenGenerator._propertyChangeTimeout = setTimeout(() => {
+        if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+          window.ScreenGenerator.saveState(`Change property (${id})`);
+        }
+      }, 1000); // 1 секунда задержки для группировки изменений
+    });
+  }
+};
 
 // Функция для создания опции селекта с визуальным рендером
 function createMaterialOption(material, selected = false) {

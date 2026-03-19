@@ -125,6 +125,19 @@ function initEventHandlers() {
   });
   
   cv.addEventListener('mouseup',()=>{
+    // Сохраняем в историю если было перетаскивание или изменение размера
+    if (window.ScreenGenerator.dragging) {
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+        const id = window.ScreenGenerator.dragging.id;
+        window.ScreenGenerator.saveState(`Move ${id === '__bg__' ? 'background' : id}`);
+      }
+    }
+    if (window.ScreenGenerator.resizing) {
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+        window.ScreenGenerator.saveState(`Resize ${window.ScreenGenerator.resizing.id}`);
+      }
+    }
+    
     window.ScreenGenerator.dragging=null;
     window.ScreenGenerator.resizing=null;
   });
@@ -227,16 +240,33 @@ function initKeyboardHandlers() {
     if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
     
     if((e.key==='Delete'||e.key==='Backspace')&&window.ScreenGenerator.selectedId){
+      let deletedItem = null;
+      
       if(window.ScreenGenerator.selectedId==='__bg__') {
-        // Фон нельзя удалить, только сбрасываем выбор
+        // Удаляем фон
+        deletedItem = 'background';
+        window.ScreenGenerator.background = null;
         window.ScreenGenerator.selectedId=null;
       } else {
-        window.ScreenGenerator.widgets=window.ScreenGenerator.widgets.filter(w=>w.id!==window.ScreenGenerator.selectedId);
-        window.ScreenGenerator.selectedId=null;
+        // Удаляем виджет
+        const widget = window.ScreenGenerator.widgets.find(w => w.id === window.ScreenGenerator.selectedId);
+        if (widget) {
+          deletedItem = `${widget.type} (${widget.id})`;
+          window.ScreenGenerator.widgets=window.ScreenGenerator.widgets.filter(w=>w.id!==window.ScreenGenerator.selectedId);
+          window.ScreenGenerator.selectedId=null;
+        }
       }
+      
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateAddBgButton === 'function') window.ScreenGenerator.updateAddBgButton();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
+      
+      // Сохраняем в историю
+      if (deletedItem && window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+        window.ScreenGenerator.saveState(`Delete ${deletedItem} (Del key)`);
+      }
     }
     if(e.key==='Escape'){
       window.ScreenGenerator.selectedId=null;

@@ -107,6 +107,14 @@ function setupEditor() {
         
         window.ScreenGenerator.applyYamlToCanvas(parsedData);
         
+        // Сохраняем в историю (с debounce)
+        clearTimeout(window.ScreenGenerator._yamlChangeTimeout);
+        window.ScreenGenerator._yamlChangeTimeout = setTimeout(() => {
+          if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
+            window.ScreenGenerator.saveState('YAML edit');
+          }
+        }, 2000); // 2 секунды задержки для группировки YAML изменений
+        
         // Обновляем подсветку с зеленым индикатором
         updateHighlight(true);
         return true;
