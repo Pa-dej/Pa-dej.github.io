@@ -96,15 +96,15 @@ function updateWidgetOverlays() {
     // Масштабируем иконку под размер виджета
     const iconClass = MATERIAL_TO_ICON[w.material.toUpperCase()];
     if (iconClass) {
-      // Вычисляем масштаб для заполнения виджета
-      const targetSize = Math.min(g.pw, g.ph) * 0.8; // 80% от размера виджета
+      // Вычисляем масштаб для заполнения виджета на 100%
+      const targetSize = Math.min(g.pw, g.ph); // 100% от размера виджета
       const baseSize = 32; // Базовый размер CSS иконки
       const scale = targetSize / baseSize;
       
       overlayEl.innerHTML = `<i class="icon-minecraft icon-minecraft-${iconClass}" style="transform:scale(${scale});transform-origin:center;" title="${w.material}"></i>`;
     } else {
-      // Для fallback иконок используем размер виджета
-      const renderSize = Math.min(g.pw, g.ph) * 0.8;
+      // Для fallback иконок используем полный размер виджета
+      const renderSize = Math.min(g.pw, g.ph);
       overlayEl.innerHTML = createColoredIcon(w.material, renderSize);
     }
     

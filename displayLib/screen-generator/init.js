@@ -6,6 +6,16 @@
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing canvas...');
   
+  // Загружаем шрифт Minecraftia
+  document.fonts.load(`${window.ScreenGenerator?.MC_FONT_PX || 8}px Minecraftia`).then(() => {
+    console.log('Minecraftia font loaded');
+    if (window.ScreenGenerator) {
+      window.ScreenGenerator.MC_FONT_READY = true;
+    }
+  }).catch(err => {
+    console.warn('Failed to load Minecraftia font:', err);
+  });
+  
   // Ensure the canvas wrapper has proper dimensions
   const cwrap = document.getElementById('cwrap');
   if (cwrap) {

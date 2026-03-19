@@ -128,8 +128,8 @@ function renderBgProps(p){
   const { background, hexRgb } = window.ScreenGenerator;
   const bg=background;
   const autoX=-(bg.w*8)/80;
-  const finXInGame=(bg.posX+bg.transX+autoX).toFixed(3); // финальная позиция в игре
-  const finXInEditor=(bg.posX+bg.transX).toFixed(3); // позиция в редакторе
+  const finXInEditor=(bg.posX+bg.transX).toFixed(3); // позиция в редакторе (БЕЗ autoX)
+  const finXInGame=(bg.posX+bg.transX+autoX).toFixed(3); // финальная позиция в игре (С autoX)
   const finY=(bg.posY+bg.transY).toFixed(3);
   
   p.innerHTML=`
@@ -171,19 +171,15 @@ function renderBgProps(p){
       <div class="pgtitle">translation[] — Transformation сдвиг</div>
       <div class="pgbody">
         <div class="phint"><span class="ok">translation = локальный сдвиг модели внутри entity</span><br>
-        transX: <span class="hl">авто -${((bg.w*8)/80).toFixed(3)}</span> + ${bg.transX}<br>
+        В игре добавляется autoX: <span class="hl">-${((bg.w*8)/80).toFixed(3)}</span><br>
         Для центрирования Y: transY = <span class="hl">-h/2 = ${(-bg.h/2).toFixed(2)}</span></div>
         ${row('transX', numIn('bg_tx',bg.transX))}
         ${row('transY', numIn('bg_ty',bg.transY))}
         ${row('transZ', numIn('bg_tz',bg.transZ||0))}
         <div class="phint" style="cursor:pointer" onclick="navigator.clipboard.writeText('[${bg.w*8}, ${bg.h*4}, 1]').then(() => showCopyToast())" title="Нажмите чтобы скопировать">YAML scale: <span class="hl">[${bg.w*8}, ${bg.h*4}, 1]</span> 📋</div>
         <div class="phint">
-          Реальный размер в игре:<br>
-          <span class="hl">${(() => {
-            const bgSize = window.ScreenGenerator.mcBgSize(' ', bg.w * 8, bg.h * 4);
-            return bgSize.w.toFixed(4) + ' × ' + bgSize.h.toFixed(4) + ' блока';
-          })()}</span><br>
-          (space=" " → ${window.ScreenGenerator.mcTextWidth(' ')+2}px ширины, 11px высоты в font-px)
+          Размер фона: <span class="hl">${bg.w} × ${bg.h} блока</span><br>
+          Простой прямоугольник без текстовых расчетов
         </div>
       </div>
     </div>`;
@@ -312,10 +308,10 @@ function renderWProps(p,w){
         ${isText ? `<div class="phint">
           Реальный размер фона в игре:<br>
           <span class="hl">${(() => {
-            const wSize = window.ScreenGenerator.mcBgSize(w.text || ' ', w.w * 8, w.h * 4);
+            const wSize = window.ScreenGenerator.mcBgSizeBlocks(w.text || ' ', w.w * 8, w.h * 4);
             return wSize.w.toFixed(4) + ' × ' + wSize.h.toFixed(4) + ' блока';
           })()}</span><br>
-          Текст "${w.text || ''}" → ${window.ScreenGenerator.mcTextWidth(w.text || '')}px широкий
+          Текст "${w.text || ''}" → ${window.ScreenGenerator.mcMeasureWidth(w.text || '')}px широкий
         </div>` : ''}
       </div>
     </div>

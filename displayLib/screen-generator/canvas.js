@@ -52,7 +52,7 @@ function render() {
     widgets, background, selectedId, 
     b2p, GSTEP, b2cx, b2cy, CC, hexRgb,
     bgVisualRect, wVisualRect,
-    MC_TEXT_SCALE, MC_FONT_HEIGHT, MC_BG_PADDING, PPB
+    MC_TEXT_SCALE, MC_FONT_PX, MC_BG_PAD, MC_LINE_HEIGHT, PPB, mcBgSizeBlocks
   } = window.ScreenGenerator;
   
   const W = cv.width, H = cv.height;
@@ -60,6 +60,9 @@ function render() {
   
   // Clear canvas
   ctx.clearRect(0,0,W,H);
+  
+  // Pixel-perfect rendering
+  ctx.imageSmoothingEnabled = false;
   
   // Fill with background color
   ctx.fillStyle = '#1a1a1a';
@@ -153,42 +156,88 @@ function render() {
 
     // Тело виджета
     if (w.type === 'TEXT_BUTTON') {
-      // Фон: цвет из w.color + alpha из w.backgroundAlpha (если есть) или ~88%
-      const {r: cr, g: cg, b: cb} = hexRgb(w.color);
-      const bgAlpha = (w.backgroundAlpha !== undefined ? w.backgroundAlpha : 150) / 255;
-      ctx.fillStyle = `rgba(${cr},${cg},${cb},${bgAlpha})`;
+      const g = wVisualRect(w);
+      const sel = w.id === selectedId;
+
+      // ─── Фон ───────────────────────────────────────────────────
+      const {r, g: cg, b} = hexRgb(w.color);
+      // backgroundAlpha хранится в диапазоне 0-255, canvas хочет 0.0-1.0
+      const bgA = (w.backgroundAlpha !== undefined ? w.backgroundAlpha : 150) / 255;
+      ctx.fillStyle = `rgba(${r},${cg},${b},${bgA})`;
       ctx.fillRect(g.px, g.py, g.pw, g.ph);
-      
-      // Текст — используем canvas-шрифт близкий к Minecraft
-      // Minecraft font: пропорциональный bitmap, нет прямого аналога в браузере
-      // Используем моноширинный шрифт с масштабированием
-      if (g.pw > 10) {
-        // Вычисляем размер шрифта в пикселях холста
-        // 1 font-px = TEXT_SCALE * scaleY блока * PPB() пикселей/блок
+
+      // ─── Текст (шрифт Minecraftia, масштабированный под zoom) ───
+      if (g.pw > 6 && g.ph > 4) {
         const scaleY = w.h * 4;
-        const fontPxOnCanvas = MC_TEXT_SCALE * scaleY * PPB() * MC_FONT_HEIGHT;
-        
-        ctx.fillStyle = sel ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.85)';
-        ctx.font = `${Math.max(4, fontPxOnCanvas)}px "Cascadia Code", monospace`;
+        // Размер шрифта в canvas-пикселях: 8 font-px * TEXT_SCALE * scaleY * PPB()
+        const fontSizePx = MC_FONT_PX * MC_TEXT_SCALE * scaleY * PPB();
+
+        ctx.save();
+        ctx.font = `${fontSizePx}px Minecraftia`;
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        const displayText = w.text || '';
-        // Обрезаем если не влезает
-        const maxW = g.pw - b2p(MC_BG_PADDING * 2 * MC_TEXT_SCALE * w.w * 8);
-        const metrics = ctx.measureText(displayText);
-        const drawText = metrics.width > maxW
-          ? displayText.slice(0, Math.floor(displayText.length * maxW / metrics.width)) + '…'
-          : displayText;
-        
-        ctx.fillText(drawText, g.px + g.pw / 2, g.py + g.ph / 2);
+        ctx.textBaseline = 'top';
+        ctx.imageSmoothingEnabled = false; // пиксельный шрифт — без сглаживания
+
+        const lines = (w.text || '').split('\n');
+        const lineHeightPx = MC_LINE_HEIGHT * MC_TEXT_SCALE * scaleY * PPB();
+        const padPx = MC_BG_PAD * MC_TEXT_SCALE * scaleY * PPB();
+
+        // Центр X, верх текста = верх фона + padding
+        const textCenterX = g.px + g.pw / 2;
+        const textTopY = g.py + padPx;
+
+        for (let i = 0; i < lines.length; i++) {
+          ctx.fillText(lines[i], textCenterX, textTopY + i * lineHeightPx);
+        }
+        ctx.restore();
       }
-      
-      // Граница выделения
-      ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
+
+      // ─── Граница выделения ─────────────────────────────────────
+      ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.12)';
       ctx.lineWidth = sel ? 1.5 : 0.5;
       ctx.strokeRect(g.px, g.py, g.pw, g.ph);
-    } else {
+
+      // ─── Точка entity (якорь) ──────────────────────────────────
+      const epx = b2cx(w.x);
+      const epy = b2cy(w.y);
+      ctx.fillStyle = sel ? '#6496ff' : 'rgba(100,150,255,0.35)';
+      ctx.beginPath();
+      ctx.arc(epx, epy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ─── Метка + handles при выделении ────────────────────────
+      if (sel) {
+        const scaleX = w.w * 8;
+        const scaleY = w.h * 4;
+        const bg = mcBgSizeBlocks(w.text || ' ', scaleX, scaleY);
+
+        ctx.fillStyle = 'rgba(100,150,255,0.9)';
+        ctx.font = '9px Cascadia Code';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(
+          `${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]  ${bg.w.toFixed(3)}×${bg.h.toFixed(3)}b`,
+          g.px, g.py - 3
+        );
+        
+        // Resize handles
+        const hpts=[
+          {n:'tl',x:g.px,y:g.py},{n:'tm',x:g.px+g.pw/2,y:g.py},{n:'tr',x:g.px+g.pw,y:g.py},
+          {n:'ml',x:g.px,y:g.py+g.ph/2},{n:'mr',x:g.px+g.pw,y:g.py+g.ph/2},
+          {n:'bl',x:g.px,y:g.py+g.ph},{n:'bm',x:g.px+g.pw/2,y:g.py+g.ph},{n:'br',x:g.px+g.pw,y:g.py+g.ph}
+        ];
+        for (const h of hpts) {
+          ctx.fillStyle='#6496ff';ctx.strokeStyle='#000';ctx.lineWidth=1;
+          ctx.fillRect(h.x-4,h.y-4,8,8);ctx.strokeRect(h.x-4,h.y-4,8,8);
+        }
+      }
+
+      continue; // переходим к следующему виджету
+    }
+    
+    // ITEM_BUTTON рендеринг
+    {
       // Для ITEM_BUTTON показываем только прозрачную границу
       ctx.fillStyle='rgba(0,0,0,0.1)'; // Очень слабый фон для видимости границ
       ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.fill();
@@ -197,54 +246,37 @@ function render() {
       ctx.strokeStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.1)';
       ctx.lineWidth = sel ? 1.5 : 0.5;
       ctx.beginPath();ctx.roundRect(g.px,g.py,g.pw,g.ph,3);ctx.stroke();
-    }
 
-    // Для ITEM_BUTTON текст не показываем - будет иконка в overlay
+      // Точка entity (где стоит сущность в мире = position[x,y])
+      const epx = b2cx(w.x), epy = b2cy(w.y);
+      ctx.fillStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.3)';
+      ctx.beginPath();ctx.arc(epx, epy, 2.5, 0, Math.PI*2);ctx.fill();
 
-    // Точка entity (где стоит сущность в мире = position[x,y])
-    // Для ITEM: это центр объекта
-    // Для TEXT: это низ объекта по Y, центр по X
-    const isText = w.type==='TEXT_BUTTON';
-    const epx = b2cx(w.x), epy = b2cy(w.y);
-    ctx.fillStyle = sel ? '#6496ff' : 'rgba(255,255,255,0.3)';
-    ctx.beginPath();ctx.arc(epx, epy, 2.5, 0, Math.PI*2);ctx.fill();
-
-    // Если есть translation — показываем стрелку entity→visual
-    if (sel && (Math.abs(w.transX||0) > 0.01 || Math.abs(w.transY||0) > 0.01)) {
-      const vcx = g.px + g.pw/2;
-      const vcy = isText ? g.py+g.ph : g.py+g.ph/2;
-      ctx.strokeStyle='rgba(100,150,255,0.35)'; ctx.lineWidth=1;
-      ctx.setLineDash([2,2]);
-      ctx.beginPath();ctx.moveTo(epx,epy);ctx.lineTo(vcx,vcy);ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Метка + handles когда выбран
-    if (sel) {
-      ctx.fillStyle='rgba(100,150,255,0.9)'; ctx.font='9px Cascadia Code';
-      ctx.textAlign='left'; ctx.textBaseline='bottom';
-      
-      if (w.type === 'TEXT_BUTTON') {
-        // Для TEXT_BUTTON показываем реальный размер фона
-        const scaleX = w.w * 8;
-        const scaleY = w.h * 4;
-        const bg = window.ScreenGenerator.mcBgSize(w.text || ' ', scaleX, scaleY);
-        ctx.fillText(
-          `${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]  bg:${bg.w.toFixed(3)}×${bg.h.toFixed(3)}b`,
-          g.px, g.py - 3
-        );
-      } else {
-        ctx.fillText(`${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]`, g.px, g.py-3);
+      // Если есть translation — показываем стрелку entity→visual
+      if (sel && (Math.abs(w.transX||0) > 0.01 || Math.abs(w.transY||0) > 0.01)) {
+        const vcx = g.px + g.pw/2;
+        const vcy = g.py+g.ph/2;
+        ctx.strokeStyle='rgba(100,150,255,0.35)'; ctx.lineWidth=1;
+        ctx.setLineDash([2,2]);
+        ctx.beginPath();ctx.moveTo(epx,epy);ctx.lineTo(vcx,vcy);ctx.stroke();
+        ctx.setLineDash([]);
       }
 
-      const hpts=[
-        {n:'tl',x:g.px,y:g.py},{n:'tm',x:g.px+g.pw/2,y:g.py},{n:'tr',x:g.px+g.pw,y:g.py},
-        {n:'ml',x:g.px,y:g.py+g.ph/2},{n:'mr',x:g.px+g.pw,y:g.py+g.ph/2},
-        {n:'bl',x:g.px,y:g.py+g.ph},{n:'bm',x:g.px+g.pw/2,y:g.py+g.ph},{n:'br',x:g.px+g.pw,y:g.py+g.ph}
-      ];
-      for (const h of hpts) {
-        ctx.fillStyle='#6496ff';ctx.strokeStyle='#000';ctx.lineWidth=1;
-        ctx.fillRect(h.x-4,h.y-4,8,8);ctx.strokeRect(h.x-4,h.y-4,8,8);
+      // Метка + handles когда выбран
+      if (sel) {
+        ctx.fillStyle='rgba(100,150,255,0.9)'; ctx.font='9px Cascadia Code';
+        ctx.textAlign='left'; ctx.textBaseline='bottom';
+        ctx.fillText(`${w.id}  pos[${w.x.toFixed(2)},${w.y.toFixed(2)}]`, g.px, g.py-3);
+
+        const hpts=[
+          {n:'tl',x:g.px,y:g.py},{n:'tm',x:g.px+g.pw/2,y:g.py},{n:'tr',x:g.px+g.pw,y:g.py},
+          {n:'ml',x:g.px,y:g.py+g.ph/2},{n:'mr',x:g.px+g.pw,y:g.py+g.ph/2},
+          {n:'bl',x:g.px,y:g.py+g.ph},{n:'bm',x:g.px+g.pw/2,y:g.py+g.ph},{n:'br',x:g.px+g.pw,y:g.py+g.ph}
+        ];
+        for (const h of hpts) {
+          ctx.fillStyle='#6496ff';ctx.strokeStyle='#000';ctx.lineWidth=1;
+          ctx.fillRect(h.x-4,h.y-4,8,8);ctx.strokeRect(h.x-4,h.y-4,8,8);
+        }
       }
     }
   }
