@@ -6,7 +6,7 @@
 // TOLERANCE OVERLAY - Display tolerance zones on top of icons
 // ═══════════════════════════════════════════════════════════════
 function updateToleranceOverlay() {
-  const { selectedId, widgets, wVisualRect, b2p } = window.ScreenGenerator;
+  const { selectedId, widgets, b2p, b2cx, b2cy } = window.ScreenGenerator;
   
   // Найдем или создадим overlay для зон толерантности
   let toleranceOverlay = document.getElementById('tolerance-overlay');
@@ -30,12 +30,12 @@ function updateToleranceOverlay() {
   if (selectedId && selectedId !== '__bg__') {
     const w = widgets.find(x => x.id === selectedId);
     if (w && (w.tolerance[0] > 0 || w.tolerance[1] > 0)) {
-      const g = wVisualRect(w);
-      
       const tolW = b2p(w.tolerance[0] * 2); // tolerance в обе стороны
       const tolH = b2p(w.tolerance[1] * 2);
-      const centerX = g.px + g.pw/2;
-      const centerY = g.py + g.ph/2;
+      
+      // Эллипс рисуется вокруг entity позиции (БЕЗ translation)
+      const entityX = b2cx(w.x);
+      const entityY = b2cy(w.y);
       
       // Создаем SVG для эллипса
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -47,8 +47,8 @@ function updateToleranceOverlay() {
       svg.style.pointerEvents = 'none';
       
       const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-      ellipse.setAttribute('cx', centerX);
-      ellipse.setAttribute('cy', centerY);
+      ellipse.setAttribute('cx', entityX);
+      ellipse.setAttribute('cy', entityY);
       ellipse.setAttribute('rx', tolW/2);
       ellipse.setAttribute('ry', tolH/2);
       ellipse.setAttribute('fill', 'none');

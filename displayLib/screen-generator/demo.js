@@ -3,28 +3,26 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════
-// DEMO — точные параметры из примеров плагина
-// Берём simple_center_test.yml как эталон:
-//   background: scale=[32,12,1] → w=4,h=3; translation=[0,-1.5,0]; position=[0,0,0]
-//   Widget: position=[0,0,0], scale=[0.5,0.5,0.5], translation=[0,0,0]
+// DEMO — точные параметры из реального YAML конфига
+// Используем правильные соотношения и размеры
 // ═══════════════════════════════════════════════════════════════
 function loadDemo(){
-  // Фон из нового конфига - заблокирован по умолчанию
+  // Фон из YAML конфига
   window.ScreenGenerator.background={
     w: 4,        // 32.0/8 = 4
     h: 3,        // 12.0/4 = 3  
     colorHex: '#0d1117',  // [13, 17, 23]
     alpha: 180,
-    posX: 0,
-    posY: 0,
-    transX: 0,
+    posX: 0.0,
+    posY: 0.0,
+    transX: 0.0,
     transY: -1.5,
-    transZ: 0,
+    transZ: 0.0,
     locked: true  // Заблокирован по умолчанию
   };
   
   window.ScreenGenerator.widgets=[
-    // widget_11 - BARRIER кнопка
+    // widget_11 - BARRIER кнопка (закрыть экран)
     {
       id: 'widget_11',
       type: 'ITEM_BUTTON',
@@ -33,16 +31,16 @@ function loadDemo(){
       text: '',
       x: 1.75,
       y: 1.25,
-      transX: 0,
-      transY: 0,
-      transZ: 0,
-      w: 0.5,
-      h: 0.5,
+      transX: 0.0,
+      transY: 0.0,
+      transZ: 0.0,
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
       color: '#cc3333',
       onClick: 'CLOSE_SCREEN',
       tolerance: [0.2, 0.2]
     },
-    // widget_12 - TEXT_BUTTON с новыми полями и смещением по Z
+    // widget_12 - TEXT_BUTTON с правильными размерами
     {
       id: 'widget_12',
       type: 'TEXT_BUTTON',
@@ -57,7 +55,7 @@ function loadDemo(){
       transZ: 0.001,  // Смещение по Z для текстовых кнопок
       w: 0.125,    // 1.0/8 = 0.125
       h: 0.25,     // 1.0/4 = 0.25
-      color: '#2a4d6e',
+      color: '#2a3c50',
       backgroundColor: [40, 60, 80],
       backgroundAlpha: 0,
       onClick: 'NONE',
@@ -72,11 +70,11 @@ function loadDemo(){
       text: '',
       x: -0.5,
       y: 0.0,
-      transX: 0,
-      transY: 0,
-      transZ: 0,
-      w: 0.5,
-      h: 0.5,
+      transX: 0.0,
+      transY: 0.0,
+      transZ: 0.0,
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
       color: '#44ddcc',
       onClick: 'NONE',
       tolerance: [0.2, 0.2]
@@ -90,12 +88,12 @@ function loadDemo(){
       text: '',
       x: 0.0,
       y: 0.0,
-      transX: 0,
-      transY: 0,
-      transZ: 0,
-      w: 0.5,
-      h: 0.5,
-      color: '#44cc44',
+      transX: 0.0,
+      transY: 0.0,
+      transZ: 0.0,
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
+      color: '#00cc55',
       onClick: 'NONE',
       tolerance: [0.2, 0.2]
     },
@@ -108,12 +106,12 @@ function loadDemo(){
       text: '',
       x: 0.5,
       y: 0.0,
-      transX: 0,
-      transY: 0,
-      transZ: 0,
-      w: 0.5,
-      h: 0.5,
-      color: '#ffcc44',
+      transX: 0.0,
+      transY: 0.0,
+      transZ: 0.0,
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
+      color: '#ddaa00',
       onClick: 'NONE',
       tolerance: [0.2, 0.2]
     }
@@ -150,7 +148,7 @@ function initVisualRenders() {
   // Обновляем иконку Item Button в палитре
   const itemButtonIcon = document.getElementById('item-button-icon');
   if (itemButtonIcon) {
-    const iconHtml = window.ScreenGenerator.getMinecraftRender('RED_STAINED_GLASS_PANE', 20);
+    const iconHtml = window.ScreenGenerator.getMinecraftRender('DIAMOND', 20);
     console.log('Generated icon HTML:', iconHtml);
     itemButtonIcon.innerHTML = iconHtml;
     console.log('Item button icon updated');

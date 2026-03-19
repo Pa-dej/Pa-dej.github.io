@@ -19,16 +19,18 @@ function addWidget(type,mat,x=0,y=0){
     label:isText?'Button':'',text:isText?'Button':'',
     x, y,
     transX:0,
-    transY: isText ? -0.5 : 0, // разумный дефолт для TEXT: -h/2 = -0.5 при h=1
+    transY: isText ? -0.125 : 0, // TEXT_BUTTON: -0.125 (как в примере)
     transZ: isText ? 0.001 : 0, // смещение по Z для текстовых кнопок
-    w:1, h:1,
+    w: isText ? 0.125 : 1, // TEXT_BUTTON: 0.125 (scale=[1,1,1]), ITEM_BUTTON: 1
+    h: isText ? 0.25 : 1,  // TEXT_BUTTON: 0.25 (scale=[1,1,1]), ITEM_BUTTON: 1
     color:isText?'#2a4d6e':matCol(mat),
-    onClick:'CLOSE_SCREEN',tolerance:[0.15,0.15]
+    onClick: isText ? 'NONE' : 'CLOSE_SCREEN', // TEXT_BUTTON: NONE, ITEM_BUTTON: CLOSE_SCREEN
+    tolerance:[0.15,0.15]
   };
   
   // Добавляем новые поля для TEXT_BUTTON
   if (isText) {
-    widget.hoveredText = '';
+    widget.hoveredText = '[Button]'; // дефолтный hover текст
     widget.backgroundColor = [40, 60, 80]; // Дефолтный цвет фона
     widget.backgroundAlpha = 150;
   }
