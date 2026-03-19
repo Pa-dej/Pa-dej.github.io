@@ -44,38 +44,45 @@ function setupEditor() {
   
   // Синхронизация скролла и размеров
   function syncScroll() {
-    yamlHighlight.scrollTop = yamlEditor.scrollTop;
-    yamlHighlight.scrollLeft = yamlEditor.scrollLeft;
+    const yamlHighlight = document.getElementById('yamlHighlight');
+    if (yamlHighlight && yamlEditor) {
+      yamlHighlight.scrollTop = yamlEditor.scrollTop;
+      yamlHighlight.scrollLeft = yamlEditor.scrollLeft;
+    }
   }
   
   function syncSize() {
-    // Устанавливаем одинаковые размеры для обоих элементов
-    const editorRect = yamlEditor.getBoundingClientRect();
-    const containerRect = yamlEditor.parentElement.getBoundingClientRect();
+    const yamlHighlight = document.getElementById('yamlHighlight');
+    if (!yamlHighlight || !yamlEditor) return;
     
-    // Синхронизируем размеры
-    yamlHighlight.style.width = yamlEditor.offsetWidth + 'px';
-    yamlHighlight.style.height = yamlEditor.offsetHeight + 'px';
+    // Принудительно синхронизируем размеры
+    yamlHighlight.style.width = yamlEditor.clientWidth + 'px';
+    yamlHighlight.style.height = yamlEditor.clientHeight + 'px';
+    yamlHighlight.style.padding = getComputedStyle(yamlEditor).padding;
+    yamlHighlight.style.border = getComputedStyle(yamlEditor).border;
+    yamlHighlight.style.fontSize = getComputedStyle(yamlEditor).fontSize;
+    yamlHighlight.style.fontFamily = getComputedStyle(yamlEditor).fontFamily;
+    yamlHighlight.style.lineHeight = getComputedStyle(yamlEditor).lineHeight;
     
-    // Убеждаемся, что scrollHeight одинаковый
-    const contentHeight = Math.max(yamlEditor.scrollHeight, yamlHighlight.scrollHeight);
-    if (yamlEditor.scrollHeight !== yamlHighlight.scrollHeight) {
-      // Принудительно синхронизируем высоту контента
-      yamlHighlight.style.minHeight = yamlEditor.scrollHeight + 'px';
-    }
+    // Синхронизируем скролл после изменения размеров
+    syncScroll();
   }
   
   // Обновление подсветки с debounce
   function updateHighlight() {
     clearTimeout(highlightTimeout);
     highlightTimeout = setTimeout(() => {
+      const yamlHighlight = document.getElementById('yamlHighlight');
+      if (!yamlHighlight || !yamlEditor) return;
+      
       const text = yamlEditor.value;
       yamlHighlight.innerHTML = highlightYaml(text);
       
       // Принудительная синхронизация после обновления контента
       requestAnimationFrame(() => {
         syncSize();
-        syncScroll();
+        // Дополнительная синхронизация через небольшую задержку
+        setTimeout(syncScroll, 10);
       });
     }, 50); // Быстрое обновление подсветки
   }
@@ -132,7 +139,7 @@ function setupEditor() {
     highlightTimeout = setTimeout(() => {
       const text = yamlEditor.value;
       const yamlHighlight = document.getElementById('yamlHighlight');
-      if (yamlHighlight) {
+      if (yamlHighlight && yamlEditor) {
         yamlHighlight.innerHTML = highlightYaml(text);
         
         // Добавляем индикатор валидности
@@ -159,7 +166,8 @@ function setupEditor() {
       // Принудительная синхронизация после обновления контента
       requestAnimationFrame(() => {
         syncSize();
-        syncScroll();
+        // Дополнительная синхронизация через небольшую задержку
+        setTimeout(syncScroll, 10);
       });
     }, 50);
   }
@@ -197,14 +205,39 @@ function setupEditor() {
     validateAndApplyYaml();
   });
   
-  yamlEditor.addEventListener('scroll', syncScroll);
+  yamlEditor.addEventListener('scroll', () => {
+    syncScroll();
+    // Дополнительная синхронизация через RAF для плавности
+    requestAnimationFrame(syncScroll);
+  });
   yamlEditor.addEventListener('keydown', handleKeyDown);
   
-  // Обработчик изменения размера
+  // Обработчик изменения размера с дополнительной синхронизацией
   const resizeObserver = new ResizeObserver(() => {
     syncSize();
+    // Дополнительная синхронизация через небольшую задержку
+    setTimeout(() => {
+      syncSize();
+      syncScroll();
+    }, 50);
   });
   resizeObserver.observe(yamlEditor);
+  
+  // Дополнительные обработчики для лучшей синхронизации
+  yamlEditor.addEventListener('mousewheel', syncScroll);
+  yamlEditor.addEventListener('wheel', syncScroll);
+  yamlEditor.addEventListener('touchmove', syncScroll);
+  
+  // Периодическая проверка синхронизации (каждые 500ms)
+  setInterval(() => {
+    if (yamlEditor && document.getElementById('yamlHighlight')) {
+      const yamlHighlight = document.getElementById('yamlHighlight');
+      if (Math.abs(yamlHighlight.scrollTop - yamlEditor.scrollTop) > 1 ||
+          Math.abs(yamlHighlight.scrollLeft - yamlEditor.scrollLeft) > 1) {
+        syncScroll();
+      }
+    }
+  }, 500);
   
   // Обработка специальных клавиш
   function handleKeyDown(e) {
@@ -294,13 +327,24 @@ function updateYamlEditor() {
   
   // Восстанавливаем позицию курсора и скролл
   setTimeout(() => {
-    yamlEditor.selectionStart = yamlEditor.selectionEnd = Math.min(cursorPos, yamlEditor.value.length);
-    yamlEditor.scrollTop = scrollTop;
-    if (yamlHighlight) {
-      yamlHighlight.scrollTop = scrollTop;
+    if (yamlEditor) {
+      yamlEditor.selectionStart = yamlEditor.selectionEnd = Math.min(cursorPos, yamlEditor.value.length);
+      yamlEditor.scrollTop = scrollTop;
+      
+      const yamlHighlight = document.getElementById('yamlHighlight');
+      if (yamlHighlight) {
+        yamlHighlight.scrollTop = scrollTop;
+        yamlHighlight.scrollLeft = yamlEditor.scrollLeft;
+        
+        // Дополнительная синхронизация через RAF
+        requestAnimationFrame(() => {
+          syncScroll();
+        });
+      }
+      
+      isUpdatingFromCanvas = false;
+      isUserEditing = false; // Сбрасываем флаг редактирования при программном обновлении
     }
-    isUpdatingFromCanvas = false;
-    isUserEditing = false; // Сбрасываем флаг редактирования при программном обновлении
   }, 10);
 }
 
@@ -462,9 +506,18 @@ function updateYamlSelection() {
   
   // Обновляем подсветку с учетом нового выбранного элемента
   const yamlHighlight = document.getElementById('yamlHighlight');
-  if (yamlHighlight) {
+  if (yamlHighlight && yamlEditor) {
     const text = yamlEditor.value;
     yamlHighlight.innerHTML = highlightYaml(text);
+    
+    // Принудительная синхронизация после обновления
+    requestAnimationFrame(() => {
+      const yamlHighlight = document.getElementById('yamlHighlight');
+      if (yamlHighlight && yamlEditor) {
+        yamlHighlight.scrollTop = yamlEditor.scrollTop;
+        yamlHighlight.scrollLeft = yamlEditor.scrollLeft;
+      }
+    });
   }
 }
 
