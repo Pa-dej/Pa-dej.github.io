@@ -1,11 +1,16 @@
 // ═══════════════════════════════════════════════════════════════
-// YAML EDITOR WITH SYNTAX HIGHLIGHTING
+// YAML EDITOR WITH SYNTAX HIGHLIGHTING AND REAL-TIME VALIDATION
 // ═══════════════════════════════════════════════════════════════
 
 let yamlEditor = null;
 let isUpdatingFromCanvas = false;
 let updateTimeout = null;
 let highlightTimeout = null;
+
+// Система мгновенного применения изменений
+let lastValidYaml = ''; // Последний валидный YAML
+let lastValidState = null; // Последнее валидное состояние canvas
+let isUserEditing = false; // Флаг редактирования пользователем
 
 // Инициализация редактора YAML
 function initYamlEditor() {
@@ -20,7 +25,7 @@ function initYamlEditor() {
   yamlContainer.innerHTML = `
     <div class="yaml-editor-container">
       <div class="yaml-editor-header">
-        <span class="yaml-hint">💡 Изменения применяются при потере фокуса</span>
+        <span class="yaml-hint">⚡ Изменения применяются мгновенно при корректном синтаксисе</span>
       </div>
       <textarea id="yamlEditor" class="yaml-textarea" spellcheck="false"></textarea>
       <div id="yamlHighlight" class="yaml-highlight"></div>
@@ -75,39 +80,125 @@ function setupEditor() {
     }, 50); // Быстрое обновление подсветки
   }
   
-  // Функция применения YAML к canvas
-  function applyYamlChanges() {
+  // Функция валидации и применения YAML
+  function validateAndApplyYaml() {
     if (isUpdatingFromCanvas) return;
     
+    const currentYaml = yamlEditor.value;
+    
     try {
-      const parsedData = window.ScreenGenerator.parseYamlToCanvas(yamlEditor.value);
+      // Пытаемся парсить YAML
+      const parsedData = window.ScreenGenerator.parseYamlToCanvas(currentYaml);
       if (parsedData) {
+        // YAML валидный - применяем изменения
+        console.log('YAML valid, applying changes');
+        lastValidYaml = currentYaml;
+        lastValidState = {
+          widgets: JSON.parse(JSON.stringify(window.ScreenGenerator.widgets)),
+          background: window.ScreenGenerator.background ? JSON.parse(JSON.stringify(window.ScreenGenerator.background)) : null
+        };
+        
         window.ScreenGenerator.applyYamlToCanvas(parsedData);
+        
+        // Обновляем подсветку с зеленым индикатором
+        updateHighlight(true);
+        return true;
       }
     } catch (error) {
-      console.error('Error applying YAML to canvas:', error);
+      console.log('YAML invalid, keeping last valid state:', error.message);
+      // YAML невалидный - используем последнее валидное состояние
+      if (lastValidState) {
+        isUpdatingFromCanvas = true;
+        window.ScreenGenerator.widgets = JSON.parse(JSON.stringify(lastValidState.widgets));
+        window.ScreenGenerator.background = lastValidState.background ? JSON.parse(JSON.stringify(lastValidState.background)) : null;
+        
+        // Обновляем canvas без изменения YAML редактора
+        if (window.ScreenGenerator.render) window.ScreenGenerator.render();
+        if (window.ScreenGenerator.updateProps) window.ScreenGenerator.updateProps();
+        if (window.ScreenGenerator.updateWidgetList) window.ScreenGenerator.updateWidgetList();
+        
+        isUpdatingFromCanvas = false;
+      }
+      
+      // Обновляем подсветку с красным индикатором
+      updateHighlight(false);
+      return false;
     }
   }
-
-  // Применение изменений при потере фокуса
+  
+  // Обновленная функция подсветки с индикатором валидности
+  function updateHighlight(isValid = null) {
+    clearTimeout(highlightTimeout);
+    highlightTimeout = setTimeout(() => {
+      const text = yamlEditor.value;
+      const yamlHighlight = document.getElementById('yamlHighlight');
+      if (yamlHighlight) {
+        yamlHighlight.innerHTML = highlightYaml(text);
+        
+        // Добавляем индикатор валидности
+        if (isValid !== null) {
+          const indicator = document.querySelector('.yaml-hint');
+          if (indicator) {
+            if (isValid) {
+              indicator.innerHTML = '✅ Синтаксис корректен - изменения применены';
+              indicator.style.color = 'var(--accent3, #4ade80)';
+            } else {
+              indicator.innerHTML = '❌ Ошибка синтаксиса - используется последняя валидная версия';
+              indicator.style.color = '#ef4444';
+            }
+            
+            // Сбрасываем индикатор через 2 секунды
+            setTimeout(() => {
+              indicator.innerHTML = '⚡ Изменения применяются мгновенно при корректном синтаксисе';
+              indicator.style.color = '';
+            }, 2000);
+          }
+        }
+      }
+      
+      // Принудительная синхронизация после обновления контента
+      requestAnimationFrame(() => {
+        syncSize();
+        syncScroll();
+      });
+    }, 50);
+  }
+  
+  // Обработчики событий с мгновенным применением
+  yamlEditor.addEventListener('input', () => {
+    isUserEditing = true;
+    
+    // Debounce для производительности
+    clearTimeout(updateTimeout);
+    updateTimeout = setTimeout(() => {
+      validateAndApplyYaml();
+    }, 150); // 150ms задержка для избежания слишком частых обновлений
+    
+    // Подсветка обновляется сразу
+    updateHighlight();
+  });
+  
+  yamlEditor.addEventListener('focus', () => {
+    isUserEditing = true;
+    // Сохраняем текущее валидное состояние при начале редактирования
+    if (!lastValidYaml) {
+      lastValidYaml = yamlEditor.value;
+      lastValidState = {
+        widgets: JSON.parse(JSON.stringify(window.ScreenGenerator.widgets)),
+        background: window.ScreenGenerator.background ? JSON.parse(JSON.stringify(window.ScreenGenerator.background)) : null
+      };
+    }
+    setTimeout(syncSize, 10);
+  });
+  
   yamlEditor.addEventListener('blur', () => {
-    applyYamlChanges();
+    isUserEditing = false;
+    // Финальная валидация при потере фокуса
+    validateAndApplyYaml();
   });
   
   yamlEditor.addEventListener('scroll', syncScroll);
   yamlEditor.addEventListener('keydown', handleKeyDown);
-  
-  // Дополнительные обработчики для лучшей синхронизации
-  yamlEditor.addEventListener('input', () => {
-    updateHighlight();
-    // Убрано автоматическое применение изменений при вводе
-    // Теперь изменения применяются только при потере фокуса
-  });
-  
-  yamlEditor.addEventListener('focus', () => {
-    // При получении фокуса синхронизируем размеры
-    setTimeout(syncSize, 10);
-  });
   
   // Обработчик изменения размера
   const resizeObserver = new ResizeObserver(() => {
@@ -152,22 +243,30 @@ function setupEditor() {
     }
   }
   
-  // Инициализация с текущим YAML
-  updateYamlEditor();
+  // Инициализация с текущим YAML (отложенная)
+  setTimeout(() => {
+    updateYamlEditor();
+  }, 100);
   
   // Устанавливаем фокус на редактор
   setTimeout(() => {
-    yamlEditor.focus();
-  }, 100);
+    if (yamlEditor) yamlEditor.focus();
+  }, 200);
 }
 
 // Обновление редактора из canvas
 function updateYamlEditor() {
   if (!yamlEditor || isUpdatingFromCanvas) return;
   
-  // Проверяем, есть ли фокус на редакторе (пользователь редактирует)
-  if (document.activeElement === yamlEditor) {
-    console.log('YAML editor has focus, skipping update to avoid interrupting user input');
+  // НЕ обновляем если пользователь активно редактирует
+  if (isUserEditing || document.activeElement === yamlEditor) {
+    console.log('User is editing YAML, skipping canvas->editor update');
+    return;
+  }
+  
+  // Проверяем, доступна ли функция plainYaml
+  if (!window.ScreenGenerator.plainYaml) {
+    console.log('plainYaml function not available yet, skipping update');
     return;
   }
   
@@ -179,6 +278,13 @@ function updateYamlEditor() {
   
   const plainYamlText = window.ScreenGenerator.plainYaml();
   yamlEditor.value = plainYamlText;
+  
+  // Обновляем сохраненное валидное состояние
+  lastValidYaml = plainYamlText;
+  lastValidState = {
+    widgets: JSON.parse(JSON.stringify(window.ScreenGenerator.widgets)),
+    background: window.ScreenGenerator.background ? JSON.parse(JSON.stringify(window.ScreenGenerator.background)) : null
+  };
   
   // Обновляем подсветку
   const yamlHighlight = document.getElementById('yamlHighlight');
@@ -194,6 +300,7 @@ function updateYamlEditor() {
       yamlHighlight.scrollTop = scrollTop;
     }
     isUpdatingFromCanvas = false;
+    isUserEditing = false; // Сбрасываем флаг редактирования при программном обновлении
   }, 10);
 }
 
@@ -361,10 +468,18 @@ function updateYamlSelection() {
   }
 }
 
+// Функция для сброса состояния редактирования (вызывается при программных изменениях canvas)
+function resetEditingState() {
+  isUserEditing = false;
+  lastValidYaml = '';
+  lastValidState = null;
+}
+
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   initYamlEditor,
   updateYamlEditor,
   updateYamlSelection,
-  highlightYaml
+  highlightYaml,
+  resetEditingState
 });

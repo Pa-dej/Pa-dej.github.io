@@ -124,6 +124,18 @@ function loadDemo(){
   
   if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
   if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.updateAddBgButton === 'function') window.ScreenGenerator.updateAddBgButton();
+  
+  // Принудительно обновляем YAML редактор
+  setTimeout(() => {
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlEditor === 'function') {
+      window.ScreenGenerator.updateYamlEditor();
+    }
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml === 'function') {
+      window.ScreenGenerator.updateYaml();
+    }
+  }, 300);
   
   // Принудительно обновляем иконки после загрузки демо
   setTimeout(() => {

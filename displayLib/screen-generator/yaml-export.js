@@ -12,15 +12,20 @@ function fn(n){
 }
 
 function updateYaml(){
+  console.log('updateYaml called');
   const { widgets, background, hexRgb } = window.ScreenGenerator;
   
   // Обновляем редактор YAML
   if (window.ScreenGenerator.updateYamlEditor) {
+    console.log('Calling updateYamlEditor');
     window.ScreenGenerator.updateYamlEditor();
+  } else {
+    console.log('updateYamlEditor not available');
   }
 }
 
 function plainYaml(){
+  console.log('plainYaml called');
   const { widgets, background, hexRgb } = window.ScreenGenerator;
   
   const sid=document.getElementById('screenId').value||'my_screen';
@@ -84,9 +89,13 @@ function doCopy(){
 
 // Инициализация обработчиков YAML
 function initYamlHandlers() {
-  document.getElementById('btnCopy').addEventListener('click',doCopy);
-  document.getElementById('btnCopy2').addEventListener('click',doCopy);
-  document.getElementById('screenId').addEventListener('input',updateYaml);
+  const btnCopy = document.getElementById('btnCopy');
+  const btnCopy2 = document.getElementById('btnCopy2');
+  const screenId = document.getElementById('screenId');
+  
+  if (btnCopy) btnCopy.addEventListener('click', doCopy);
+  if (btnCopy2) btnCopy2.addEventListener('click', doCopy);
+  if (screenId) screenId.addEventListener('input', updateYaml);
 }
 
 // Экспорт функций

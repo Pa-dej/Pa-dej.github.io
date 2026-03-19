@@ -174,7 +174,7 @@ function renderBgProps(p){
         ${row('transX', numIn('bg_tx',bg.transX))}
         ${row('transY', numIn('bg_ty',bg.transY))}
         ${row('transZ', numIn('bg_tz',bg.transZ||0))}
-        <div class="phint">YAML scale: <span class="hl">[${bg.w*8}, ${bg.h*4}, 1]</span></div>
+        <div class="phint" style="cursor:pointer" onclick="navigator.clipboard.writeText('[${bg.w*8}, ${bg.h*4}, 1]').then(() => showCopyToast())" title="Нажмите чтобы скопировать">YAML scale: <span class="hl">[${bg.w*8}, ${bg.h*4}, 1]</span> 📋</div>
       </div>
     </div>`;
     
@@ -298,7 +298,7 @@ function renderWProps(p,w){
       <div class="pgbody">
         ${row('Ширина', numIn('w_w',w.w,0.125,0.125))}
         ${row('Высота', numIn('w_h',w.h,0.125,0.125))}
-        <div class="phint">YAML scale: <span class="hl">${yamlScaleStr}</span></div>
+        <div class="phint" style="cursor:pointer" onclick="navigator.clipboard.writeText('${yamlScaleStr}').then(() => showCopyToast())" title="Нажмите чтобы скопировать">YAML scale: <span class="hl">${yamlScaleStr}</span> 📋</div>
       </div>
     </div>
     ${backgroundFields}
@@ -368,6 +368,55 @@ function renderWProps(p,w){
   bind('w_tolV',v=>{w.tolerance[1]=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
 }
 
+// Функция для показа уведомления о копировании
+function showCopyToast() {
+  // Создаем toast элемент
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--accent);
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
+  `;
+  toast.textContent = '✓ Скопировано в буфер';
+  
+  // Добавляем CSS анимацию если её нет
+  if (!document.getElementById('toast-styles')) {
+    const style = document.createElement('style');
+    style.id = 'toast-styles';
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(toast);
+  
+  // Удаляем через 2 секунды с анимацией
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+// Делаем функцию глобально доступной
+window.showCopyToast = showCopyToast;
+
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   updateProps,
@@ -376,6 +425,7 @@ Object.assign(window.ScreenGenerator, {
   createMaterialOption,
   createMaterialSelect,
   filterMaterials,
+  showCopyToast,
   MATS,
   ACTS
 });

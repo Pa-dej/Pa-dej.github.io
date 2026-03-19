@@ -49,11 +49,13 @@
       </div>
       
       <div class="ptitle" style="margin-top:auto">Виджеты на экране</div>
+      <button class="btn" id="btnAddBg" style="margin:6px;width:calc(100% - 12px);font-size:11px;">+ Добавить фон</button>
       <div id="widgetList" style="padding:5px 6px;overflow-y:auto;max-height:200px;display:flex;flex-direction:column;gap:2px;"></div>
     </div>
     <div class="cwrap" id="cwrap">
       <canvas id="cv"></canvas>
       <div id="widget-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;"></div>
+      <div id="hovtip" class="hovtip" style="position:absolute;background:rgba(0,0,0,0.8);color:#fff;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;pointer-events:none;z-index:10;visibility:hidden;white-space:nowrap;"></div>
       <div id="estate" class="estate"><h3>Холст пуст</h3><p>Перетащите виджет или добавьте фон</p></div>
       <div class="cov">
         Курсор: X <span id="curX">0.00</span> Y <span id="curY">0.00</span>

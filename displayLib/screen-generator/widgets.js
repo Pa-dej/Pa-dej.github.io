@@ -37,6 +37,11 @@ function addWidget(type,mat,x=0,y=0){
   
   window.ScreenGenerator.selectedId = id;
   
+  // Сбрасываем состояние редактирования YAML при программном изменении
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.resetEditingState === 'function') {
+    window.ScreenGenerator.resetEditingState();
+  }
+  
   if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
   if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
 }
@@ -97,16 +102,70 @@ function updateEmpty(){
 document.getElementById('btnClear').addEventListener('click',()=>{
   if(confirm('Очистить виджеты?')){
     window.ScreenGenerator.widgets = [];
+    window.ScreenGenerator.background = null;
     window.ScreenGenerator.selectedId = null;
     window.ScreenGenerator.nextId = 1;
+    
+    // Сбрасываем состояние редактирования YAML
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.resetEditingState === 'function') {
+      window.ScreenGenerator.resetEditingState();
+    }
+    
     if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
+    updateAddBgButton();
   }
 });
+
+// Add background
+document.getElementById('btnAddBg').addEventListener('click', () => {
+  if (!window.ScreenGenerator.background) {
+    // Создаем фон с дефолтными параметрами
+    window.ScreenGenerator.background = {
+      w: 8,
+      h: 5,
+      colorHex: '#0d1117',
+      alpha: 160,
+      posX: 0,
+      posY: 0,
+      transX: 0,
+      transY: -2.5,
+      transZ: 0,
+      locked: false
+    };
+    
+    // Выделяем фон
+    window.ScreenGenerator.selectedId = '__bg__';
+    
+    // Сбрасываем состояние редактирования YAML
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.resetEditingState === 'function') {
+      window.ScreenGenerator.resetEditingState();
+    }
+    
+    // Обновляем интерфейс
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
+    
+    updateAddBgButton();
+  }
+});
+
+// Функция для обновления состояния кнопки "Добавить фон"
+function updateAddBgButton() {
+  const btn = document.getElementById('btnAddBg');
+  if (btn) {
+    btn.disabled = !!window.ScreenGenerator.background;
+    btn.textContent = window.ScreenGenerator.background ? '✓ Фон добавлен' : '+ Добавить фон';
+    btn.style.opacity = window.ScreenGenerator.background ? '0.6' : '1';
+  }
+}
 
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   addWidget,
   updateWidgetList,
-  updateEmpty
+  updateEmpty,
+  updateAddBgButton
 });

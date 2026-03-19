@@ -38,6 +38,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       console.log('Initializing visual renders after demo load...');
       window.ScreenGenerator.initVisualRenders();
+      // Обновляем состояние кнопки добавления фона
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateAddBgButton === 'function') {
+        window.ScreenGenerator.updateAddBgButton();
+      }
+      // Принудительно обновляем YAML
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml === 'function') {
+        console.log('Force updating YAML from init.js');
+        window.ScreenGenerator.updateYaml();
+      }
     }, 200);
   }, 300);
 });

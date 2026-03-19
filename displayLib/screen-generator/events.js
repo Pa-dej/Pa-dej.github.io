@@ -53,6 +53,37 @@ function initEventHandlers() {
         if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
       }
     }
+    
+    // Tooltip при наведении на виджет
+    const hovtip = document.getElementById('hovtip');
+    if (hovtip && !window.ScreenGenerator.dragging && !window.ScreenGenerator.resizing) {
+      const hoveredWidget = hitWidget(mx, my);
+      const hoveredBg = hitBg(mx, my);
+      
+      if (hoveredWidget) {
+        const w = hoveredWidget;
+        hovtip.innerHTML = `
+          <div>id: ${w.id}</div>
+          <div>pos: [${w.x.toFixed(2)}, ${w.y.toFixed(2)}]</div>
+          <div>size: ${w.w.toFixed(2)} × ${w.h.toFixed(2)}</div>
+        `;
+        hovtip.style.left = (mx + 10) + 'px';
+        hovtip.style.top = (my - 10) + 'px';
+        hovtip.style.visibility = 'visible';
+      } else if (hoveredBg && window.ScreenGenerator.background) {
+        const bg = window.ScreenGenerator.background;
+        hovtip.innerHTML = `
+          <div>background</div>
+          <div>pos: [${bg.posX.toFixed(2)}, ${bg.posY.toFixed(2)}]</div>
+          <div>size: ${bg.w.toFixed(2)} × ${bg.h.toFixed(2)}</div>
+        `;
+        hovtip.style.left = (mx + 10) + 'px';
+        hovtip.style.top = (my - 10) + 'px';
+        hovtip.style.visibility = 'visible';
+      } else {
+        hovtip.style.visibility = 'hidden';
+      }
+    }
   });
 
   cv.addEventListener('mousedown', e => {
@@ -70,6 +101,7 @@ function initEventHandlers() {
       window.ScreenGenerator.dragging={id:hw.id,smx:mx,smy:my,sx:hw.x,sy:hw.y};
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
       return;
     }
@@ -82,12 +114,14 @@ function initEventHandlers() {
       }
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
       return;
     }
     window.ScreenGenerator.selectedId=null;
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYamlSelection === 'function') window.ScreenGenerator.updateYamlSelection();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
   });
   
   cv.addEventListener('mouseup',()=>{
@@ -98,6 +132,11 @@ function initEventHandlers() {
   cv.addEventListener('mouseleave',()=>{
     window.ScreenGenerator.dragging=null;
     window.ScreenGenerator.resizing=null;
+    // Скрываем tooltip при выходе мыши с canvas
+    const hovtip = document.getElementById('hovtip');
+    if (hovtip) {
+      hovtip.style.visibility = 'hidden';
+    }
   });
   
   cv.addEventListener('contextmenu',e=>{
@@ -213,6 +252,66 @@ function initKeyboardHandlers() {
         if(e.key==='ArrowRight'){w.x=window.ScreenGenerator.snap(w.x+step);if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();}
         if(e.key==='ArrowUp'){w.y=window.ScreenGenerator.snap(w.y+step);if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();}
         if(e.key==='ArrowDown'){w.y=window.ScreenGenerator.snap(w.y-step);if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();}
+      }
+    }
+    
+    // Новые горячие клавиши
+    if(e.ctrlKey && e.key === 'd' && window.ScreenGenerator.selectedId && window.ScreenGenerator.selectedId !== '__bg__') {
+      e.preventDefault();
+      // Дублировать выбранный виджет (как ctxDup)
+      const w = window.ScreenGenerator.widgets.find(x => x.id === window.ScreenGenerator.selectedId);
+      if (w) {
+        const newWidget = JSON.parse(JSON.stringify(w));
+        newWidget.id = `widget_${window.ScreenGenerator.nextId++}`;
+        newWidget.x += 0.5; // Смещаем немного
+        newWidget.y += 0.5;
+        window.ScreenGenerator.widgets.push(newWidget);
+        window.ScreenGenerator.selectedId = newWidget.id;
+        if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+        if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+        if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
+      }
+    }
+    
+    if(e.ctrlKey && e.key === 'c') {
+      e.preventDefault();
+      // Копировать YAML в буфер
+      const yamlText = window.ScreenGenerator.plainYaml ? window.ScreenGenerator.plainYaml() : '';
+      navigator.clipboard.writeText(yamlText).then(() => {
+        if (window.showCopyToast) window.showCopyToast();
+      });
+    }
+    
+    if(e.key === 'g' || e.key === 'G') {
+      // Переключить сетку
+      const gridToggle = document.getElementById('gridToggle');
+      if (gridToggle) {
+        gridToggle.checked = !gridToggle.checked;
+        if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+      }
+    }
+    
+    if(e.key === 'f' || e.key === 'F') {
+      // Сфокусировать камеру на выбранном виджете
+      if (window.ScreenGenerator.selectedId && window.ScreenGenerator.selectedId !== '__bg__') {
+        const w = window.ScreenGenerator.widgets.find(x => x.id === window.ScreenGenerator.selectedId);
+        if (w) {
+          // Центрируем камеру на виджете
+          const cv = document.getElementById('cv');
+          if (cv) {
+            window.ScreenGenerator.CC.x = cv.width / 2 - window.ScreenGenerator.b2p(w.x);
+            window.ScreenGenerator.CC.y = cv.height / 2 + window.ScreenGenerator.b2p(w.y);
+            if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+          }
+        }
+      } else if (window.ScreenGenerator.selectedId === '__bg__' && window.ScreenGenerator.background) {
+        // Центрируем на фоне
+        const cv = document.getElementById('cv');
+        if (cv) {
+          window.ScreenGenerator.CC.x = cv.width / 2 - window.ScreenGenerator.b2p(window.ScreenGenerator.background.posX);
+          window.ScreenGenerator.CC.y = cv.height / 2 + window.ScreenGenerator.b2p(window.ScreenGenerator.background.posY);
+          if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+        }
       }
     }
   });
