@@ -571,29 +571,25 @@ function setupEditor() {
     if (window.syncScroll) window.syncScroll();
   }
   
-  // Обновление подсветки с debounce
+  // Мгновенная подсветка без debounce
+  function updateHighlightNow() {
+    const yamlHighlight = document.getElementById('yamlHighlight');
+    if (!yamlHighlight || !codeEditor) return;
+    
+    const text = codeEditor.value;
+    if (currentTab === 'yaml') {
+      yamlHighlight.innerHTML = highlightYaml(text);
+    } else if (currentTab === 'lua') {
+      yamlHighlight.innerHTML = highlightLua(text);
+    }
+    
+    // Мгновенная синхронизация скролла
+    if (window.syncScroll) window.syncScroll();
+  }
+  
+  // Обновление подсветки с debounce (для обратной совместимости)
   function updateHighlight() {
-    clearTimeout(highlightTimeout);
-    highlightTimeout = setTimeout(() => {
-      const yamlHighlight = document.getElementById('yamlHighlight');
-      if (!yamlHighlight || !codeEditor) return;
-      
-      const text = codeEditor.value;
-      if (currentTab === 'yaml') {
-        yamlHighlight.innerHTML = highlightYaml(text);
-      } else if (currentTab === 'lua') {
-        yamlHighlight.innerHTML = highlightLua(text);
-      }
-      
-      // Принудительная синхронизация после обновления контента
-      requestAnimationFrame(() => {
-        if (window.syncSize) window.syncSize();
-        // Дополнительная синхронизация через небольшую задержку
-        setTimeout(() => {
-          if (window.syncScroll) window.syncScroll();
-        }, 10);
-      });
-    }, 50); // Быстрое обновление подсветки
+    updateHighlightNow();
   }
   
   // Функция валидации и применения YAML (только для YAML вкладки)
@@ -652,58 +648,50 @@ function setupEditor() {
   
   // Обновленная функция подсветки с индикатором валидности
   function updateHighlightWithStatus(isValid = null) {
-    clearTimeout(highlightTimeout);
-    highlightTimeout = setTimeout(() => {
-      const text = codeEditor.value;
-      const yamlHighlight = document.getElementById('yamlHighlight');
-      if (yamlHighlight && codeEditor) {
-        // Выбираем функцию подсветки в зависимости от текущей вкладки
-        if (currentTab === 'yaml') {
-          yamlHighlight.innerHTML = highlightYaml(text);
-        } else if (currentTab === 'lua') {
-          yamlHighlight.innerHTML = highlightLua(text);
-        }
-        
-        // Добавляем индикатор валидности (только для YAML)
-        if (isValid !== null && currentTab === 'yaml') {
-          const indicator = document.querySelector('.yaml-hint');
-          if (indicator) {
-            if (isValid) {
-              indicator.innerHTML = '✅ Синтаксис корректен - изменения применены';
-              indicator.style.color = 'var(--accent3, #4ade80)';
-            } else {
-              indicator.innerHTML = '❌ Ошибка синтаксиса - используется последняя валидная версия';
-              indicator.style.color = '#ef4444';
-            }
-            
-            // Сбрасываем индикатор через 2 секунды
-            setTimeout(() => {
-              if (currentTab === 'yaml') {
-                indicator.innerHTML = '⚡ Изменения применяются мгновенно при корректном синтаксисе';
-              } else {
-                indicator.innerHTML = '🔧 Редактируемый Lua код для DisplayLib';
-              }
-              indicator.style.color = '';
-            }, 2000);
-          }
-        }
+    const text = codeEditor.value;
+    const yamlHighlight = document.getElementById('yamlHighlight');
+    if (yamlHighlight && codeEditor) {
+      // Выбираем функцию подсветки в зависимости от текущей вкладки
+      if (currentTab === 'yaml') {
+        yamlHighlight.innerHTML = highlightYaml(text);
+      } else if (currentTab === 'lua') {
+        yamlHighlight.innerHTML = highlightLua(text);
       }
       
-      // Принудительная синхронизация после обновления контента
-      requestAnimationFrame(() => {
-        if (window.syncSize) window.syncSize();
-        // Дополнительная синхронизация через небольшую задержку
-        setTimeout(() => {
-          if (window.syncScroll) window.syncScroll();
-        }, 10);
-      });
-    }, 50);
+      // Добавляем индикатор валидности (только для YAML)
+      if (isValid !== null && currentTab === 'yaml') {
+        const indicator = document.querySelector('.yaml-hint');
+        if (indicator) {
+          if (isValid) {
+            indicator.innerHTML = '✅ Синтаксис корректен - изменения применены';
+            indicator.style.color = 'var(--accent3, #4ade80)';
+          } else {
+            indicator.innerHTML = '❌ Ошибка синтаксиса - используется последняя валидная версия';
+            indicator.style.color = '#ef4444';
+          }
+          
+          // Сбрасываем индикатор через 2 секунды
+          setTimeout(() => {
+            if (currentTab === 'yaml') {
+              indicator.innerHTML = '⚡ Изменения применяются мгновенно при корректном синтаксисе';
+            } else {
+              indicator.innerHTML = '🔧 Редактируемый Lua код для DisplayLib';
+            }
+            indicator.style.color = '';
+          }, 2000);
+        }
+      }
+    }
+    
+    // Мгновенная синхронизация
+    if (window.syncScroll) window.syncScroll();
   }
   
   // Делаем функции доступными глобально
   window.syncScroll = syncScroll;
   window.syncSize = syncSize;
   window.updateHighlight = updateHighlight;
+  window.updateHighlightNow = updateHighlightNow; // Для автодополнения
   window.ScreenGenerator._editorSyncScroll = syncScroll;
   window.ScreenGenerator._editorUpdateHighlight = updateHighlight;
   
@@ -712,14 +700,17 @@ function setupEditor() {
     // Сохраняем содержимое текущей вкладки
     tabContents[currentTab] = codeEditor.value;
     
+    // Подсветка — МГНОВЕННО, без setTimeout
+    updateHighlightNow();
+    
     if (currentTab === 'yaml') {
       isUserEditing = true;
       
-      // Debounce для производительности
+      // Применение к canvas — с увеличенным debounce для стабильности
       clearTimeout(updateTimeout);
       updateTimeout = setTimeout(() => {
         validateAndApplyYaml();
-      }, 150); // 150ms задержка для избежания слишком частых обновлений
+      }, 300); // Увеличено до 300ms для лучшей производительности
     } else if (currentTab === 'lua') {
       // Для Lua сохраняем в историю изменения
       clearTimeout(window.ScreenGenerator._luaChangeTimeout);
@@ -729,9 +720,6 @@ function setupEditor() {
         }
       }, 2000);
     }
-    
-    // Подсветка обновляется сразу
-    if (window.updateHighlight) window.updateHighlight();
   });
   
   codeEditor.addEventListener('focus', () => {
@@ -761,11 +749,8 @@ function setupEditor() {
   
   codeEditor.addEventListener('scroll', () => {
     if (window.syncScroll) window.syncScroll();
-    // Дополнительная синхронизация через RAF для плавности
-    requestAnimationFrame(() => {
-      if (window.syncScroll) window.syncScroll();
-    });
-  });
+  }, { passive: true }); // Passive для лучшей производительности
+  
   codeEditor.addEventListener('keydown', handleKeyDown);
   
   // Обработчик изменения размера с дополнительной синхронизацией
@@ -782,24 +767,13 @@ function setupEditor() {
   // Дополнительные обработчики для лучшей синхронизации
   codeEditor.addEventListener('mousewheel', () => {
     if (window.syncScroll) window.syncScroll();
-  });
+  }, { passive: true });
   codeEditor.addEventListener('wheel', () => {
     if (window.syncScroll) window.syncScroll();
-  });
+  }, { passive: true });
   codeEditor.addEventListener('touchmove', () => {
     if (window.syncScroll) window.syncScroll();
-  });
-  
-  // Периодическая проверка синхронизации (каждые 500ms)
-  setInterval(() => {
-    if (codeEditor && document.getElementById('yamlHighlight')) {
-      const yamlHighlight = document.getElementById('yamlHighlight');
-      if (Math.abs(yamlHighlight.scrollTop - codeEditor.scrollTop) > 1 ||
-          Math.abs(yamlHighlight.scrollLeft - codeEditor.scrollLeft) > 1) {
-        if (window.syncScroll) window.syncScroll();
-      }
-    }
-  }, 500);
+  }, { passive: true });
   
   // Обработка специальных клавиш
   function handleKeyDown(e) {

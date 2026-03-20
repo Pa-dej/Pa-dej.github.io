@@ -3,7 +3,7 @@
 // Полная база данных материалов Minecraft для поиска
 // ═══════════════════════════════════════════════════════════════
 
-const MATERIALS_DATABASE = [
+const FULL_MATERIALS_DATABASE = [
   { id: 'ACACIA_BOAT', name: 'Acacia Boat', icon: 'acacia-boat', tags: ['boat', 'acacia'] },
   { id: 'ACACIA_CHEST_BOAT', name: 'Acacia Boat with Chest', icon: 'acacia-chest-boat', tags: ['boat', 'acacia', 'with', 'chest'] },
   { id: 'ACACIA_BUTTON', name: 'Acacia Button', icon: 'acacia-button', tags: ['acacia', 'button'] },
@@ -3511,3 +3511,5 @@ const MATERIAL_TO_ICON = {
   'MOB-ZOMBIE-VILLAGER-FACE': 'mob-zombie-villager-face',
   'MOB-ZOMBIFIED-PIGLIN-FACE': 'mob-zombified-piglin-face'
 };
+// Экспорт для ES модулей
+export { FULL_MATERIALS_DATABASE, MATERIAL_TO_ICON };

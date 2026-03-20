@@ -1654,6 +1654,65 @@ pre.ycode {
   font-style: italic;    /* Курсив для визуального отличия */
 }
 
+/* Autocomplete popup */
+.autocomplete-popup {
+  position: fixed;
+  background: #1e1e1e;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999;
+  font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  min-width: 280px;
+  display: none;
+}
+
+.ac-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+}
+
+.ac-item:hover,
+.ac-selected {
+  background: #094771;
+  border-bottom-color: #2ED9FF;
+}
+
+.ac-label {
+  color: #d4d4d4;
+  flex: 1;
+  font-weight: 500;
+}
+
+.ac-detail {
+  color: #808080;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.ac-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  text-align: center;
+  font-size: 8px;
+  line-height: 12px;
+}
+
+/* Иконки по типу */
+.ac-object   { background: #4ec9b0; color: #000; } /* бирюзовый — объект */
+.ac-method   { background: #dcdcaa; color: #000; } /* золотой — метод */
+.ac-lifecycle{ background: #c586c0; color: #000; } /* фиолетовый — lifecycle */
+.ac-keyword  { background: #2ED9FF; color: #000; } /* синий — ключевое слово */
+
 /* Выделение выбранного виджета в Lua */
 .lua-block-selected {
   background: rgba(46, 217, 255, 0.15) !important; /* Полупрозрачный голубой фон */
