@@ -96,7 +96,11 @@ function getContext(text, cursorPos) {
   // Случай 2: просто слово — показать глобалы + ключевые слова
   const wordMatch = before.match(/(\w+)$/);
   if (wordMatch) {
-    return { type: 'global', partial: wordMatch[1] };
+    const partial = wordMatch[1];
+    // Требуем минимум 1 символ
+    if (partial.length >= 1) {
+      return { type: 'global', partial };
+    }
   }
   
   return null;
@@ -104,11 +108,13 @@ function getContext(text, cursorPos) {
 
 // Фильтрация элементов по частичному совпадению
 function filterItems(items, partial) {
-  if (!partial) return items;
+  // Требуем минимум 1 символ для показа подсказок
+  if (!partial || partial.length === 0) return [];
   
   const lowerPartial = partial.toLowerCase();
-  return items.filter(item => 
-    item.label.toLowerCase().startsWith(lowerPartial)
+  const filtered = items.filter(item => 
+    item.label.toLowerCase().startsWith(lowerPartial) ||
+    item.label.toLowerCase().includes(lowerPartial)
   ).sort((a, b) => {
     // Точные совпадения в начале
     const aExact = a.label.toLowerCase() === lowerPartial;
@@ -116,9 +122,17 @@ function filterItems(items, partial) {
     if (aExact && !bExact) return -1;
     if (!aExact && bExact) return 1;
     
+    // Совпадения с начала строки
+    const aStarts = a.label.toLowerCase().startsWith(lowerPartial);
+    const bStarts = b.label.toLowerCase().startsWith(lowerPartial);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+    
     // Затем по алфавиту
     return a.label.localeCompare(b.label);
   });
+  
+  return filtered.slice(0, 15); // Максимум 15 результатов
 }
 
 // Получение координат курсора в textarea (упрощенная версия)
@@ -170,9 +184,20 @@ function showAutocomplete(items, anchorPos) {
   currentItems = items;
   selectedIndex = 0;
   
+  // Функция для получения иконки по типу
+  function getIconForType(type) {
+    switch (type) {
+      case 'object': return '<img src="../../icons/open.svg" class="ac-icon-svg" alt="obj">';
+      case 'method': return '<img src="../../icons/function.svg" class="ac-icon-svg" alt="fn">';
+      case 'lifecycle': return '<img src="../../icons/function.svg" class="ac-icon-svg" alt="lc">';
+      case 'keyword': return '<img src="../../icons/var.svg" class="ac-icon-svg" alt="kw">';
+      default: return '<img src="../../icons/close.svg" class="ac-icon-svg" alt="?">';
+    }
+  }
+  
   autocompletePopup.innerHTML = items.map((item, i) => `
-    <div class="ac-item ${i === 0 ? 'ac-selected' : ''}" data-index="${i}">
-      <span class="ac-icon ac-${item.type}">●</span>
+    <div class="ac-item ${i === 0 ? 'ac-selected' : ''}" data-index="${i}" data-type="${item.type}">
+      <span class="ac-icon-container">${getIconForType(item.type)}</span>
       <span class="ac-label">${item.label}</span>
       <span class="ac-detail">${item.detail}</span>
     </div>
@@ -196,6 +221,8 @@ function showAutocomplete(items, anchorPos) {
 function hideAutocomplete() {
   if (autocompletePopup) {
     autocompletePopup.style.display = 'none';
+    currentItems = [];
+    selectedIndex = 0;
   }
 }
 
@@ -203,17 +230,25 @@ function hideAutocomplete() {
 function moveSelection(delta) {
   if (!currentItems.length) return;
   
+  // Убираем старое выделение
+  const oldSelected = autocompletePopup.querySelector('.ac-selected');
+  if (oldSelected) {
+    oldSelected.classList.remove('ac-selected');
+  }
+  
+  // Вычисляем новый индекс
   selectedIndex = Math.max(0, Math.min(currentItems.length - 1, selectedIndex + delta));
   
-  // Обновляем визуальное выделение
-  autocompletePopup.querySelectorAll('.ac-item').forEach((item, index) => {
-    item.classList.toggle('ac-selected', index === selectedIndex);
-  });
-  
-  // Прокручиваем к выбранному элементу
-  const selectedElement = autocompletePopup.querySelector('.ac-selected');
-  if (selectedElement) {
-    selectedElement.scrollIntoView({ block: 'nearest' });
+  // Добавляем новое выделение
+  const newSelected = autocompletePopup.querySelector(`[data-index="${selectedIndex}"]`);
+  if (newSelected) {
+    newSelected.classList.add('ac-selected');
+    
+    // Прокручиваем к выбранному элементу
+    newSelected.scrollIntoView({ 
+      block: 'nearest',
+      behavior: 'smooth'
+    });
   }
 }
 
@@ -268,10 +303,22 @@ function initAutocomplete() {
     return;
   }
   
-  // Обработчик ввода для показа автодополнения
-  codeEditor.addEventListener('input', (e) => {
+  // Проверяем, не инициализировано ли уже
+  if (codeEditor._autocompleteInitialized) {
+    console.log('Autocomplete already initialized');
+    return;
+  }
+  
+  console.log('Initializing autocomplete for code editor:', codeEditor);
+  
+  // Функция для обработки автодополнения
+  function handleAutocomplete() {
+    // Проверяем активную вкладку через DOM
+    const activeTab = document.querySelector('.editor-tab.active');
+    const isLuaTab = activeTab && activeTab.dataset.tab === 'lua';
+    
     // Только для Lua вкладки
-    if (window.ScreenGenerator && window.ScreenGenerator.currentTab !== 'lua') {
+    if (!isLuaTab) {
       hideAutocomplete();
       return;
     }
@@ -298,6 +345,52 @@ function initAutocomplete() {
     } else {
       hideAutocomplete();
     }
+  }
+  
+  // Обработчик ввода для показа автодополнения
+  codeEditor.addEventListener('input', handleAutocomplete);
+  
+  // Также обрабатываем keyup для случаев когда курсор перемещается
+  codeEditor.addEventListener('keyup', (e) => {
+    // Проверяем активную вкладку через DOM
+    const activeTab = document.querySelector('.editor-tab.active');
+    const isLuaTab = activeTab && activeTab.dataset.tab === 'lua';
+    
+    // Показываем автодополнение при нажатии Ctrl+Space
+    if (e.ctrlKey && e.code === 'Space') {
+      e.preventDefault();
+      handleAutocomplete();
+      return;
+    }
+    
+    // Только для Lua вкладки
+    if (!isLuaTab) return;
+    
+    // Проверяем, открыт ли попап автодополнения
+    const popup = document.getElementById('autocomplete-popup');
+    const isPopupOpen = popup && popup.style.display !== 'none';
+    
+    // Если попап открыт, НЕ обрабатываем навигационные клавиши
+    if (isPopupOpen && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+      return;
+    }
+    
+    // Показываем автодополнение при вводе точки
+    if (e.key === '.') {
+      setTimeout(handleAutocomplete, 10);
+      return;
+    }
+    
+    // Показываем глобальные подсказки при начале ввода
+    if (e.key.length === 1 && /[a-zA-Z_]/.test(e.key)) {
+      setTimeout(handleAutocomplete, 10);
+      return;
+    }
+    
+    // Скрываем при навигационных клавишах только если попап закрыт
+    if (!isPopupOpen && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+      hideAutocomplete();
+    }
   });
   
   // Обработчик клавиш для навигации в попапе
@@ -305,22 +398,31 @@ function initAutocomplete() {
     const popup = document.getElementById('autocomplete-popup');
     if (!popup || popup.style.display === 'none') return;
     
+    // Предотвращаем обработку стрелок редактором когда попап открыт
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         moveSelection(1);
         break;
       case 'ArrowUp':
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         moveSelection(-1);
         break;
       case 'Enter':
       case 'Tab':
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         applyCompletion(getSelectedItem());
         break;
       case 'Escape':
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         hideAutocomplete();
         break;
     }
@@ -339,21 +441,78 @@ function initAutocomplete() {
     setTimeout(hideAutocomplete, 150);
   });
   
-  console.log('Autocomplete initialized for DisplayLib Lua API');
+  // Отмечаем что автодополнение инициализировано
+  codeEditor._autocompleteInitialized = true;
 }
 
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   initAutocomplete,
   showAutocomplete,
-  hideAutocomplete
+  hideAutocomplete,
+  // Тестовая функция для отладки
+  testAutocomplete: function() {
+    console.log('=== AUTOCOMPLETE DEBUG ===');
+    const codeEditor = document.getElementById('yamlEditor');
+    console.log('Code editor found:', !!codeEditor);
+    console.log('Current tab:', window.ScreenGenerator?.currentTab);
+    console.log('Autocomplete initialized:', codeEditor?._autocompleteInitialized);
+    
+    if (codeEditor) {
+      const cursorPos = codeEditor.selectionStart;
+      const context = getContext(codeEditor.value, cursorPos);
+      console.log('Current context:', context);
+      console.log('Cursor position:', cursorPos);
+      console.log('Text before cursor:', codeEditor.value.slice(0, cursorPos));
+      
+      // Принудительно показываем автодополнение
+      if (context) {
+        let items = [];
+        if (context.type === 'member' && DL_COMPLETIONS[context.object]) {
+          items = filterItems(DL_COMPLETIONS[context.object], context.partial);
+        } else if (context.type === 'global') {
+          items = filterItems(DL_COMPLETIONS.globals, context.partial);
+        }
+        console.log('Available items:', items);
+        
+        if (items.length > 0) {
+          const coords = getCaretCoordinates(codeEditor, cursorPos);
+          console.log('Showing autocomplete at:', coords);
+          showAutocomplete(items, coords);
+        }
+      }
+    }
+    console.log('=== END DEBUG ===');
+  },
+  onTabSwitch: function(tabType) {
+    if (tabType === 'lua') {
+      // Принудительно переинициализируем автодополнение
+      setTimeout(() => {
+        const codeEditor = document.getElementById('yamlEditor');
+        if (codeEditor && !codeEditor._autocompleteInitialized) {
+          initAutocomplete();
+        }
+      }, 100);
+    } else {
+      hideAutocomplete();
+    }
+  }
 });
 
 // Автоинициализация при загрузке
+function tryInitAutocomplete() {
+  const codeEditor = document.getElementById('yamlEditor');
+  if (codeEditor) {
+    initAutocomplete();
+  } else {
+    setTimeout(tryInitAutocomplete, 500);
+  }
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initAutocomplete, 1000); // Увеличиваем задержку для полной инициализации
+    setTimeout(tryInitAutocomplete, 1000);
   });
 } else {
-  setTimeout(initAutocomplete, 1000);
+  setTimeout(tryInitAutocomplete, 1000);
 }

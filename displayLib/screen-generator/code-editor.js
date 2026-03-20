@@ -478,9 +478,6 @@ function initYamlEditor() {
       <button class="editor-tab" data-tab="lua">Lua</button>
     </div>
     <div class="yaml-editor-container">
-      <div class="yaml-editor-header">
-        <span class="yaml-hint">⚡ Изменения применяются мгновенно при корректном синтаксисе</span>
-      </div>
       <textarea id="yamlEditor" class="yaml-textarea" spellcheck="false"></textarea>
       <div id="yamlHighlight" class="yaml-highlight"></div>
     </div>
@@ -529,15 +526,18 @@ function switchTab(tabType) {
   if (tabType === 'yaml') {
     if (codeEditor) codeEditor.readOnly = false; // YAML можно редактировать
     updateYamlContent();
-    document.querySelector('.yaml-hint').textContent = '⚡ Изменения применяются мгновенно при корректном синтаксисе';
   } else if (tabType === 'lua') {
     if (codeEditor) codeEditor.readOnly = false; // Lua тоже можно редактировать
     updateLuaContent();
-    document.querySelector('.yaml-hint').textContent = '🔧 Редактируемый Lua код для DisplayLib';
   }
   
   // Обновляем подсветку
   if (window.updateHighlight) window.updateHighlight();
+  
+  // Уведомляем автодополнение о смене вкладки
+  if (window.ScreenGenerator && window.ScreenGenerator.onTabSwitch) {
+    window.ScreenGenerator.onTabSwitch(tabType);
+  }
 }
 function setupEditor() {
   codeEditor = document.getElementById('yamlEditor');
@@ -656,30 +656,6 @@ function setupEditor() {
         yamlHighlight.innerHTML = highlightYaml(text);
       } else if (currentTab === 'lua') {
         yamlHighlight.innerHTML = highlightLua(text);
-      }
-      
-      // Добавляем индикатор валидности (только для YAML)
-      if (isValid !== null && currentTab === 'yaml') {
-        const indicator = document.querySelector('.yaml-hint');
-        if (indicator) {
-          if (isValid) {
-            indicator.innerHTML = '✅ Синтаксис корректен - изменения применены';
-            indicator.style.color = 'var(--accent3, #4ade80)';
-          } else {
-            indicator.innerHTML = '❌ Ошибка синтаксиса - используется последняя валидная версия';
-            indicator.style.color = '#ef4444';
-          }
-          
-          // Сбрасываем индикатор через 2 секунды
-          setTimeout(() => {
-            if (currentTab === 'yaml') {
-              indicator.innerHTML = '⚡ Изменения применяются мгновенно при корректном синтаксисе';
-            } else {
-              indicator.innerHTML = '🔧 Редактируемый Lua код для DisplayLib';
-            }
-            indicator.style.color = '';
-          }, 2000);
-        }
       }
     }
     

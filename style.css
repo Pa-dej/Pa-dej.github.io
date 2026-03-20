@@ -1448,32 +1448,12 @@ pre.ycode {
   line-height: 1.4;
 }
 
-.yaml-editor-header {
+.yaml-textarea {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 24px;
-  background: #374151; /* Темно-серый фон заголовка */
-  border-bottom: 1px solid #4b5563; /* Серая граница */
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  z-index: 3;
-}
-
-.yaml-hint {
-  font-size: 10px;
-  color: #9ca3af; /* Серый текст подсказки */
-  opacity: 0.8;
-}
-
-.yaml-textarea {
-  position: absolute;
-  top: 25px;
-  left: 0;
   width: 100%;
-  height: calc(100% - 25px);
+  height: 100%;
   padding: 8px 12px;
   margin: 0;
   border: none;
@@ -1502,10 +1482,10 @@ pre.ycode {
 
 .yaml-highlight {
   position: absolute;
-  top: 25px;
+  top: 0;
   left: 0;
   width: 100%;
-  height: calc(100% - 25px);
+  height: 100%;
   padding: 8px 12px;
   margin: 0;
   border: none;
@@ -1654,64 +1634,120 @@ pre.ycode {
   font-style: italic;    /* Курсив для визуального отличия */
 }
 
-/* Autocomplete popup */
+/* Autocomplete popup в стиле VS Code */
 .autocomplete-popup {
   position: fixed;
-  background: #1e1e1e;
-  border: 1px solid #454545;
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-  max-height: 200px;
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  max-height: 300px;
   overflow-y: auto;
   z-index: 9999;
   font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 13px;
-  min-width: 280px;
+  min-width: 350px;
   display: none;
+  padding: 4px;
 }
 
 .ac-item {
   display: flex;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 8px 12px;
   cursor: pointer;
   align-items: center;
-  border-bottom: 1px solid transparent;
+  border-radius: 4px;
+  margin: 1px 0;
+  transition: background-color 0.1s ease;
 }
 
-.ac-item:hover,
+.ac-item:hover {
+  background: #2a2d2e;
+}
+
 .ac-selected {
-  background: #094771;
-  border-bottom-color: #2ED9FF;
+  background: #094771 !important;
+}
+
+.ac-icon-container {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ac-icon-svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+
+/* Иконки по типу - цветные фильтры */
+.ac-item[data-type="object"] .ac-icon-svg {
+  filter: brightness(0) saturate(100%) invert(69%) sepia(61%) saturate(2159%) hue-rotate(166deg) brightness(91%) contrast(101%);
+}
+
+.ac-item[data-type="method"] .ac-icon-svg {
+  filter: brightness(0) saturate(100%) invert(85%) sepia(46%) saturate(959%) hue-rotate(314deg) brightness(108%) contrast(92%);
+}
+
+.ac-item[data-type="lifecycle"] .ac-icon-svg {
+  filter: brightness(0) saturate(100%) invert(69%) sepia(25%) saturate(1275%) hue-rotate(244deg) brightness(93%) contrast(87%);
+}
+
+.ac-item[data-type="keyword"] .ac-icon-svg {
+  filter: brightness(0) saturate(100%) invert(47%) sepia(96%) saturate(1515%) hue-rotate(190deg) brightness(103%) contrast(101%);
 }
 
 .ac-label {
-  color: #d4d4d4;
+  color: #cccccc;
   flex: 1;
+  font-weight: 400;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.ac-selected .ac-label {
+  color: #ffffff;
   font-weight: 500;
 }
 
 .ac-detail {
-  color: #808080;
-  font-size: 11px;
-  font-style: italic;
+  color: #858585;
+  font-size: 12px;
+  font-style: normal;
+  opacity: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
-.ac-icon {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  display: inline-block;
-  text-align: center;
-  font-size: 8px;
-  line-height: 12px;
+.ac-selected .ac-detail {
+  color: #b3d9ff;
 }
 
-/* Иконки по типу */
-.ac-object   { background: #4ec9b0; color: #000; } /* бирюзовый — объект */
-.ac-method   { background: #dcdcaa; color: #000; } /* золотой — метод */
-.ac-lifecycle{ background: #c586c0; color: #000; } /* фиолетовый — lifecycle */
-.ac-keyword  { background: #2ED9FF; color: #000; } /* синий — ключевое слово */
+/* Скроллбар в стиле VS Code */
+.autocomplete-popup::-webkit-scrollbar {
+  width: 10px;
+}
+
+.autocomplete-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.autocomplete-popup::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+  border: 2px solid #252526;
+}
+
+.autocomplete-popup::-webkit-scrollbar-thumb:hover {
+  background: #4f4f4f;
+}
 
 /* Выделение выбранного виджета в Lua */
 .lua-block-selected {
