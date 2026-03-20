@@ -79,7 +79,20 @@ function plainYaml(){
 }
 
 function doCopy(){
-  navigator.clipboard.writeText(plainYaml()).then(()=>{
+  // Копируем содержимое активной вкладки
+  let textToCopy;
+  if (window.ScreenGenerator.getCurrentTabContent) {
+    textToCopy = window.ScreenGenerator.getCurrentTabContent();
+  } else {
+    // Fallback для совместимости
+    if (window.ScreenGenerator.currentTab === 'lua') {
+      textToCopy = window.ScreenGenerator.generateLua();
+    } else {
+      textToCopy = plainYaml();
+    }
+  }
+  
+  navigator.clipboard.writeText(textToCopy).then(()=>{
     ['btnCopy','btnCopy2'].forEach(id=>{
       const b=document.getElementById(id);const o=b.textContent;
       b.textContent='✓ Скопировано!';setTimeout(()=>b.textContent=o,1600);

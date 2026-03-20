@@ -1577,6 +1577,92 @@ pre.ycode {
   padding-right: 12px !important; /* Добавляем отступ справа */
 }
 
+/* Editor Tabs */
+.editor-tabs {
+  display: flex;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.editor-tab {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.editor-tab:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.editor-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--bg);
+}
+
+/* Lua Syntax Highlighting - Ray Theme */
+.lk { 
+  color: #2ED9FF; /* Голубой для ключевых слов */
+}
+
+.ls { 
+  color: #9DD8EB; /* Светло-голубой для строк */
+}
+
+.ln { 
+  color: #9984EE; /* Фиолетовый для чисел */
+}
+
+.lf { 
+  color: #1AD6B5; /* Зеленый для функций */
+}
+
+.lpr { 
+  color: #008BB7; /* Синий для свойств */
+}
+
+.lp { 
+  color: #2ED9FF; /* Голубой для пунктуации */
+}
+
+.lc { 
+  color: #6C808B; /* Серый для комментариев */
+}
+
+/* DisplayLib API objects: player, screen, widget, storage, timer, log */
+.la { 
+  color: #4ec9b0; /* Бирюзовый — как типы в VS Code */
+}
+
+/* DisplayLib API methods: .name(), .health(), .widget() и т.д. */
+.lm { 
+  color: #dcdcaa; /* Золотистый — как вызовы функций в VS Code */
+}
+
+/* DisplayLib lifecycle: on_open, on_close */
+.ll {
+  color: #c586c0;        /* Фиолетовый — как специальные методы */
+  font-style: italic;    /* Курсив для визуального отличия */
+}
+
+/* Выделение выбранного виджета в Lua */
+.lua-block-selected {
+  background: rgba(46, 217, 255, 0.15) !important; /* Полупрозрачный голубой фон */
+  border-left: 3px solid #2ED9FF !important; /* Голубая полоска слева */
+  padding-left: 9px !important; /* Компенсируем ширину полоски */
+  margin-left: -12px !important; /* Выравниваем с остальным текстом */
+  padding-right: 12px !important; /* Добавляем отступ справа */
+}
+
 .litem {
   padding: 4px 7px;
   border-radius: 5px;
