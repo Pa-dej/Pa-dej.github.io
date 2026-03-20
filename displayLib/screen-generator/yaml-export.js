@@ -31,6 +31,7 @@ function plainYaml(){
   const sid=document.getElementById('screenId').value||'my_screen';
   const L=[];
   L.push(`id: ${sid}`);
+  
   if(background){
     const {r,g,b}=hexRgb(background.colorHex);
     L.push(`background:`);
@@ -43,6 +44,14 @@ function plainYaml(){
     L.push(`  translation: [${fn(background.transX)}, ${fn(background.transY)}, ${fn(background.transZ||0)}]`);
     L.push(`  text: " "`);
   }
+  
+  // Проверяем нужна ли секция scripts
+  const needsScript = widgets.some(w => w.onClick === 'RUN_SCRIPT');
+  if (needsScript) {
+    L.push(`scripts:`);
+    L.push(`  file: "${sid}.lua"`);
+  }
+  
   if(widgets.length>0){
     L.push(`widgets:`);
     for(const w of widgets){
@@ -73,6 +82,15 @@ function plainYaml(){
       L.push(`    tolerance: [${w.tolerance[0]}, ${w.tolerance[1]}]`);
       L.push(`    onClick:`);
       L.push(`      action: ${w.onClick}`);
+      
+      // Добавляем дополнительные поля в зависимости от типа действия
+      if (w.onClick === 'RUN_SCRIPT') {
+        const funcName = w.clickFunction || `${w.id}_click`;
+        L.push(`      function: "${funcName}"`);
+      } else if (w.onClick === 'SWITCH_SCREEN') {
+        const target = w.switchTarget || 'target_screen_id';
+        L.push(`      target: ${target}`);
+      }
     }
   }
   return L.join('\n');

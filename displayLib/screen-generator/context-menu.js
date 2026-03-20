@@ -27,6 +27,9 @@ function initContextMenu() {
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
       
+      // Обновляем редактор (YAML и Lua)
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml === 'function') window.ScreenGenerator.updateYaml();
+      
       // Сохраняем в историю
       if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
         window.ScreenGenerator.saveState(`Duplicate ${w.type} (${c.id})`);
@@ -56,6 +59,9 @@ function initContextMenu() {
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateAddBgButton === 'function') window.ScreenGenerator.updateAddBgButton();
+    
+    // Обновляем редактор (YAML и Lua)
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml === 'function') window.ScreenGenerator.updateYaml();
     
     // Сохраняем в историю
     if (deletedItem && window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {

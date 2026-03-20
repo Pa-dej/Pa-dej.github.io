@@ -25,6 +25,8 @@ function addWidget(type,mat,x=0,y=0){
     h: isText ? 0.25 : 1,  // TEXT_BUTTON: 0.25 (scale=[1,1,1]), ITEM_BUTTON: 1
     color:isText?'#2a4d6e':matCol(mat),
     onClick: isText ? 'NONE' : 'CLOSE_SCREEN', // TEXT_BUTTON: NONE, ITEM_BUTTON: CLOSE_SCREEN
+    clickFunction: '', // Имя функции для RUN_SCRIPT
+    switchTarget: '', // Целевой экран для SWITCH_SCREEN
     tolerance:[0.15,0.15]
   };
   
@@ -46,6 +48,9 @@ function addWidget(type,mat,x=0,y=0){
   
   if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
   if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+  
+  // Обновляем редактор (YAML и Lua)
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml === 'function') window.ScreenGenerator.updateYaml();
   
   // Сохраняем в историю
   if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
@@ -122,6 +127,9 @@ document.getElementById('btnClear').addEventListener('click',()=>{
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
     updateAddBgButton();
+    
+    // Обновляем редактор (YAML и Lua)
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml === 'function') window.ScreenGenerator.updateYaml();
     
     // Сохраняем в историю
     if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {

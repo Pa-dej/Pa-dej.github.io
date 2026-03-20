@@ -876,13 +876,9 @@ function updateLuaContent() {
   // Сохраняем позицию скролла
   const scrollTop = codeEditor.scrollTop;
   
-  // Если у нас уже есть сохраненный Lua код, используем его
-  let luaCode = tabContents.lua;
-  if (!luaCode) {
-    // Генерируем Lua код из текущего состояния canvas
-    luaCode = window.ScreenGenerator.generateLua();
-    tabContents.lua = luaCode;
-  }
+  // ВСЕГДА регенерируем Lua код из текущего состояния canvas
+  const luaCode = window.ScreenGenerator.generateLua();
+  tabContents.lua = luaCode; // Обновляем кэш
   
   codeEditor.value = luaCode;
   

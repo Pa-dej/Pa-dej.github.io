@@ -69,7 +69,7 @@ const MATS = [
   'COMPASS', 'CLOCK', 'SPYGLASS', 'MAP', 'FILLED_MAP', 'RECOVERY_COMPASS'
 ];
 
-const ACTS=['CLOSE_SCREEN','OPEN_MENU','RUN_COMMAND','SEND_CHAT','PLAY_SOUND','RUN_SCRIPT','SWITCH_SCREEN','NONE'];
+const ACTS=['NONE','CLOSE_SCREEN','SWITCH_SCREEN','RUN_SCRIPT'];
 
 // Утилиты для создания элементов формы
 const row=(lbl,inp)=>`<div class="prow"><div class="plabel">${lbl}</div>${inp}</div>`;
@@ -345,6 +345,14 @@ function renderWProps(p,w){
       <div class="pgtitle">onClick</div>
       <div class="pgbody">
         ${row('action', selIn('w_act',w.onClick,ACTS))}
+        ${w.onClick === 'RUN_SCRIPT' ? row('function', txtIn('w_func', w.clickFunction || `${w.id}_click`)) : ''}
+        ${w.onClick === 'SWITCH_SCREEN' ? row('target', txtIn('w_target', w.switchTarget || 'target_screen_id')) : ''}
+        <div class="phint">
+          ${w.onClick === 'NONE' ? '<span class="ok">Кнопка не выполняет действий</span>' : ''}
+          ${w.onClick === 'CLOSE_SCREEN' ? '<span class="ok">Закрывает текущий экран</span>' : ''}
+          ${w.onClick === 'SWITCH_SCREEN' ? '<span class="wa">Переключает на другой экран</span>' : ''}
+          ${w.onClick === 'RUN_SCRIPT' ? '<span class="hl">Требует Lua скрипт и секцию scripts: в YAML</span>' : ''}
+        </div>
       </div>
     </div>`;
 
@@ -391,7 +399,24 @@ function renderWProps(p,w){
   bind('w_tz',v=>{w.transZ=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
   bind('w_w',v=>{w.w=Math.max(0.125,parseFloat(v)||1);if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
   bind('w_h',v=>{w.h=Math.max(0.125,parseFloat(v)||1);if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();updateProps();});
-  bind('w_act',v=>{w.onClick=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
+  bind('w_act',v=>{
+    w.onClick=v;
+    // Обновляем интерфейс при смене действия
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateProps==='function')window.ScreenGenerator.updateProps();
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    // Обновляем Lua контент при изменении onClick
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateLuaContent==='function')window.ScreenGenerator.updateLuaContent();
+  });
+  bind('w_func',v=>{
+    w.clickFunction=v;
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    // Обновляем Lua контент при изменении имени функции
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateLuaContent==='function')window.ScreenGenerator.updateLuaContent();
+  });
+  bind('w_target',v=>{
+    w.switchTarget=v;
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+  });
   bind('w_tolH',v=>{w.tolerance[0]=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
   bind('w_tolV',v=>{w.tolerance[1]=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
 }
