@@ -75,6 +75,11 @@ const ACTS=['NONE','CLOSE_SCREEN','SWITCH_SCREEN','RUN_SCRIPT'];
 const row=(lbl,inp)=>`<div class="prow"><div class="plabel">${lbl}</div>${inp}</div>`;
 const numIn=(id,v,step=0.05,min='')=>`<input class="pinput" type="number" id="${id}" value="${typeof v==='number'?+v.toFixed(4):v}" step="${step}" ${min!==''?`min="${min}"`:''}  >`;
 const txtIn=(id,v)=>`<input class="pinput" type="text" id="${id}" value="${v}">`;
+const txtAreaIn=(id,v)=>{
+  // Экранируем HTML и заменяем \n на \\n для отображения в textarea
+  const escaped = (v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return `<textarea class="pinput ptextarea" id="${id}" rows="3" placeholder="Введите текст. Используйте \\n для переноса строк">${escaped}</textarea>`;
+};
 const selIn=(id,v,opts)=>`<select class="pselect" id="${id}">${opts.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`;
 const colIn=(id,v)=>`<input class="pinput" type="color" id="${id}" value="${v}">`;
 const bind=(id,fn)=>{
@@ -256,7 +261,7 @@ function renderWProps(p,w){
   
   // Дополнительные поля для TEXT_BUTTON
   const textFields = isText ? `
-    ${row('Текст',txtIn('w_txt',w.text))}
+    ${row('Текст',txtAreaIn('w_txt',w.text))}
     ${row('Hover текст',txtIn('w_hover',w.hoveredText||''))}
     ${row('Цвет BG',colIn('w_col',w.color))}
   ` : '';
@@ -366,7 +371,12 @@ function renderWProps(p,w){
     }, 50);
   }
   if(isText){
-    bind('w_txt',v=>{w.text=v;w.label=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
+    bind('w_txt',v=>{
+      // Текст уже приходит правильно из textarea (с реальными \n)
+      w.text = v;
+      w.label = v.replace(/\n/g, ' '); // Для label убираем переносы
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();
+    });
     bind('w_hover',v=>{w.hoveredText=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
     bind('w_col',v=>{w.color=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
     

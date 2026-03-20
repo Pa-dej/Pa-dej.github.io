@@ -112,9 +112,13 @@ function parseWidgetProperty(line, widget) {
   } else if (line.startsWith('material:')) {
     widget.material = line.split(':')[1].trim();
   } else if (line.startsWith('text:')) {
-    widget.text = line.split(':')[1].trim().replace(/"/g, '');
+    // Извлекаем текст и заменяем \n на реальные переносы строк
+    const textValue = line.split(':')[1].trim().replace(/"/g, '');
+    widget.text = textValue.replace(/\\n/g, '\n');
   } else if (line.startsWith('hoveredText:')) {
-    widget.hoveredText = line.split(':')[1].trim().replace(/"/g, '');
+    // Аналогично для hoveredText
+    const hoverValue = line.split(':')[1].trim().replace(/"/g, '');
+    widget.hoveredText = hoverValue.replace(/\\n/g, '\n');
   } else if (line.startsWith('backgroundColor:')) {
     const colorMatch = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);
     if (colorMatch) {

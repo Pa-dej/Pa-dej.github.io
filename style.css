@@ -1321,6 +1321,13 @@ body.displaylib-body .pright {
   border-color: var(--accent);
 }
 
+.ptextarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  line-height: 1.4;
+}
+
 .pinput[type=number] {
   -moz-appearance: textfield; /* Убираем стрелки в Firefox */
 }

@@ -60,8 +60,13 @@ function plainYaml(){
       L.push(`    type: ${w.type}`);
       if(!isText&&w.material) L.push(`    material: ${w.material}`);
       if(isText){
-        L.push(`    text: "${w.text}"`);
-        if(w.hoveredText) L.push(`    hoveredText: "${w.hoveredText}"`);
+        // Заменяем реальные переносы строк на \n для YAML
+        const escapedText = (w.text || '').replace(/\n/g, '\\n');
+        L.push(`    text: "${escapedText}"`);
+        if(w.hoveredText) {
+          const escapedHover = (w.hoveredText || '').replace(/\n/g, '\\n');
+          L.push(`    hoveredText: "${escapedHover}"`);
+        }
         L.push(`    scale: [${fn(w.w*8)}, ${fn(w.h*4)}, 1]`);
       } else {
         L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, ${fn(w.w)}]`);
