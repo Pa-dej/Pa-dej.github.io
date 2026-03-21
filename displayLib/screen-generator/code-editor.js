@@ -23,6 +23,38 @@ let tabContents = {
 // 1. YAML SYNTAX HIGHLIGHTING
 // ═══════════════════════════════════════════════════════════════
 
+// Функция для поиска начала комментария (игнорируя # внутри кавычек)
+function findCommentStart(line) {
+  let inQuotes = false;
+  let quoteChar = null;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true;
+      quoteChar = char;
+    } else if (inQuotes && char === quoteChar) {
+      // Проверяем, не экранирована ли кавычка
+      let escaped = false;
+      let backslashCount = 0;
+      for (let j = i - 1; j >= 0 && line[j] === '\\'; j--) {
+        backslashCount++;
+      }
+      escaped = backslashCount % 2 === 1;
+      
+      if (!escaped) {
+        inQuotes = false;
+        quoteChar = null;
+      }
+    } else if (!inQuotes && char === '#') {
+      return i;
+    }
+  }
+  
+  return -1; // Комментарий не найден
+}
+
 // Подсветка синтаксиса с выделением блоков виджетов
 function highlightYaml(text) {
   const { selectedId } = window.ScreenGenerator || {};
@@ -97,12 +129,12 @@ function highlightYaml(text) {
     // Обрабатываем строку
     let processedLine = line;
     if (line.trim()) {
-      // Inline комментарии
+      // Inline комментарии - но только если # не внутри кавычек
       if (line.includes('#')) {
-        const parts = line.split('#');
-        if (parts.length > 1) {
-          const beforeComment = parts[0];
-          const comment = '#' + parts.slice(1).join('#');
+        const commentIndex = findCommentStart(line);
+        if (commentIndex !== -1) {
+          const beforeComment = line.substring(0, commentIndex);
+          const comment = line.substring(commentIndex);
           processedLine = processYamlLine(beforeComment) + '<span class="yc">' + comment + '</span>';
         } else {
           processedLine = processYamlLine(line);

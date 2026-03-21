@@ -7,19 +7,18 @@
 // Используем правильные соотношения и размеры
 // ═══════════════════════════════════════════════════════════════
 function loadDemo(){
-  // Фон из нового YAML конфига
+  // Фон из YAML конфига
   window.ScreenGenerator.background={
-    w: 32.0,     // scale: [32.0, 12.0, 1]
-    h: 12.0,     
-    colorHex: '#0d1117',  // color: [13, 17, 23]
+    w: 4,        // 32.0/8 = 4
+    h: 3,        // 12.0/4 = 3  
+    colorHex: '#0d1117',  // [13, 17, 23]
     alpha: 180,
-    posX: 0.0,   // position: [0.0, 0.0, 0]
+    posX: 0.0,
     posY: 0.0,
-    transX: 0.0, // translation: [0.0, -1.5, 0.0]
+    transX: 0.0,
     transY: -1.5,
     transZ: 0.0,
-    locked: true,
-    text: " "    // text: " "
+    locked: true  // Заблокирован по умолчанию
   };
   
   window.ScreenGenerator.widgets=[
@@ -30,56 +29,56 @@ function loadDemo(){
       material: 'BARRIER',
       label: '',
       text: '',
-      x: 1.8438,   // position: [1.8438, 1.3438, 0]
-      y: 1.3438,
-      transX: 0.0,  // translation: [0.0, 0.0, 0.0]
+      x: 1.75,
+      y: 1.25,
+      transX: 0.0,
       transY: 0.0,
       transZ: 0.0,
-      w: 0.25,      // scale: [0.25, 0.25, 0.25]
-      h: 0.25,
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
       color: '#cc3333',
       onClick: 'CLOSE_SCREEN',
-      tolerance: [0.1, 0.1]  // tolerance: [0.1, 0.1]
+      tolerance: [0.2, 0.2]
     },
-    // widget_12 - TEXT_BUTTON с цветным текстом
+    // widget_12 - TEXT_BUTTON с правильными размерами
     {
       id: 'widget_12',
       type: 'TEXT_BUTTON',
       material: '',
-      label: 'Colored text example',
-      text: [{text: "red", color: "red"}, {text: " "}, {text: "green", color: "green"}, {text: " "}, {text: "blue", color: "blue"}],
+      label: 'Example text',
+      text: 'Example text',
       alignment: 'LEFT',
       hoveredText: 'Example!',
-      x: 0.0,       // position: [0.0, 0.8125, 0]
-      y: 0.8125,
-      transX: 0.0,  // translation: [0.0, -0.125, 0.001]
-      transY: -0.125,
-      transZ: 0.001,
-      w: 1.0,       // scale: [1.0, 1.0, 1]
-      h: 1.0,
+      x: 0.0,
+      y: 1.0,
+      transX: 0.0,
+      transY: -0.5,
+      transZ: 0.001,  // Смещение по Z для текстовых кнопок
+      w: 0.125,    // 1.0/8 = 0.125
+      h: 0.25,     // 1.0/4 = 0.25
       color: '#2a3c50',
-      backgroundColor: [40, 60, 80],  // backgroundColor: [40, 60, 80]
-      backgroundAlpha: 0,             // backgroundAlpha: 0
+      backgroundColor: [40, 60, 80],
+      backgroundAlpha: 0,
       onClick: 'NONE',
-      tolerance: [0, 0]  // tolerance: [0, 0]
+      tolerance: [0.15, 0.15]
     },
-    // widget_13 - REDSTONE
+    // widget_13 - DIAMOND
     {
       id: 'widget_13',
       type: 'ITEM_BUTTON',
-      material: 'REDSTONE',
+      material: 'DIAMOND',
       label: '',
       text: '',
-      x: -0.5,      // position: [-0.5, 0.0, 0]
+      x: -0.5,
       y: 0.0,
-      transX: 0.0,  // translation: [0.0, 0.0, 0.0]
+      transX: 0.0,
       transY: 0.0,
       transZ: 0.0,
-      w: 0.5,       // scale: [0.5, 0.5, 0.5]
-      h: 0.5,
-      color: '#cc3333',
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
+      color: '#44ddcc',
       onClick: 'NONE',
-      tolerance: [0.2, 0.2]  // tolerance: [0.2, 0.2]
+      tolerance: [0.2, 0.2]
     },
     // widget_14 - EMERALD
     {
@@ -88,34 +87,34 @@ function loadDemo(){
       material: 'EMERALD',
       label: '',
       text: '',
-      x: 0.0,       // position: [0.0, 0.0, 0]
+      x: 0.0,
       y: 0.0,
-      transX: 0.0,  // translation: [0.0, 0.0, 0.0]
+      transX: 0.0,
       transY: 0.0,
       transZ: 0.0,
-      w: 0.5,       // scale: [0.5, 0.5, 0.5]
-      h: 0.5,
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
       color: '#00cc55',
       onClick: 'NONE',
-      tolerance: [0.2, 0.2]  // tolerance: [0.2, 0.2]
+      tolerance: [0.2, 0.2]
     },
-    // widget_15 - LAPIS_LAZULI
+    // widget_15 - GOLD_INGOT
     {
       id: 'widget_15',
       type: 'ITEM_BUTTON',
-      material: 'LAPIS_LAZULI',
+      material: 'GOLD_INGOT',
       label: '',
       text: '',
-      x: 0.5,       // position: [0.5, 0.0, 0]
+      x: 0.5,
       y: 0.0,
-      transX: 0.0,  // translation: [0.0, 0.0, 0.0]
+      transX: 0.0,
       transY: 0.0,
       transZ: 0.0,
-      w: 0.5,       // scale: [0.5, 0.5, 0.5]
-      h: 0.5,
-      color: '#3366cc',
+      w: 0.5,      // 0.5/1 = 0.5
+      h: 0.5,      // 0.5/1 = 0.5
+      color: '#ddaa00',
       onClick: 'NONE',
-      tolerance: [0.2, 0.2]  // tolerance: [0.2, 0.2]
+      tolerance: [0.2, 0.2]
     }
   ];
   
