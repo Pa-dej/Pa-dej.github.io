@@ -1578,6 +1578,21 @@ pre.ycode {
   color: #a2bfcd; /* Светло-голубой для эмодзи */
 }
 
+/* JSON Syntax Highlighting */
+.yj { 
+  color: #a2bfcd; /* Базовый цвет для JSON блоков */
+}
+
+.yp { 
+  color: #5fb3d4; /* Голубой для скобок и запятых в JSON */
+  font-weight: 500;
+}
+
+.yh { 
+  color: #ff6b6b; /* Красноватый для hex цветов */
+  font-weight: 500;
+}
+
 /* Выделение выбранного виджета в YAML */
 .yaml-block-selected {
   display: block !important;

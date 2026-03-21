@@ -191,19 +191,104 @@ function processYamlKeyValue(line) {
 
 // Обработка значений в стиле VS Code
 function processYamlValue(value) {
-  return value
-    // Строки в кавычках (светло-синие)
-    .replace(/(".*?")/g, '<span class="ys">$1</span>')
-    // Булевые значения (фиолетовые)
-    .replace(/(\s+)(true|false|null)(\s*$)/g, '$1<span class="yb">$2</span>$3')
-    // Числовые массивы [1.0, 2.0, 3.0] (синие)
-    .replace(/(\[[\d\s,.-]+\])/g, '<span class="yn">$1</span>')
-    // Отдельные числа (синие)
-    .replace(/(\s+)(\d+(?:\.\d+)?)(\s*)$/g, '$1<span class="yn">$2</span>$3')
-    // Значения типов и действий (синие)
-    .replace(/(\s+)([A-Z][A-Z_]*[A-Z]|NONE|CLOSE_SCREEN|SWITCH_SCREEN)(\s*)$/g, '$1<span class="yv">$2</span>$3')
-    // Эмодзи и специальные символы (зеленые)
-    .replace(/(\s*)([🎮⏺🔒])/g, '$1<span class="ye">$2</span>');
+  // Проверяем, содержит ли значение JSON массив
+  const hasJsonArray = /\[[\s\S]*?\{[\s\S]*?\}[\s\S]*?\]/.test(value);
+  
+  if (hasJsonArray) {
+    // Обрабатываем как JSON блок с токенизацией
+    return value.replace(/(\[[\s\S]*?\{[\s\S]*?\}[\s\S]*?\])/g, (match, jsonArray) => {
+      return tokenizeJson(jsonArray);
+    });
+  } else {
+    // Обычная обработка YAML значений
+    return value
+      // Строки в кавычках (светло-синие)
+      .replace(/(".*?")/g, '<span class="ys">$1</span>')
+      // Булевые значения (фиолетовые)
+      .replace(/(\s+)(true|false|null)(\s*$)/g, '$1<span class="yb">$2</span>$3')
+      // Числовые массивы [1.0, 2.0, 3.0] (синие)
+      .replace(/(\[[\d\s,.-]+\])/g, '<span class="yn">$1</span>')
+      // Отдельные числа (синие)
+      .replace(/(\s+)(\d+(?:\.\d+)?)(\s*)$/g, '$1<span class="yn">$2</span>$3')
+      // Значения типов и действий (синие)
+      .replace(/(\s+)([A-Z][A-Z_]*[A-Z]|NONE|CLOSE_SCREEN|SWITCH_SCREEN)(\s*)$/g, '$1<span class="yv">$2</span>$3')
+      // Эмодзи и специальные символы (зеленые)
+      .replace(/(\s*)([🎮⏺🔒])/g, '$1<span class="ye">$2</span>');
+  }
+}
+
+function tokenizeJson(code) {
+  let result = '';
+  let i = 0;
+  
+  while (i < code.length) {
+    // Пропускаем пробелы
+    if (/\s/.test(code[i])) {
+      result += code[i];
+      i++;
+      continue;
+    }
+    
+    // Строки в кавычках
+    if (code[i] === '"') {
+      let str = '"';
+      i++;
+      while (i < code.length && code[i] !== '"') {
+        if (code[i] === '\\' && i + 1 < code.length) { 
+          str += code[i]; 
+          i++; 
+          str += code[i]; 
+          i++; 
+        } else {
+          str += code[i]; 
+          i++;
+        }
+      }
+      if (i < code.length) {
+        str += '"'; 
+        i++;
+      }
+      
+      // Проверяем, является ли это ключом (после строки идет двоеточие)
+      let j = i;
+      while (j < code.length && /\s/.test(code[j])) j++;
+      if (j < code.length && code[j] === ':') {
+        result += `<span class="yk">${str}</span>`;
+      } else {
+        result += `<span class="ys">${str}</span>`;
+      }
+      continue;
+    }
+    
+    // Hex цвета
+    if (code[i] === '#' && i + 1 < code.length) {
+      let hex = '#';
+      i++;
+      while (i < code.length && /[0-9a-fA-F]/.test(code[i])) {
+        hex += code[i];
+        i++;
+      }
+      if (hex.length === 4 || hex.length === 7) {
+        result += `<span class="yh">${hex}</span>`;
+      } else {
+        result += hex;
+      }
+      continue;
+    }
+    
+    // Скобки и пунктуация
+    if ('{}[],:'.includes(code[i])) {
+      result += `<span class="yp">${code[i]}</span>`;
+      i++;
+      continue;
+    }
+    
+    // Всё остальное
+    result += code[i];
+    i++;
+  }
+  
+  return result;
 }
 
 // ═══════════════════════════════════════════════════════════════
