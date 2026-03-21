@@ -1422,7 +1422,7 @@ body.displaylib-body .pright {
 
 .yaml-container .ybody {
   flex: 1;
-  overflow: hidden !important;
+  overflow: auto !important;
   background: var(--bg);
   position: relative;
   display: flex;
@@ -1581,15 +1581,24 @@ pre.ycode {
 
 /* Выделение выбранного виджета в YAML */
 .yaml-block-selected {
-  display: inline-block !important;
-  background: rgba(95, 179, 212, 0.15) !important; /* Полупрозрачный голубой фон */
+  display: block !important;
   border-left: 3px solid #5fb3d4 !important; /* Голубая полоска слева */
   padding-left: 9px !important; /* Компенсируем ширину полоски */
   margin-left: -12px !important; /* Выравниваем с остальным текстом */
-  padding-right: 12px !important; /* Добавляем отступ справа */
   white-space: pre !important; /* Сохраняем форматирование */
-  width: 100% !important; /* Занимаем всю ширину */
-  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.yaml-block-selected::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -12px !important;
+  right: -9999px !important; /* Растягиваем далеко вправо */
+  bottom: 0 !important;
+  background: rgba(95, 179, 212, 0.15) !important; /* Полупрозрачный голубой фон */
+  z-index: -1 !important;
 }
 
 /* Editor Tabs */
@@ -1787,11 +1796,23 @@ pre.ycode {
 
 /* Выделение выбранного виджета в Lua */
 .lua-block-selected {
-  background: rgba(46, 217, 255, 0.15) !important; /* Полупрозрачный голубой фон */
+  display: block !important; /* Занимаем всю ширину строки */
   border-left: 3px solid #2ED9FF !important; /* Голубая полоска слева */
   padding-left: 9px !important; /* Компенсируем ширину полоски */
   margin-left: -12px !important; /* Выравниваем с остальным текстом */
-  padding-right: 12px !important; /* Добавляем отступ справа */
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.lua-block-selected::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -12px !important;
+  right: -9999px !important; /* Растягиваем далеко вправо */
+  bottom: 0 !important;
+  background: rgba(46, 217, 255, 0.15) !important; /* Полупрозрачный голубой фон */
+  z-index: -1 !important;
 }
 
 .litem {
