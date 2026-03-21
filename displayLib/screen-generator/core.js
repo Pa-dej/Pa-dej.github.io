@@ -104,7 +104,6 @@ function parseColoredText(textInput) {
             .replace(/(\w+):/g, '"$1":')  // Добавляем кавычки к ключам
             .replace(/:\s*([^",\[\]{}]+)(?=[,\]}])/g, ': "$1"'); // Добавляем кавычки к значениям
           
-          console.log('Trying to fix JSON:', trimmed, '->', fixedJson);
           const parsed = JSON.parse(fixedJson);
           return parsed.map(part => ({
             text: part.text || '',
