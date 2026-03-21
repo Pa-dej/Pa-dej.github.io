@@ -16,12 +16,19 @@ function initMaterialSearchForWidget(id, widget) {
   let searchTimeout;
   
   // Управление классом focused для правильной обводки
-  searchInput.addEventListener('focus', (e) => {
+  searchInput.addEventListener('focus', async (e) => {
     if (inputGroup) inputGroup.classList.add('focused');
     
     if (e.target.value.trim().length > 0) {
-      const results = searchMaterials(e.target.value.trim());
-      displaySearchResultsForWidget(results, e.target.value.trim(), id, widget);
+      console.log('Focus search for:', e.target.value.trim());
+      try {
+        const searchFunction = window.ScreenGenerator?.searchMaterials;
+        const results = await searchFunction(e.target.value.trim());
+        displaySearchResultsForWidget(results, e.target.value.trim(), id, widget);
+      } catch (error) {
+        console.warn('Search error on focus:', error);
+        displaySearchResultsForWidget([], e.target.value.trim(), id, widget);
+      }
     }
   });
   
@@ -33,15 +40,27 @@ function initMaterialSearchForWidget(id, widget) {
     clearTimeout(searchTimeout);
     const query = e.target.value.trim();
     
+    console.log('Input event fired, query:', query);
+    
     if (query.length === 0) {
       searchResults.style.display = 'none';
       return;
     }
     
     // Debounce поиска
-    searchTimeout = setTimeout(() => {
-      const results = searchMaterials(query);
-      displaySearchResultsForWidget(results, query, id, widget);
+    searchTimeout = setTimeout(async () => {
+      console.log('Starting search for:', query);
+      try {
+        const searchFunction = window.ScreenGenerator?.searchMaterials;
+        console.log('Search function available:', !!searchFunction);
+        
+        const results = await searchFunction(query);
+        console.log('Search completed, results:', results);
+        displaySearchResultsForWidget(results, query, id, widget);
+      } catch (error) {
+        console.warn('Search error:', error);
+        displaySearchResultsForWidget([], query, id, widget);
+      }
     }, 150);
   });
   
@@ -72,10 +91,16 @@ function initMaterialSearchForWidget(id, widget) {
 }
 
 function displaySearchResultsForWidget(results, query, id, widget) {
-  const { getMinecraftRender, matCol } = window.ScreenGenerator;
+  const { getMinecraftRenderAsync, getMinecraftRender, matCol } = window.ScreenGenerator;
   
   const searchResults = document.getElementById(`${id}_results`);
   const searchInput = document.getElementById(`${id}_search`);
+  
+  // Проверяем, что results является массивом
+  if (!Array.isArray(results)) {
+    console.warn('displaySearchResultsForWidget: results is not an array:', results);
+    results = [];
+  }
   
   if (results.length === 0) {
     searchResults.innerHTML = '<div class="search-more">Ничего не найдено</div>';
@@ -83,6 +108,79 @@ function displaySearchResultsForWidget(results, query, id, widget) {
     positionDropdown(searchInput, searchResults);
     return;
   }
+  
+  // Используем асинхронную версию для получения иконок
+  if (getMinecraftRenderAsync) {
+    const renderPromises = results.map(async (result) => {
+      const iconHtml = await getMinecraftRenderAsync(result.id, 16);
+      return `
+        <li>
+          <a href="#" data-v="${result.id}">
+            ${iconHtml} ${result.name}
+          </a>
+        </li>
+      `;
+    });
+    
+    // Ждем все иконки и отображаем результаты
+    Promise.all(renderPromises).then(htmlParts => {
+      let html = htmlParts.join('');
+      
+      if (results.length === 15) {
+        html += '<div class="search-more"><em>there are more results<br>refine search</em></div>';
+      }
+      
+      searchResults.innerHTML = `<ul>${html}</ul>`;
+      searchResults.style.display = 'block';
+      positionDropdown(searchInput, searchResults);
+      
+      // Добавляем обработчики кликов
+      searchResults.querySelectorAll('a[data-v]').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const material = item.dataset.v;
+          
+          // Обновляем виджет
+          widget.material = material;
+          widget.color = matCol(material);
+          
+          // Обновляем скрытое поле
+          document.getElementById(id).value = material;
+          
+          // Обновляем превью асинхронно
+          const preview = document.getElementById(`${id}_preview`);
+          if (preview) {
+            getMinecraftRenderAsync(material, 24).then(iconHtml => {
+              preview.innerHTML = iconHtml;
+            });
+          }
+          
+          // Очищаем поиск и скрываем результаты
+          searchInput.value = '';
+          searchResults.style.display = 'none';
+          
+          // Обновляем отображение
+          if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+          if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
+        });
+      });
+    }).catch(error => {
+      console.warn('Error rendering search results:', error);
+      // Fallback к синхронной версии
+      displaySearchResultsWidgetSync(results, query, id, widget);
+    });
+  } else {
+    // Fallback к синхронной версии
+    displaySearchResultsWidgetSync(results, query, id, widget);
+  }
+}
+
+// Синхронная версия как fallback
+function displaySearchResultsWidgetSync(results, query, id, widget) {
+  const { getMinecraftRender, matCol } = window.ScreenGenerator;
+  
+  const searchResults = document.getElementById(`${id}_results`);
+  const searchInput = document.getElementById(`${id}_search`);
   
   let html = '';
   
@@ -101,7 +199,7 @@ function displaySearchResultsForWidget(results, query, id, widget) {
     html += '<div class="search-more"><em>there are more results<br>refine search</em></div>';
   }
   
-  searchResults.innerHTML = html;
+  searchResults.innerHTML = `<ul>${html}</ul>`;
   searchResults.style.display = 'block';
   
   // Позиционируем dropdown
@@ -127,10 +225,10 @@ function displaySearchResultsForWidget(results, query, id, widget) {
       }
       
       // Очищаем поиск и скрываем результаты
-      document.getElementById(`${id}_search`).value = '';
+      searchInput.value = '';
       searchResults.style.display = 'none';
       
-      // Обновляем интерфейс
+      // Обновляем отображение
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
       if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') window.ScreenGenerator.updateProps();
     });

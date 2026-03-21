@@ -6,14 +6,20 @@
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing canvas...');
   
-  // Загружаем шрифт Minecraftia
-  document.fonts.load(`${window.ScreenGenerator?.MC_FONT_PX || 8}px Minecraftia`).then(() => {
-    console.log('Minecraftia font loaded');
+  // Загружаем шрифты Minecraft
+  const fontPromises = [
+    document.fonts.load(`${window.ScreenGenerator?.MC_FONT_PX || 8}px Minecraftia`),
+    document.fonts.load(`${window.ScreenGenerator?.MC_FONT_PX || 8}px "Minecraft Rus"`)
+  ];
+  
+  Promise.allSettled(fontPromises).then((results) => {
+    console.log('Minecraftia font loaded:', results[0].status === 'fulfilled');
+    console.log('Minecraft Rus font loaded:', results[1].status === 'fulfilled');
     if (window.ScreenGenerator) {
       window.ScreenGenerator.MC_FONT_READY = true;
     }
   }).catch(err => {
-    console.warn('Failed to load Minecraftia font:', err);
+    console.warn('Failed to load Minecraft fonts:', err);
   });
   
   // Ensure the canvas wrapper has proper dimensions

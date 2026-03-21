@@ -33,46 +33,35 @@ const MATERIAL_COLORS = {
   'TNT': '#cc3333'
 };
 
-// Функция поиска материалов
-function searchMaterials(query) {
+// Функция поиска материалов (использует систему из materials-core.js)
+async function searchMaterials(query) {
   if (!query || query.length < 1) return [];
   
-  const searchTerm = query.toLowerCase();
-  const results = [];
+  console.log('Searching for:', query);
   
-  for (const material of MATERIALS_DATABASE) {
-    let score = 0;
-    
-    // Поиск в названии (высокий приоритет)
-    if (material.name.toLowerCase().includes(searchTerm)) {
-      score += 10;
-      if (material.name.toLowerCase().startsWith(searchTerm)) {
-        score += 5; // Бонус за начало названия
-      }
-    }
-    
-    // Поиск в ID (средний приоритет)
-    if (material.id.toLowerCase().includes(searchTerm)) {
-      score += 5;
-    }
-    
-    // Поиск в тегах (низкий приоритет)
-    for (const tag of material.tags) {
-      if (tag.includes(searchTerm)) {
-        score += 2;
-      }
-    }
-    
-    if (score > 0) {
-      results.push({ ...material, score });
+  // Проверяем доступность функции из materials-core.js
+  if (window.ScreenGenerator && window.ScreenGenerator.searchMaterials && window.ScreenGenerator.searchMaterials !== searchMaterials) {
+    console.log('Using materials-core.js search');
+    try {
+      const results = await window.ScreenGenerator.searchMaterials(query, 15);
+      console.log('Search results from materials-core:', results);
+      return results;
+    } catch (error) {
+      console.warn('Error in materials-core search:', error);
     }
   }
   
-  // Сортируем по релевантности
-  results.sort((a, b) => b.score - a.score);
+  // Fallback если materials-core.js не загружен - используем CORE_MATERIALS
+  console.log('Using fallback search with CORE_MATERIALS');
+  const lowerQuery = query.toLowerCase();
+  const coreResults = window.ScreenGenerator?.CORE_MATERIALS?.filter(material => 
+    material.id.toLowerCase().includes(lowerQuery) ||
+    material.name.toLowerCase().includes(lowerQuery) ||
+    material.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+  ) || [];
   
-  // Возвращаем максимум 15 результатов
-  return results.slice(0, 15);
+  console.log('Fallback search results:', coreResults);
+  return coreResults.slice(0, 15);
 }
 
 // Функция для получения цвета материала
@@ -127,43 +116,131 @@ function createColoredIcon(material, size = 32) {
   `;
 }
 
-// Основная функция для получения визуального рендера
-function getMinecraftRender(material, size = 32) {
+// Основная функция для получения визуального рендера с поддержкой lazy loading
+async function getMinecraftRender(material, size = 32) {
   if (!material) {
     return `<div style="width:${size}px;height:${size}px;background:#666;border-radius:2px;"></div>`;
   }
   
-  // Проверяем, есть ли CSS иконка для этого материала
-  const iconClass = MATERIAL_TO_ICON[material.toUpperCase()];
+  // Получаем иконку через систему materials-core.js
+  let iconClass = null;
   
+  if (window.ScreenGenerator && window.ScreenGenerator.getMaterialIcon) {
+    try {
+      iconClass = await window.ScreenGenerator.getMaterialIcon(material);
+    } catch (error) {
+      console.warn('Error getting material icon:', error);
+    }
+  }
+  
+  // Если иконка найдена, используем её
   if (iconClass) {
-    // Используем CSS иконку GamerGeeks в естественном размере
     if (size <= 16) {
-      // Для маленьких размеров используем icon-minecraft-sm (16px)
       return `<i class="icon-minecraft-sm icon-minecraft-${iconClass}" title="${material}"></i>`;
     } else {
-      // Для всех остальных размеров используем стандартную иконку (32px)
       return `<i class="icon-minecraft icon-minecraft-${iconClass}" title="${material}"></i>`;
     }
-  } else {
-    // Fallback к цветной иконке
-    return createColoredIcon(material, size);
+  }
+  
+  // Fallback к цветной иконке
+  return createColoredIcon(material, size);
+}
+
+// Синхронная версия для обратной совместимости
+function getMinecraftRenderSync(material, size = 32) {
+  if (!material) {
+    return `<div style="width:${size}px;height:${size}px;background:#666;border-radius:2px;"></div>`;
+  }
+  
+  // Проверяем глобальный MATERIAL_TO_ICON
+  const iconClass = window.MATERIAL_TO_ICON && window.MATERIAL_TO_ICON[material.toUpperCase()];
+  
+  if (iconClass) {
+    if (size <= 16) {
+      return `<i class="icon-minecraft-sm icon-minecraft-${iconClass}" title="${material}"></i>`;
+    } else {
+      return `<i class="icon-minecraft icon-minecraft-${iconClass}" title="${material}"></i>`;
+    }
+  }
+  
+  // Попробуем получить иконку из materials-core.js синхронно
+  if (window.ScreenGenerator && window.ScreenGenerator.getMaterialIcon) {
+    // Для синхронной версии попробуем получить иконку, но не ждем
+    window.ScreenGenerator.getMaterialIcon(material).then(iconClass => {
+      if (iconClass) {
+        // Обновляем все элементы с этим материалом после загрузки
+        updateMaterialIconsInDOM(material, iconClass, size);
+      }
+    }).catch(() => {
+      // Игнорируем ошибки в синхронной версии
+    });
+  }
+  
+  // Fallback к цветной иконке
+  return createColoredIcon(material, size);
+}
+
+// Функция для обновления иконок в DOM после асинхронной загрузки
+function updateMaterialIconsInDOM(material, iconClass, size) {
+  // Обновляем все элементы с этим материалом
+  const elements = document.querySelectorAll(`[title="${material}"]`);
+  elements.forEach(element => {
+    if (element.tagName === 'I' && element.className.includes('icon-minecraft')) {
+      // Это наша цветная иконка-заглушка, заменяем на настоящую
+      const newIcon = size <= 16 
+        ? `<i class="icon-minecraft-sm icon-minecraft-${iconClass}" title="${material}"></i>`
+        : `<i class="icon-minecraft icon-minecraft-${iconClass}" title="${material}"></i>`;
+      element.outerHTML = newIcon;
+    } else if (element.style && element.style.background) {
+      // Это цветная div-заглушка, заменяем на иконку
+      const newIcon = size <= 16 
+        ? `<i class="icon-minecraft-sm icon-minecraft-${iconClass}" title="${material}"></i>`
+        : `<i class="icon-minecraft icon-minecraft-${iconClass}" title="${material}"></i>`;
+      element.outerHTML = newIcon;
+    }
+  });
+  
+  // Принудительно обновляем canvas если материал используется
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') {
+    const { widgets } = window.ScreenGenerator;
+    const materialUsed = widgets.some(w => w.material === material);
+    if (materialUsed) {
+      window.ScreenGenerator.render();
+    }
   }
 }
 
 // Функция для получения блока (для совместимости)
 function getMinecraftBlock(material) {
-  return getMinecraftRender(material, 32);
+  return getMinecraftRenderSync(material, 32);
 }
 
 // Экспорт функций
+const existingSearchMaterials = window.ScreenGenerator?.searchMaterials;
+
 Object.assign(window.ScreenGenerator, {
-  searchMaterials,
   getMaterialColor,
   getShortName,
   isLightColor,
   createColoredIcon,
-  getMinecraftRender,
+  getMinecraftRender: getMinecraftRenderSync, // Используем синхронную версию по умолчанию
+  getMinecraftRenderAsync: getMinecraftRender, // Асинхронная версия доступна отдельно
   getMinecraftBlock,
+  updateMaterialIconsInDOM,
   MATERIAL_COLORS
 });
+
+// Добавляем searchMaterials только если его еще нет
+if (!existingSearchMaterials) {
+  window.ScreenGenerator.searchMaterials = searchMaterials;
+  console.log('Added fallback searchMaterials function');
+} else {
+  console.log('Using existing searchMaterials from materials-core.js');
+}
+
+// Тестируем доступность материалов
+console.log('CORE_MATERIALS available:', !!window.ScreenGenerator?.CORE_MATERIALS);
+console.log('searchMaterials function:', typeof window.ScreenGenerator?.searchMaterials);
+if (window.ScreenGenerator?.CORE_MATERIALS) {
+  console.log('First few core materials:', window.ScreenGenerator.CORE_MATERIALS.slice(0, 3));
+}

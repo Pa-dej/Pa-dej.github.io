@@ -10,7 +10,7 @@
 const ZOOM_CONFIG = {
   current: 120,
   min: 25,
-  max: 200,
+  max: 400,
   step: 10,
   stepFine: 5
 };
@@ -51,12 +51,22 @@ const _measureCanvas = document.createElement('canvas');
 const _measureCtx = _measureCanvas.getContext('2d');
 
 /**
- * Ширина строки текста в font-pixels через реальный шрифт Minecraftia.
+ * Определяет подходящий шрифт для текста (русский или английский)
+ */
+function getMinecraftFont(text) {
+  // Проверяем наличие кириллических символов
+  const hasRussian = /[а-яё]/i.test(text);
+  return hasRussian ? 'Minecraft Rus' : 'Minecraftia';
+}
+
+/**
+ * Ширина строки текста в font-pixels через реальный шрифт Minecraftia или Minecraft Rus.
  * Если шрифт ещё не загружен — возвращает приблизительное значение.
  */
 function mcMeasureWidth(text) {
   if (!text) return 0;
-  _measureCtx.font = `${MC_FONT_PX}px Minecraftia`;
+  const font = getMinecraftFont(text);
+  _measureCtx.font = `${MC_FONT_PX}px ${font}`;
   return _measureCtx.measureText(text).width;
 }
 
@@ -221,7 +231,7 @@ Object.assign(window.ScreenGenerator, {
   // Функции
   PPB, GSTEP, updateZoomDisplay, setZoom, initZoom,
   b2p, p2b, snap, b2cx, b2cy, cx2b, cy2b,
-  hexRgb, matCol, MATCOL,
+  hexRgb, matCol, MATCOL, getMinecraftFont,
   MIN_ZOOM: ZOOM_CONFIG.min, MAX_ZOOM: ZOOM_CONFIG.max,
   
   // Minecraft text rendering

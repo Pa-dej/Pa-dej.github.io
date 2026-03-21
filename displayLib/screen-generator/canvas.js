@@ -163,14 +163,15 @@ function render() {
       ctx.fillStyle = `rgba(${r},${cg},${b},${bgA})`;
       ctx.fillRect(g.px, g.py, g.pw, g.ph);
 
-      // ─── Текст (шрифт Minecraftia, масштабированный под zoom) ───
+      // ─── Текст (шрифт Minecraftia/Minecraft Rus, масштабированный под zoom) ───
       if (g.pw > 6 && g.ph > 4) {
         const scaleY = w.h * 4;
         // Размер шрифта в canvas-пикселях: 8 font-px * TEXT_SCALE * scaleY * PPB()
         const fontSizePx = MC_FONT_PX * MC_TEXT_SCALE * scaleY * PPB();
+        const font = window.ScreenGenerator.getMinecraftFont(w.text || w.label || '');
 
         ctx.save();
-        ctx.font = `${fontSizePx}px Minecraftia`;
+        ctx.font = `${fontSizePx}px ${font}`;
         ctx.fillStyle = 'rgba(255,255,255,0.95)';
         
         // Устанавливаем выравнивание текста
