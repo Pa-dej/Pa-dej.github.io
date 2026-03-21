@@ -46,6 +46,26 @@ const MC_BG_PAD = 1;         // padding фона в font-pixels
 const MC_FONT_PX = 8;        // базовый font-size для canvas measureText
 let MC_FONT_READY = false;   // флаг готовности шрифта
 
+// Minecraft цветовые коды
+const MC_COLORS = {
+  'black': '#000000',
+  'dark_blue': '#0000AA',
+  'dark_green': '#00AA00',
+  'dark_aqua': '#00AAAA',
+  'dark_red': '#AA0000',
+  'dark_purple': '#AA00AA',
+  'gold': '#FFAA00',
+  'gray': '#AAAAAA',
+  'dark_gray': '#555555',
+  'blue': '#5555FF',
+  'green': '#55FF55',
+  'aqua': '#55FFFF',
+  'red': '#FF5555',
+  'light_purple': '#FF55FF',
+  'yellow': '#FFFF55',
+  'white': '#FFFFFF'
+};
+
 // Один offscreen canvas для всех измерений ширины
 const _measureCanvas = document.createElement('canvas');
 const _measureCtx = _measureCanvas.getContext('2d');
@@ -60,11 +80,116 @@ function getMinecraftFont(text) {
 }
 
 /**
+ * Парсит цветной текст в формате JSON или обычную строку
+ */
+function parseColoredText(textInput) {
+  if (!textInput) return [{ text: '', color: '#ffffff' }];
+  
+  // Если это строка, пытаемся распарсить как JSON
+  if (typeof textInput === 'string') {
+    const trimmed = textInput.trim();
+    // Проверяем, начинается ли с [ - значит это JSON массив
+    if (trimmed.startsWith('[')) {
+      try {
+        // Сначала попробуем распарсить как есть
+        const parsed = JSON.parse(trimmed);
+        return parsed.map(part => ({
+          text: part.text || '',
+          color: resolveMinecraftColor(part.color || 'white')
+        }));
+      } catch (error) {
+        // Если не удалось, попробуем исправить JSON (добавить кавычки к ключам)
+        try {
+          const fixedJson = trimmed
+            .replace(/(\w+):/g, '"$1":')  // Добавляем кавычки к ключам
+            .replace(/:\s*([^",\[\]{}]+)(?=[,\]}])/g, ': "$1"'); // Добавляем кавычки к значениям
+          
+          console.log('Trying to fix JSON:', trimmed, '->', fixedJson);
+          const parsed = JSON.parse(fixedJson);
+          return parsed.map(part => ({
+            text: part.text || '',
+            color: resolveMinecraftColor(part.color || 'white')
+          }));
+        } catch (secondError) {
+          console.warn('Failed to parse colored text JSON:', error);
+          console.warn('Also failed to fix JSON:', secondError);
+          // Если не удалось распарсить, обрабатываем как обычный текст
+          return [{ text: textInput, color: '#ffffff' }];
+        }
+      }
+    } else {
+      // Обычный текст
+      return [{ text: textInput, color: '#ffffff' }];
+    }
+  }
+  
+  // Если уже массив
+  if (Array.isArray(textInput)) {
+    return textInput.map(part => ({
+      text: part.text || '',
+      color: resolveMinecraftColor(part.color || 'white')
+    }));
+  }
+  
+  return [{ text: String(textInput), color: '#ffffff' }];
+}
+
+/**
+ * Преобразует цвет Minecraft в hex
+ */
+function resolveMinecraftColor(color) {
+  if (!color) return '#ffffff';
+  
+  // Если уже hex цвет
+  if (color.startsWith('#')) {
+    return color;
+  }
+  
+  // Если это название цвета Minecraft
+  const mcColor = MC_COLORS[color.toLowerCase()];
+  if (mcColor) {
+    return mcColor;
+  }
+  
+  // Fallback к белому
+  return '#ffffff';
+}
+
+/**
+ * Измеряет ширину цветного текста
+ */
+function measureColoredText(coloredTextParts) {
+  let totalWidth = 0;
+  
+  for (const part of coloredTextParts) {
+    if (part.text) {
+      const font = getMinecraftFont(part.text);
+      _measureCtx.font = `${MC_FONT_PX}px ${font}`;
+      totalWidth += _measureCtx.measureText(part.text).width;
+    }
+  }
+  
+  return totalWidth;
+}
+
+/**
  * Ширина строки текста в font-pixels через реальный шрифт Minecraftia или Minecraft Rus.
  * Если шрифт ещё не загружен — возвращает приблизительное значение.
  */
 function mcMeasureWidth(text) {
   if (!text) return 0;
+  
+  // Проверяем, является ли текст цветным (JSON) и не пустой
+  if (typeof text === 'string' && text.trim().startsWith('[') && text.trim().length > 2) {
+    try {
+      const coloredParts = parseColoredText(text);
+      return measureColoredText(coloredParts);
+    } catch (error) {
+      // Fallback к обычному измерению
+      console.warn('Error measuring colored text, falling back to regular measurement:', error);
+    }
+  }
+  
   const font = getMinecraftFont(text);
   _measureCtx.font = `${MC_FONT_PX}px ${font}`;
   return _measureCtx.measureText(text).width;
@@ -73,7 +198,7 @@ function mcMeasureWidth(text) {
 /**
  * Размер ФОНА TextDisplay в БЛОКАХ для данного текста и scale.
  * 
- * @param {string} text   — отображаемый текст (может содержать \n)
+ * @param {string} text   — отображаемый текст (может содержать \n или быть JSON)
  * @param {number} scaleX — YAML scale[0]
  * @param {number} scaleY — YAML scale[1]
  * @returns {{ w: number, h: number }}
@@ -84,9 +209,28 @@ function mcBgSizeBlocks(text, scaleX, scaleY) {
   // Максимальная ширина строки в font-px
   let maxW = 0;
   for (const line of lines) {
-    // Для пустой строки ширина = 0, для пробела используем реальную ширину
-    const w = line === '' ? 0 : mcMeasureWidth(line);
-    if (w > maxW) maxW = w;
+    if (line === '') {
+      // Пустая строка
+      continue;
+    }
+    
+    let lineWidth = 0;
+    
+    // Проверяем, является ли строка цветным текстом и не пустой
+    if (line.trim().startsWith('[') && line.trim().length > 2) {
+      try {
+        const coloredParts = parseColoredText(line);
+        lineWidth = measureColoredText(coloredParts);
+      } catch (error) {
+        // Fallback к обычному измерению
+        console.warn('Error in mcBgSizeBlocks, using fallback measurement:', error);
+        lineWidth = mcMeasureWidth(line.replace(/^\[.*\]$/, 'Text')); // Заменяем на простой текст для измерения
+      }
+    } else {
+      lineWidth = mcMeasureWidth(line);
+    }
+    
+    if (lineWidth > maxW) maxW = lineWidth;
   }
   
   // Высота текстового содержимого в font-px
@@ -232,10 +376,11 @@ Object.assign(window.ScreenGenerator, {
   PPB, GSTEP, updateZoomDisplay, setZoom, initZoom,
   b2p, p2b, snap, b2cx, b2cy, cx2b, cy2b,
   hexRgb, matCol, MATCOL, getMinecraftFont,
+  parseColoredText, resolveMinecraftColor, measureColoredText,
   MIN_ZOOM: ZOOM_CONFIG.min, MAX_ZOOM: ZOOM_CONFIG.max,
   
   // Minecraft text rendering
-  MC_TEXT_SCALE, MC_LINE_HEIGHT, MC_LINE_GAP, MC_BG_PAD, MC_FONT_PX,
+  MC_TEXT_SCALE, MC_LINE_HEIGHT, MC_LINE_GAP, MC_BG_PAD, MC_FONT_PX, MC_COLORS,
   get MC_FONT_READY() { return MC_FONT_READY; },
   set MC_FONT_READY(value) { MC_FONT_READY = value; },
   mcMeasureWidth, mcBgSizeBlocks

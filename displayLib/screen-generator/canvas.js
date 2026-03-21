@@ -10,6 +10,49 @@ console.log('Canvas element:', cv);
 console.log('Canvas context:', ctx);
 console.log('Canvas wrapper:', cwrap);
 
+/**
+ * Рендерит строку цветного текста
+ */
+function renderColoredTextLine(ctx, coloredParts, startX, y, alignment, fontSizePx, scaleY, ppb) {
+  // Сначала измеряем общую ширину строки для выравнивания
+  let totalWidth = 0;
+  const partWidths = [];
+  
+  for (const part of coloredParts) {
+    if (part.text) {
+      const font = window.ScreenGenerator.getMinecraftFont(part.text);
+      ctx.font = `${fontSizePx}px ${font}`;
+      const width = ctx.measureText(part.text).width;
+      partWidths.push(width);
+      totalWidth += width;
+    } else {
+      partWidths.push(0);
+    }
+  }
+  
+  // Вычисляем начальную X позицию в зависимости от выравнивания
+  let currentX;
+  if (alignment === 'LEFT') {
+    currentX = startX;
+  } else if (alignment === 'RIGHT') {
+    currentX = startX - totalWidth;
+  } else {
+    currentX = startX - totalWidth / 2; // CENTER
+  }
+  
+  // Рендерим каждую часть
+  for (let i = 0; i < coloredParts.length; i++) {
+    const part = coloredParts[i];
+    if (part.text) {
+      const font = window.ScreenGenerator.getMinecraftFont(part.text);
+      ctx.font = `${fontSizePx}px ${font}`;
+      ctx.fillStyle = part.color;
+      ctx.fillText(part.text, currentX, y);
+      currentX += partWidths[i];
+    }
+  }
+}
+
 function resize() {
   // Wait for layout to be ready
   requestAnimationFrame(() => {
@@ -203,8 +246,27 @@ function render() {
         
         const textTopY = g.py + padPx;
 
+        // Рендерим каждую строку
         for (let i = 0; i < lines.length; i++) {
-          ctx.fillText(lines[i], textX, textTopY + i * lineHeightPx);
+          const line = lines[i];
+          const lineY = textTopY + i * lineHeightPx;
+          
+          // Проверяем, является ли строка цветным текстом и не пустой
+          if (line.trim().startsWith('[') && line.trim().length > 2) {
+            try {
+              const coloredParts = window.ScreenGenerator.parseColoredText(line);
+              renderColoredTextLine(ctx, coloredParts, textX, lineY, alignment, fontSizePx, scaleY, PPB());
+            } catch (error) {
+              // Fallback к обычному тексту
+              console.warn('Error rendering colored text, using fallback:', error);
+              ctx.fillStyle = 'rgba(255,255,255,0.95)';
+              ctx.fillText('Colored Text', textX, lineY); // Показываем placeholder
+            }
+          } else {
+            // Обычный текст
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.fillText(line, textX, lineY);
+          }
         }
         ctx.restore();
       }
@@ -320,5 +382,5 @@ function render() {
 
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
-  cv, ctx, cwrap, resize, render
+  cv, ctx, cwrap, resize, render, renderColoredTextLine
 });

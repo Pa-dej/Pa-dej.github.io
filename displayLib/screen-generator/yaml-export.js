@@ -54,17 +54,35 @@ function plainYaml(){
       L.push(`    type: ${w.type}`);
       if(!isText&&w.material) L.push(`    material: ${w.material}`);
       if(isText){
-        // Заменяем реальные переносы строк на \n для YAML
-        const escapedText = (w.text || '').replace(/\n/g, '\\n');
-        L.push(`    text: "${escapedText}"`);
+        // Обрабатываем текст - может быть обычный или JSON массив
+        const textContent = w.text || '';
+        
+        if (textContent.trim().startsWith('[')) {
+          // Это JSON массив цветного текста - экспортируем как есть
+          L.push(`    text: ${textContent}`);
+        } else {
+          // Обычный текст - заменяем реальные переносы строк на \n для YAML
+          const escapedText = textContent.replace(/\n/g, '\\n');
+          L.push(`    text: "${escapedText}"`);
+        }
+        
         // Добавляем alignment если он не CENTERED (дефолтный)
         if(w.alignment && w.alignment !== 'CENTERED') {
           L.push(`    alignment: ${w.alignment}`);
         }
+        
         if(w.hoveredText) {
-          const escapedHover = (w.hoveredText || '').replace(/\n/g, '\\n');
-          L.push(`    hoveredText: "${escapedHover}"`);
+          const hoverContent = w.hoveredText;
+          if (hoverContent.trim().startsWith('[')) {
+            // JSON массив для hoveredText
+            L.push(`    hoveredText: ${hoverContent}`);
+          } else {
+            // Обычный текст
+            const escapedHover = hoverContent.replace(/\n/g, '\\n');
+            L.push(`    hoveredText: "${escapedHover}"`);
+          }
         }
+        
         L.push(`    scale: [${fn(w.w*8)}, ${fn(w.h*4)}, 1]`);
       } else {
         L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, ${fn(w.w)}]`);

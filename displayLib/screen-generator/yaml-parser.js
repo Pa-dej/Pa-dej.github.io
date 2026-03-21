@@ -115,15 +115,29 @@ function parseWidgetProperty(line, widget) {
   } else if (line.startsWith('material:')) {
     widget.material = line.split(':')[1].trim();
   } else if (line.startsWith('text:')) {
-    // Извлекаем текст и заменяем \n на реальные переносы строк
-    const textValue = line.split(':')[1].trim().replace(/"/g, '');
-    widget.text = textValue.replace(/\\n/g, '\n');
+    // Извлекаем текст - может быть обычный текст или JSON массив
+    const textPart = line.substring(5).trim(); // Убираем 'text:'
+    
+    // Если начинается с [, это JSON массив - не убираем кавычки
+    if (textPart.startsWith('[')) {
+      widget.text = textPart;
+    } else {
+      // Обычный текст - убираем кавычки и заменяем \n
+      const textValue = textPart.replace(/^["']|["']$/g, ''); // Убираем внешние кавычки
+      widget.text = textValue.replace(/\\n/g, '\n');
+    }
   } else if (line.startsWith('alignment:')) {
     widget.alignment = line.split(':')[1].trim();
   } else if (line.startsWith('hoveredText:')) {
     // Аналогично для hoveredText
-    const hoverValue = line.split(':')[1].trim().replace(/"/g, '');
-    widget.hoveredText = hoverValue.replace(/\\n/g, '\n');
+    const hoverPart = line.substring(12).trim(); // Убираем 'hoveredText:'
+    
+    if (hoverPart.startsWith('[')) {
+      widget.hoveredText = hoverPart;
+    } else {
+      const hoverValue = hoverPart.replace(/^["']|["']$/g, '');
+      widget.hoveredText = hoverValue.replace(/\\n/g, '\n');
+    }
   } else if (line.startsWith('backgroundColor:')) {
     const colorMatch = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);
     if (colorMatch) {
