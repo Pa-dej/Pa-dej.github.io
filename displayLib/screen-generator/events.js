@@ -8,7 +8,7 @@
 function initEventHandlers() {
   const { 
     cv, cx2b, cy2b, snap, hitHandle, hitWidget, hitBg, 
-    p2b, setZoom, currentZoom, GSTEP
+    p2b, GSTEP
   } = window.ScreenGenerator;
 
   cv.addEventListener('mousemove', e => {
@@ -201,36 +201,6 @@ function initEventHandlers() {
     }
   });
 
-  // Обработчик колесика мыши для zoom
-  cv.addEventListener('wheel', e => {
-    e.preventDefault();
-    
-    // Более сильный зум с учетом Ctrl для точной настройки
-    const multiplier = e.ctrlKey ? 5 : 20; // Ctrl для точного зума
-    const delta = e.deltaY > 0 ? -multiplier : multiplier;
-    const newZoom = currentZoom + delta;
-    
-    console.log('Zoom change:', currentZoom, '->', newZoom, 'limits:', window.ScreenGenerator.MIN_ZOOM, '-', window.ScreenGenerator.MAX_ZOOM);
-    setZoom(newZoom);
-  });
-
-  // Также добавляем обработчик для всего cwrap на случай если курсор не на canvas
-  const cwrap = window.ScreenGenerator.cwrap;
-  if (cwrap) {
-    cwrap.addEventListener('wheel', e => {
-      e.preventDefault();
-      
-      const multiplier = e.ctrlKey ? 5 : 20;
-      const delta = e.deltaY > 0 ? -multiplier : multiplier;
-      const newZoom = currentZoom + delta;
-      
-      console.log('Zoom change (cwrap):', currentZoom, '->', newZoom, 'limits:', window.ScreenGenerator.MIN_ZOOM, '-', window.ScreenGenerator.MAX_ZOOM);
-      setZoom(newZoom);
-    });
-  } else {
-    console.warn('cwrap not found for wheel event handler');
-  }
-
   // Глобальные обработчики для средней кнопки мыши
   document.addEventListener('mouseup', (e) => {
     if (e.button === 1) { // Средняя кнопка
@@ -295,8 +265,36 @@ function initDragFromPalette() {
 // ═══════════════════════════════════════════════════════════════
 function initKeyboardHandlers() {
   document.addEventListener('keydown',e=>{
+    // Более надежная проверка на поля ввода
+    const isInputField = e.target.tagName === 'INPUT' || 
+                        e.target.tagName === 'SELECT' || 
+                        e.target.tagName === 'TEXTAREA' ||
+                        e.target.contentEditable === 'true' ||
+                        e.target.classList.contains('pinput') ||
+                        e.target.closest('.pinput') ||
+                        e.target.closest('.yaml-container');
+    
     // Игнорируем события клавиатуры если фокус в полях ввода или YAML редакторе
-    if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+    if(isInputField) return;
+    
+    // Zoom shortcuts
+    if(e.key === '=' || e.key === '+') {
+      e.preventDefault();
+      const step = e.ctrlKey ? 5 : 10;
+      window.ScreenGenerator.setZoom(window.ScreenGenerator.currentZoom + step);
+      return;
+    }
+    if(e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      const step = e.ctrlKey ? 5 : 10;
+      window.ScreenGenerator.setZoom(window.ScreenGenerator.currentZoom - step);
+      return;
+    }
+    if(e.key === '0' && e.ctrlKey) {
+      e.preventDefault();
+      window.ScreenGenerator.setZoom(120); // Reset to default
+      return;
+    }
     
     if((e.key==='Delete'||e.key==='Backspace')&&window.ScreenGenerator.selectedId){
       let deletedItem = null;

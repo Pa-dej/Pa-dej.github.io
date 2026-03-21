@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Инициализируем zoom
-  window.ScreenGenerator.updateZoomDisplay();
+  window.ScreenGenerator.initZoom();
   
   // Инициализируем систему истории
   if (window.ScreenGenerator && typeof window.ScreenGenerator.initHistory === 'function') {

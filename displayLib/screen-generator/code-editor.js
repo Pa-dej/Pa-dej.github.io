@@ -805,7 +805,6 @@ function updateYamlContent() {
   
   // НЕ обновляем если пользователь активно редактирует
   if (isUserEditing || document.activeElement === codeEditor) {
-    console.log('User is editing YAML, skipping canvas->editor update');
     return;
   }
   

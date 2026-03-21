@@ -17,7 +17,6 @@ function resize() {
     cwrap.style.display = 'block';
     
     const rect = cwrap.getBoundingClientRect();
-    console.log('cwrap dimensions:', rect.width, 'x', rect.height);
     
     // Ensure minimum dimensions and handle edge cases
     const width = Math.max(rect.width || 800, 400);
@@ -27,7 +26,6 @@ function resize() {
     cv.height = height;
     window.ScreenGenerator.CC.x = cv.width / 2;
     window.ScreenGenerator.CC.y = cv.height / 2;
-    console.log('Canvas resized:', cv.width, 'x', cv.height);
     // Use setTimeout to ensure render function is available
     setTimeout(() => {
       if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') {
@@ -56,7 +54,6 @@ function render() {
   } = window.ScreenGenerator;
   
   const W = cv.width, H = cv.height;
-  console.log('Rendering canvas:', W, 'x', H);
   
   // Clear canvas
   ctx.clearRect(0,0,W,H);

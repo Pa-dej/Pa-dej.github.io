@@ -2,13 +2,21 @@
 // CORE UTILITIES AND CONSTANTS
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+// НОВАЯ СИСТЕМА ЗУМА
+// ═══════════════════════════════════════════════════════════════
+
 // Zoom управление
-let currentZoom = 120; // Дефолтный zoom 120
-const MIN_ZOOM = 25;   // Минимальный зум
-const MAX_ZOOM = 200;  // Максимальный зум
+const ZOOM_CONFIG = {
+  current: 120,
+  min: 25,
+  max: 200,
+  step: 10,
+  stepFine: 5
+};
 
 // Основные функции масштабирования
-const PPB = () => currentZoom;
+const PPB = () => ZOOM_CONFIG.current;
 const GSTEP = () => parseFloat(document.getElementById('gridStepSelect').value) || 0.25;
 
 // Хранение виджетов и состояния
@@ -100,20 +108,65 @@ const cy2b = py => p2b(CC.y - py);
 
 // Zoom функции
 function updateZoomDisplay() {
-  document.getElementById('zoomDisplay').textContent = `×${currentZoom}`;
+  const display = document.getElementById('zoomDisplay');
+  if (display) {
+    display.textContent = `×${ZOOM_CONFIG.current}`;
+  }
 }
 
 function setZoom(newZoom) {
-  const oldZoom = currentZoom;
-  currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-  console.log('setZoom called:', newZoom, 'clamped to:', currentZoom, 'limits:', MIN_ZOOM, '-', MAX_ZOOM);
+  const clampedZoom = Math.max(ZOOM_CONFIG.min, Math.min(ZOOM_CONFIG.max, Math.round(newZoom)));
+  
+  if (clampedZoom !== ZOOM_CONFIG.current) {
+    ZOOM_CONFIG.current = clampedZoom;
+    updateZoomDisplay();
+    
+    // Рендерим с небольшой задержкой
+    requestAnimationFrame(() => {
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') {
+        window.ScreenGenerator.render();
+      }
+    });
+  }
+}
+
+// Инициализация зума
+function initZoom() {
   updateZoomDisplay();
-  // Use setTimeout to ensure render function is available
-  setTimeout(() => {
-    if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') {
-      window.ScreenGenerator.render();
-    }
-  }, 0);
+  
+  // Добавляем обработчики колесика мыши
+  const canvas = document.getElementById('cv');
+  const cwrap = document.getElementById('cwrap');
+  
+  const handleZoom = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const step = e.ctrlKey ? ZOOM_CONFIG.stepFine : ZOOM_CONFIG.step;
+    const delta = e.deltaY > 0 ? -step : step;
+    
+    setZoom(ZOOM_CONFIG.current + delta);
+  };
+  
+  if (canvas) {
+    canvas.addEventListener('wheel', handleZoom, { passive: false });
+  }
+  
+  if (cwrap) {
+    cwrap.addEventListener('wheel', handleZoom, { passive: false });
+  }
+  
+  // Добавляем кнопки для тестирования
+  const zoomDisplay = document.getElementById('zoomDisplay');
+  if (zoomDisplay && !zoomDisplay.dataset.zoomInitialized) {
+    zoomDisplay.dataset.zoomInitialized = 'true';
+    zoomDisplay.style.cursor = 'pointer';
+    zoomDisplay.title = 'Клик для сброса зума, колесико мыши для изменения';
+    
+    zoomDisplay.addEventListener('click', () => {
+      setZoom(120); // Сброс к дефолтному значению
+    });
+  }
 }
 
 // Утилиты для цвета
@@ -141,8 +194,8 @@ function matCol(m){return MATCOL[m]||'#7c3aed';}
 window.ScreenGenerator = window.ScreenGenerator || {};
 Object.assign(window.ScreenGenerator, {
   // Переменные состояния
-  get currentZoom() { return currentZoom; },
-  set currentZoom(value) { currentZoom = value; },
+  get currentZoom() { return ZOOM_CONFIG.current; },
+  set currentZoom(value) { setZoom(value); },
   get widgets() { return widgets; },
   set widgets(value) { widgets = value; },
   get background() { return background; },
@@ -166,10 +219,10 @@ Object.assign(window.ScreenGenerator, {
   set isDragPal(value) { isDragPal = value; },
   
   // Функции
-  PPB, GSTEP, updateZoomDisplay, setZoom,
+  PPB, GSTEP, updateZoomDisplay, setZoom, initZoom,
   b2p, p2b, snap, b2cx, b2cy, cx2b, cy2b,
   hexRgb, matCol, MATCOL,
-  MIN_ZOOM, MAX_ZOOM,
+  MIN_ZOOM: ZOOM_CONFIG.min, MAX_ZOOM: ZOOM_CONFIG.max,
   
   // Minecraft text rendering
   MC_TEXT_SCALE, MC_LINE_HEIGHT, MC_LINE_GAP, MC_BG_PAD, MC_FONT_PX,

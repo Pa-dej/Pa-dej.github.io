@@ -12,20 +12,13 @@ function fn(n){
 }
 
 function updateYaml(){
-  console.log('updateYaml called');
-  const { widgets, background, hexRgb } = window.ScreenGenerator;
-  
   // Обновляем редактор YAML
   if (window.ScreenGenerator.updateYamlEditor) {
-    console.log('Calling updateYamlEditor');
     window.ScreenGenerator.updateYamlEditor();
-  } else {
-    console.log('updateYamlEditor not available');
   }
 }
 
 function plainYaml(){
-  console.log('plainYaml called');
   const { widgets, background, hexRgb } = window.ScreenGenerator;
   
   const sid=document.getElementById('screenId').value||'my_screen';

@@ -85,8 +85,27 @@ const colIn=(id,v)=>`<input class="pinput" type="color" id="${id}" value="${v}">
 const bind=(id,fn)=>{
   const el=document.getElementById(id);
   if(el) {
+    // Предотвращаем удаление виджетов при работе с полями ввода
+    el.addEventListener('keydown', e => {
+      // Останавливаем всплытие событий Delete и Backspace
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.stopPropagation();
+      }
+    });
+    
     el.addEventListener('input',e=>{
-      fn(e.target.value);
+      const value = e.target.value;
+      
+      // Для числовых полей разрешаем пустые значения и обрабатываем их как 0
+      if (el.type === 'number') {
+        if (value === '' || value === null || value === undefined) {
+          // Не вызываем fn для пустых значений, позволяем пользователю ввести новое число
+          return;
+        }
+      }
+      
+      fn(value);
+      
       // Сохраняем в историю с debounce
       clearTimeout(window.ScreenGenerator._propertyChangeTimeout);
       window.ScreenGenerator._propertyChangeTimeout = setTimeout(() => {
@@ -95,6 +114,19 @@ const bind=(id,fn)=>{
         }
       }, 1000); // 1 секунда задержки для группировки изменений
     });
+    
+    // Обработка потери фокуса для числовых полей
+    if (el.type === 'number') {
+      el.addEventListener('blur', e => {
+        const value = e.target.value;
+        if (value === '' || value === null || value === undefined) {
+          // При потере фокуса устанавливаем значение по умолчанию
+          const defaultValue = el.min !== '' ? parseFloat(el.min) : 0;
+          el.value = defaultValue;
+          fn(defaultValue);
+        }
+      });
+    }
   }
 };
 
@@ -138,9 +170,105 @@ function updateProps(){
   const { selectedId, background, widgets } = window.ScreenGenerator;
   
   const p=document.getElementById('propPanel');
-  if(!selectedId){p.innerHTML='<div class="nsm">Выберите элемент<br>для редактирования</div>';return;}
-  if(selectedId==='__bg__') renderBgProps(p);
-  else{const w=widgets.find(x=>x.id===selectedId);if(w)renderWProps(p,w);}
+  
+  // Сохраняем информацию о текущем фокусе
+  const activeElement = document.activeElement;
+  const activeId = activeElement ? activeElement.id : null;
+  const selectionStart = activeElement && activeElement.setSelectionRange ? activeElement.selectionStart : null;
+  const selectionEnd = activeElement && activeElement.setSelectionRange ? activeElement.selectionEnd : null;
+  const isInputFocused = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT');
+  
+  // Если поле ввода в фокусе, не обновляем интерфейс
+  if (isInputFocused && activeElement.closest('#propPanel')) {
+    return;
+  }
+  
+  if(!selectedId){
+    p.innerHTML='<div class="nsm">Выберите элемент<br>для редактирования</div>';
+    return;
+  }
+  
+  if(selectedId==='__bg__') {
+    renderBgProps(p);
+  } else {
+    const w=widgets.find(x=>x.id===selectedId);
+    if(w) renderWProps(p,w);
+  }
+  
+  // Восстанавливаем фокус только если он был в панели свойств
+  if (activeId && activeId.startsWith('w_') || activeId.startsWith('bg_')) {
+    setTimeout(() => {
+      const newActiveElement = document.getElementById(activeId);
+      if (newActiveElement) {
+        newActiveElement.focus();
+        if (newActiveElement.setSelectionRange && selectionStart !== null) {
+          newActiveElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }
+    }, 0);
+  }
+}
+
+// Функция для обновления только значений фона без пересоздания элементов
+function updateBgValues() {
+  const { background } = window.ScreenGenerator;
+  if (!background) return;
+  
+  const updateField = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && el !== document.activeElement) {
+      el.value = typeof value === 'number' ? value.toFixed(4) : value;
+    }
+  };
+  
+  updateField('bg_w', background.w);
+  updateField('bg_h', background.h);
+  updateField('bg_col', background.colorHex);
+  updateField('bg_alpha', background.alpha);
+  updateField('bg_px', background.posX);
+  updateField('bg_py', background.posY);
+  updateField('bg_tx', background.transX);
+  updateField('bg_ty', background.transY);
+  updateField('bg_tz', background.transZ || 0);
+}
+
+// Функция для обновления только значений виджета без пересоздания элементов
+function updateWidgetValues(w) {
+  const updateField = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && el !== document.activeElement) {
+      el.value = typeof value === 'number' ? value.toFixed(4) : value;
+    }
+  };
+  
+  updateField('w_id', w.id);
+  updateField('w_x', w.x);
+  updateField('w_y', w.y);
+  updateField('w_tx', w.transX || 0);
+  updateField('w_ty', w.transY || 0);
+  updateField('w_tz', w.transZ || 0);
+  updateField('w_w', w.w);
+  updateField('w_h', w.h);
+  
+  if (w.type === 'TEXT_BUTTON') {
+    updateField('w_txt', w.text);
+    updateField('w_hover', w.hoveredText || '');
+    updateField('w_col', w.color);
+    updateField('w_align', w.alignment || 'CENTERED');
+    
+    if (w.backgroundColor) {
+      updateField('w_bgR', w.backgroundColor[0]);
+      updateField('w_bgG', w.backgroundColor[1]);
+      updateField('w_bgB', w.backgroundColor[2]);
+    }
+    updateField('w_bgAlpha', w.backgroundAlpha !== undefined ? w.backgroundAlpha : 150);
+  }
+  
+  updateField('w_act', w.onClick);
+  updateField('w_func', w.clickFunction || '');
+  updateField('w_target', w.switchTarget || '');
+  updateField('w_tolH', w.tolerance[0]);
+  updateField('w_tolV', w.tolerance[1]);
 }
 
 function renderBgProps(p){
