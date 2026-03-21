@@ -35,6 +35,7 @@ function plainYaml(){
     L.push(`  position: [${fn(background.posX)}, ${fn(background.posY)}, 0]`);
     // Всегда показываем translation, даже если 0
     L.push(`  translation: [${fn(background.transX)}, ${fn(background.transY)}, ${fn(background.transZ||0)}]`);
+    L.push(`  locked: ${background.locked ? 'true' : 'false'}`);
     L.push(`  text: " "`);
   }
   

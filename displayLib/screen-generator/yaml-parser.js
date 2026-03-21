@@ -34,7 +34,7 @@ function parseYamlToCanvas(yamlText) {
         currentSection = null;
       } else if (trimmedLine.startsWith('background:')) {
         currentSection = 'background';
-        result.background = { w: 4, h: 3, colorHex: '#0d1117', alpha: 180, posX: 0, posY: 0, transX: 0, transY: 0, locked: false };
+        result.background = { w: 4, h: 3, colorHex: '#0d1117', alpha: 180, posX: 0, posY: 0, transX: 0, transY: 0, locked: true };
       } else if (trimmedLine.startsWith('widgets:')) {
         currentSection = 'widgets';
       } else if (trimmedLine.startsWith('- id:')) {
@@ -85,6 +85,8 @@ function parseBackgroundProperty(line, background) {
     }
   } else if (line.startsWith('alpha:')) {
     background.alpha = parseInt(line.split(':')[1].trim()) || 180;
+  } else if (line.startsWith('locked:')) {
+    background.locked = line.split(':')[1].trim() === 'true';
   } else if (line.startsWith('scale:')) {
     const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),/);
     if (scaleMatch) {
@@ -187,7 +189,16 @@ function applyYamlToCanvas(parsedData) {
     if (!parsedData.background.colorHex) {
       parsedData.background.colorHex = '#0d1117'; // Дефолтный цвет
     }
+    
+    // Сохраняем существующее состояние locked если оно есть
+    const existingLocked = ScreenGenerator.background?.locked;
     ScreenGenerator.background = parsedData.background;
+    
+    // Если в YAML нет locked, но у нас есть существующий фон с locked состоянием, сохраняем его
+    if (parsedData.background.locked === undefined && existingLocked !== undefined) {
+      ScreenGenerator.background.locked = existingLocked;
+    }
+    
     console.log('Applied background:', ScreenGenerator.background);
   }
   
