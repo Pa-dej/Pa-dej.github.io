@@ -262,6 +262,7 @@ function renderWProps(p,w){
   // Дополнительные поля для TEXT_BUTTON
   const textFields = isText ? `
     ${row('Текст',txtAreaIn('w_txt',w.text))}
+    ${row('Выравнивание',selIn('w_align',w.alignment||'CENTERED',['LEFT','CENTERED','RIGHT']))}
     ${row('Hover текст',txtIn('w_hover',w.hoveredText||''))}
     ${row('Цвет BG',colIn('w_col',w.color))}
   ` : '';
@@ -376,6 +377,11 @@ function renderWProps(p,w){
       w.text = v;
       w.label = v.replace(/\n/g, ' '); // Для label убираем переносы
       if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();
+    });
+    bind('w_align',v=>{
+      w.alignment = v;
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
     });
     bind('w_hover',v=>{w.hoveredText=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
     bind('w_col',v=>{w.color=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});

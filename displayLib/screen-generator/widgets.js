@@ -35,6 +35,7 @@ function addWidget(type,mat,x=0,y=0){
     widget.hoveredText = '[Button]'; // дефолтный hover текст
     widget.backgroundColor = [40, 60, 80]; // Дефолтный цвет фона
     widget.backgroundAlpha = 150;
+    widget.alignment = 'CENTERED'; // дефолтное выравнивание
   }
   
   widgets.push(widget);

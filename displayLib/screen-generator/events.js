@@ -17,7 +17,26 @@ function initEventHandlers() {
     document.getElementById('curY').textContent=cy2b(my).toFixed(2);
     const handle=hitHandle(mx,my);
     const HCUR={tl:'nw-resize',tr:'ne-resize',bl:'sw-resize',br:'se-resize',tm:'n-resize',bm:'s-resize',ml:'w-resize',mr:'e-resize'};
-    cv.style.cursor = handle?(HCUR[handle]||'default'):hitWidget(mx,my)||hitBg(mx,my)?'move':'default';
+    
+    // Устанавливаем курсор в зависимости от состояния
+    if (window.ScreenGenerator.panning) {
+      cv.style.cursor = 'grabbing';
+    } else {
+      cv.style.cursor = handle?(HCUR[handle]||'default'):hitWidget(mx,my)||hitBg(mx,my)?'move':'default';
+    }
+
+    // Обработка перемещения камеры
+    if (window.ScreenGenerator.panning) {
+      const panning = window.ScreenGenerator.panning;
+      const dx = mx - panning.startX;
+      const dy = my - panning.startY;
+      
+      window.ScreenGenerator.CC.x = panning.startCCX + dx;
+      window.ScreenGenerator.CC.y = panning.startCCY + dy;
+      
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
+      return;
+    }
 
     if (window.ScreenGenerator.dragging) {
       const dragging = window.ScreenGenerator.dragging;
@@ -56,7 +75,7 @@ function initEventHandlers() {
     
     // Tooltip при наведении на виджет
     const hovtip = document.getElementById('hovtip');
-    if (hovtip && !window.ScreenGenerator.dragging && !window.ScreenGenerator.resizing) {
+    if (hovtip && !window.ScreenGenerator.dragging && !window.ScreenGenerator.resizing && !window.ScreenGenerator.panning) {
       const hoveredWidget = hitWidget(mx, my);
       const hoveredBg = hitBg(mx, my);
       
@@ -87,8 +106,22 @@ function initEventHandlers() {
   });
 
   cv.addEventListener('mousedown', e => {
-    if(e.button===2) return;
     const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    
+    // Средняя кнопка мыши (колесико) - начинаем перемещение камеры
+    if(e.button === 1) {
+      e.preventDefault();
+      window.ScreenGenerator.panning = {
+        startX: mx,
+        startY: my,
+        startCCX: window.ScreenGenerator.CC.x,
+        startCCY: window.ScreenGenerator.CC.y
+      };
+      return;
+    }
+    
+    if(e.button===2) return;
+    
     const handle=hitHandle(mx,my);
     if(handle&&window.ScreenGenerator.selectedId){
       const w=window.ScreenGenerator.widgets.find(x=>x.id===window.ScreenGenerator.selectedId);
@@ -124,7 +157,7 @@ function initEventHandlers() {
     if (window.ScreenGenerator && typeof window.ScreenGenerator.updateWidgetList === 'function') window.ScreenGenerator.updateWidgetList();
   });
   
-  cv.addEventListener('mouseup',()=>{
+  cv.addEventListener('mouseup',(e)=>{
     // Сохраняем в историю если было перетаскивание или изменение размера
     if (window.ScreenGenerator.dragging) {
       if (window.ScreenGenerator && typeof window.ScreenGenerator.saveState === 'function') {
@@ -138,13 +171,16 @@ function initEventHandlers() {
       }
     }
     
+    // Завершаем все операции
     window.ScreenGenerator.dragging=null;
     window.ScreenGenerator.resizing=null;
+    window.ScreenGenerator.panning=null;
   });
   
   cv.addEventListener('mouseleave',()=>{
     window.ScreenGenerator.dragging=null;
     window.ScreenGenerator.resizing=null;
+    window.ScreenGenerator.panning=null;
     // Скрываем tooltip при выходе мыши с canvas
     const hovtip = document.getElementById('hovtip');
     if (hovtip) {
@@ -169,21 +205,44 @@ function initEventHandlers() {
   cv.addEventListener('wheel', e => {
     e.preventDefault();
     
-    const delta = e.deltaY > 0 ? -10 : 10; // Инвертируем для естественного направления
+    // Более сильный зум с учетом Ctrl для точной настройки
+    const multiplier = e.ctrlKey ? 5 : 20; // Ctrl для точного зума
+    const delta = e.deltaY > 0 ? -multiplier : multiplier;
     const newZoom = currentZoom + delta;
     
+    console.log('Zoom change:', currentZoom, '->', newZoom, 'limits:', window.ScreenGenerator.MIN_ZOOM, '-', window.ScreenGenerator.MAX_ZOOM);
     setZoom(newZoom);
   });
 
   // Также добавляем обработчик для всего cwrap на случай если курсор не на canvas
   const cwrap = window.ScreenGenerator.cwrap;
-  cwrap.addEventListener('wheel', e => {
-    e.preventDefault();
-    
-    const delta = e.deltaY > 0 ? -10 : 10;
-    const newZoom = currentZoom + delta;
-    
-    setZoom(newZoom);
+  if (cwrap) {
+    cwrap.addEventListener('wheel', e => {
+      e.preventDefault();
+      
+      const multiplier = e.ctrlKey ? 5 : 20;
+      const delta = e.deltaY > 0 ? -multiplier : multiplier;
+      const newZoom = currentZoom + delta;
+      
+      console.log('Zoom change (cwrap):', currentZoom, '->', newZoom, 'limits:', window.ScreenGenerator.MIN_ZOOM, '-', window.ScreenGenerator.MAX_ZOOM);
+      setZoom(newZoom);
+    });
+  } else {
+    console.warn('cwrap not found for wheel event handler');
+  }
+
+  // Глобальные обработчики для средней кнопки мыши
+  document.addEventListener('mouseup', (e) => {
+    if (e.button === 1) { // Средняя кнопка
+      window.ScreenGenerator.panning = null;
+    }
+  });
+
+  // Предотвращаем стандартное поведение средней кнопки мыши
+  cv.addEventListener('auxclick', (e) => {
+    if (e.button === 1) {
+      e.preventDefault();
+    }
   });
 }
 

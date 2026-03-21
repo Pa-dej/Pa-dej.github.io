@@ -47,6 +47,7 @@ function loadDemo(){
       material: '',
       label: 'Example text',
       text: 'Example text',
+      alignment: 'LEFT',
       hoveredText: 'Example!',
       x: 0.0,
       y: 1.0,

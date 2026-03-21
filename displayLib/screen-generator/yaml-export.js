@@ -63,6 +63,10 @@ function plainYaml(){
         // Заменяем реальные переносы строк на \n для YAML
         const escapedText = (w.text || '').replace(/\n/g, '\\n');
         L.push(`    text: "${escapedText}"`);
+        // Добавляем alignment если он не CENTERED (дефолтный)
+        if(w.alignment && w.alignment !== 'CENTERED') {
+          L.push(`    alignment: ${w.alignment}`);
+        }
         if(w.hoveredText) {
           const escapedHover = (w.hoveredText || '').replace(/\n/g, '\\n');
           L.push(`    hoveredText: "${escapedHover}"`);

@@ -175,7 +175,17 @@ function render() {
         ctx.save();
         ctx.font = `${fontSizePx}px Minecraftia`;
         ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.textAlign = 'center';
+        
+        // Устанавливаем выравнивание текста
+        const alignment = w.alignment || 'CENTERED';
+        if (alignment === 'LEFT') {
+          ctx.textAlign = 'left';
+        } else if (alignment === 'RIGHT') {
+          ctx.textAlign = 'right';
+        } else {
+          ctx.textAlign = 'center'; // CENTERED
+        }
+        
         ctx.textBaseline = 'top';
         ctx.imageSmoothingEnabled = false; // пиксельный шрифт — без сглаживания
 
@@ -183,12 +193,20 @@ function render() {
         const lineHeightPx = MC_LINE_HEIGHT * MC_TEXT_SCALE * scaleY * PPB();
         const padPx = MC_BG_PAD * MC_TEXT_SCALE * scaleY * PPB();
 
-        // Центр X, верх текста = верх фона + padding
-        const textCenterX = g.px + g.pw / 2;
+        // Вычисляем X координату в зависимости от выравнивания
+        let textX;
+        if (alignment === 'LEFT') {
+          textX = g.px + padPx;
+        } else if (alignment === 'RIGHT') {
+          textX = g.px + g.pw - padPx;
+        } else {
+          textX = g.px + g.pw / 2; // CENTER
+        }
+        
         const textTopY = g.py + padPx;
 
         for (let i = 0; i < lines.length; i++) {
-          ctx.fillText(lines[i], textCenterX, textTopY + i * lineHeightPx);
+          ctx.fillText(lines[i], textX, textTopY + i * lineHeightPx);
         }
         ctx.restore();
       }

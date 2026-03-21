@@ -4,8 +4,8 @@
 
 // Zoom управление
 let currentZoom = 120; // Дефолтный zoom 120
-const MIN_ZOOM = 20;
-const MAX_ZOOM = 200;
+const MIN_ZOOM = 25;   // Минимальный зум
+const MAX_ZOOM = 200;  // Максимальный зум
 
 // Основные функции масштабирования
 const PPB = () => currentZoom;
@@ -21,6 +21,7 @@ let CC = {x:0, y:0}; // Canvas center
 // Состояние перетаскивания
 let dType=null, dMat=null, isDragPal=false;
 let dragging=null, resizing=null;
+let panning=null; // Состояние перемещения камеры
 
 // Координатные преобразования
 const b2p = b => b * PPB(); // blocks to pixels
@@ -103,7 +104,9 @@ function updateZoomDisplay() {
 }
 
 function setZoom(newZoom) {
+  const oldZoom = currentZoom;
   currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+  console.log('setZoom called:', newZoom, 'clamped to:', currentZoom, 'limits:', MIN_ZOOM, '-', MAX_ZOOM);
   updateZoomDisplay();
   // Use setTimeout to ensure render function is available
   setTimeout(() => {
@@ -153,6 +156,8 @@ Object.assign(window.ScreenGenerator, {
   set dragging(value) { dragging = value; },
   get resizing() { return resizing; },
   set resizing(value) { resizing = value; },
+  get panning() { return panning; },
+  set panning(value) { panning = value; },
   get dType() { return dType; },
   set dType(value) { dType = value; },
   get dMat() { return dMat; },

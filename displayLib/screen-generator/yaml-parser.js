@@ -47,7 +47,8 @@ function parseYamlToCanvas(yamlText) {
           x: 0, y: 0, w: 1, h: 1,
           transX: 0, transY: 0,
           tolerance: [0, 0],
-          onClick: 'CLOSE'
+          onClick: 'CLOSE',
+          alignment: 'CENTERED' // дефолтное выравнивание для TEXT_BUTTON
         };
         result.widgets.push(currentWidget);
         inOnClick = false;
@@ -115,6 +116,8 @@ function parseWidgetProperty(line, widget) {
     // Извлекаем текст и заменяем \n на реальные переносы строк
     const textValue = line.split(':')[1].trim().replace(/"/g, '');
     widget.text = textValue.replace(/\\n/g, '\n');
+  } else if (line.startsWith('alignment:')) {
+    widget.alignment = line.split(':')[1].trim();
   } else if (line.startsWith('hoveredText:')) {
     // Аналогично для hoveredText
     const hoverValue = line.split(':')[1].trim().replace(/"/g, '');
