@@ -629,9 +629,28 @@ function switchTab(tabType) {
   currentTab = tabType;
   
   // Обновляем активную вкладку
-  document.querySelectorAll('.editor-tab').forEach(tab => {
+  const tabs = document.querySelectorAll('.editor-tab');
+  const activeTabIndex = Array.from(tabs).findIndex(tab => tab.dataset.tab === tabType);
+  
+  tabs.forEach(tab => {
     tab.classList.toggle('active', tab.dataset.tab === tabType);
   });
+  
+  // Анимируем индикатор
+  const tabsContainer = document.querySelector('.editor-tabs');
+  if (tabsContainer && activeTabIndex !== -1) {
+    const tabWidth = 100 / tabs.length; // Процент ширины каждой вкладки
+    const indicatorPosition = activeTabIndex * tabWidth;
+    
+    tabsContainer.style.setProperty('--indicator-left', `${indicatorPosition}%`);
+    tabsContainer.style.setProperty('--indicator-width', `${tabWidth}%`);
+    
+    // Обновляем псевдоэлемент через CSS переменные
+    const indicator = tabsContainer.querySelector('::before') || tabsContainer;
+    if (tabsContainer.style.setProperty) {
+      tabsContainer.style.setProperty('--indicator-transform', `translateX(${indicatorPosition}%)`);
+    }
+  }
   
   // Обновляем заголовок
   const editorTitle = document.getElementById('editorTitle');

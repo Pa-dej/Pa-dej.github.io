@@ -1622,30 +1622,71 @@ pre.ycode {
   border-bottom: 1px solid var(--border);
   margin-bottom: 0;
   flex-shrink: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  --indicator-left: 0%;
+  --indicator-width: 50%;
+}
+
+.editor-tabs::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: var(--indicator-left, 0%);
+  width: var(--indicator-width, 50%);
+  height: 2px;
+  background: var(--accent);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
 }
 
 .editor-tab {
   background: transparent;
   border: none;
-  padding: 8px 16px;
+  padding: 12px 0;
   font-size: 11px;
   font-weight: 500;
   color: var(--text2);
   cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  flex: 1;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.editor-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
 }
 
 .editor-tab:hover {
-  background: var(--bg3);
   color: var(--text);
+  transform: translateY(-1px);
+}
+
+.editor-tab:hover::before {
+  opacity: 0.05;
 }
 
 .editor-tab.active {
   color: var(--accent);
-  border-bottom-color: var(--accent);
-  background: var(--bg);
+  background: transparent;
+  transform: translateY(0);
+}
+
+.editor-tab.active::before {
+  opacity: 0.1;
 }
 
 /* Lua Syntax Highlighting - Ray Theme */

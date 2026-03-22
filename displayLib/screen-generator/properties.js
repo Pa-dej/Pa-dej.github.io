@@ -382,6 +382,8 @@ function renderBgProps(p){
 
 function renderWProps(p,w){
   const isText=w.type==='TEXT_BUTTON';
+  const screenType = document.getElementById('screenType')?.value || 'PRIVATE';
+  const isPrivateScreen = screenType === 'PRIVATE';
   const yamlScaleStr=isText?`[${+(w.w*8).toFixed(2)}, ${+(w.h*4).toFixed(2)}, 1]`:`[${+w.w.toFixed(2)}, ${+w.h.toFixed(2)}, 0.01]`;
   
   // Материал с визуальным селектом
@@ -398,7 +400,7 @@ function renderWProps(p,w){
   const textFields = isText ? `
     ${row('Текст',txtAreaIn('w_txt',w.text))}
     ${row('Выравнивание',selIn('w_align',w.alignment||'CENTERED',['LEFT','CENTERED','RIGHT']))}
-    ${row('Hover текст',txtIn('w_hover',w.hoveredText||''))}
+    ${isPrivateScreen ? row('Hover текст',txtIn('w_hover',w.hoveredText||'')) : ''}
     ${row('Цвет BG',colIn('w_col',w.color))}
   ` : '';
   
@@ -416,7 +418,7 @@ function renderWProps(p,w){
         ${row('BG Alpha', numIn('w_bgAlpha', w.backgroundAlpha || 150, 1, 0, 255))}
       </div>
     </div>
-    <div class="pgroup">
+    ${isPrivateScreen ? `<div class="pgroup">
       <div class="pgtitle">Фон при наведении</div>
       <div class="pgbody">
         <div class="phint">
@@ -427,7 +429,7 @@ function renderWProps(p,w){
         ${row('Hover BG B', numIn('w_hbgB', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[2] : 60, 1, 0, 255))}
         ${row('Hover BG Alpha', numIn('w_hbgAlpha', w.hoveredBackgroundAlpha || 0, 1, 0, 255))}
       </div>
-    </div>
+    </div>` : ''}
   ` : '';
   
   // Заголовок без эмодзи

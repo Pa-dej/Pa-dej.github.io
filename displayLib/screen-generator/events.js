@@ -311,6 +311,11 @@ function initKeyboardHandlers() {
           deletedItem = `${widget.type} (${widget.id})`;
           window.ScreenGenerator.widgets=window.ScreenGenerator.widgets.filter(w=>w.id!==window.ScreenGenerator.selectedId);
           window.ScreenGenerator.selectedId=null;
+          
+          // Пересчитываем оптимизацию после удаления виджета
+          if (window.ScreenGenerator && typeof window.ScreenGenerator.calculateOptimization === 'function') {
+            window.ScreenGenerator.calculateOptimization();
+          }
         }
       }
       

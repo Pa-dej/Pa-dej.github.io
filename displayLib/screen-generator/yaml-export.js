@@ -22,8 +22,31 @@ function plainYaml(){
   const { widgets, background, hexRgb } = window.ScreenGenerator;
   
   const sid=document.getElementById('screenId').value||'my_screen';
+  const screenType = document.getElementById('screenType')?.value || 'PRIVATE';
+  const interactionRadius = parseFloat(document.getElementById('interactionRadius')?.value || '3.0');
+  const rangeCheckInterval = parseInt(document.getElementById('rangeCheckInterval')?.value || '10');
+  const closeDistance = parseFloat(document.getElementById('closeDistance')?.value || '20.0');
+  const tickRate = parseInt(document.getElementById('tickRate')?.value || '4');
+  
   const L=[];
   L.push(`id: ${sid}`);
+  L.push(`screen_type: ${screenType}`);
+  L.push(`interaction_radius: ${interactionRadius.toFixed(1)}`);
+  L.push(`range_check_interval: ${rangeCheckInterval}`);
+  
+  // close_distance только для PRIVATE экранов
+  if (screenType === 'PRIVATE') {
+    L.push(`close_distance: ${closeDistance.toFixed(1)}`);
+  }
+  
+  L.push(`tick_rate: ${tickRate}`);
+  
+  // Проверяем нужна ли секция scripts
+  const needsScript = widgets.some(w => w.onClick === 'RUN_SCRIPT');
+  if (needsScript) {
+    L.push(`scripts:`);
+    L.push(`  file: "${sid}.lua"`);
+  }
   
   if(background){
     const {r,g,b}=hexRgb(background.colorHex);
@@ -37,13 +60,6 @@ function plainYaml(){
     L.push(`  translation: [${fn(background.transX)}, ${fn(background.transY)}, ${fn(background.transZ||0)}]`);
     L.push(`  locked: ${background.locked ? 'true' : 'false'}`);
     L.push(`  text: " "`);
-  }
-  
-  // Проверяем нужна ли секция scripts
-  const needsScript = widgets.some(w => w.onClick === 'RUN_SCRIPT');
-  if (needsScript) {
-    L.push(`scripts:`);
-    L.push(`  file: "${sid}.lua"`);
   }
   
   if(widgets.length>0){
@@ -71,7 +87,8 @@ function plainYaml(){
           L.push(`    alignment: ${w.alignment}`);
         }
         
-        if(w.hoveredText) {
+        // hoveredText только для PRIVATE экранов
+        if(screenType === 'PRIVATE' && w.hoveredText) {
           const hoverContent = w.hoveredText;
           if (hoverContent.trim().startsWith('[')) {
             // JSON массив для hoveredText
@@ -100,12 +117,14 @@ function plainYaml(){
         L.push(`    backgroundAlpha: ${w.backgroundAlpha}`);
       }
       
-      // Добавляем hoveredBackgroundColor и hoveredBackgroundAlpha если они есть
-      if(w.hoveredBackgroundColor) {
-        L.push(`    hoveredBackgroundColor: [${w.hoveredBackgroundColor[0]}, ${w.hoveredBackgroundColor[1]}, ${w.hoveredBackgroundColor[2]}]`);
-      }
-      if(w.hoveredBackgroundAlpha !== undefined) {
-        L.push(`    hoveredBackgroundAlpha: ${w.hoveredBackgroundAlpha}`);
+      // Добавляем hoveredBackgroundColor и hoveredBackgroundAlpha только для PRIVATE экранов
+      if(screenType === 'PRIVATE') {
+        if(w.hoveredBackgroundColor) {
+          L.push(`    hoveredBackgroundColor: [${w.hoveredBackgroundColor[0]}, ${w.hoveredBackgroundColor[1]}, ${w.hoveredBackgroundColor[2]}]`);
+        }
+        if(w.hoveredBackgroundAlpha !== undefined) {
+          L.push(`    hoveredBackgroundAlpha: ${w.hoveredBackgroundAlpha}`);
+        }
       }
       
       L.push(`    tolerance: [${w.tolerance[0]}, ${w.tolerance[1]}]`);
@@ -158,11 +177,156 @@ function initYamlHandlers() {
   if (screenId) screenId.addEventListener('input', updateYaml);
 }
 
+// Инициализация обработчиков настроек экрана
+function initScreenSettingsHandlers() {
+  const screenType = document.getElementById('screenType');
+  const interactionRadius = document.getElementById('interactionRadius');
+  const rangeCheckInterval = document.getElementById('rangeCheckInterval');
+  const rangeCheckIntervalValue = document.getElementById('rangeCheckIntervalValue');
+  const closeDistance = document.getElementById('closeDistance');
+  const tickRate = document.getElementById('tickRate');
+  const tickRateValue = document.getElementById('tickRateValue');
+  const closeDistanceGroup = document.getElementById('closeDistanceGroup');
+  
+  // Функция расчета оптимизации
+  function calculateOptimization() {
+    const isPrivate = screenType?.value === 'PRIVATE';
+    const radius = parseFloat(interactionRadius?.value || '3.0');
+    const checkInterval = parseInt(rangeCheckInterval?.value || '10');
+    const rate = parseInt(tickRate?.value || '4');
+    const widgetCount = window.ScreenGenerator?.widgets?.length || 0;
+    
+    let score = 100;
+    
+    // Тип экрана (PUBLIC хуже чем PRIVATE, но не критично)
+    if (!isPrivate) {
+      score -= 15; // Уменьшили с 20 до 15
+    }
+    
+    // Радиус взаимодействия (более мягкий штраф)
+    score -= Math.max(0, (radius - 3.0) * 3); // Уменьшили с 5 до 3
+    
+    // Частота проверки (более мягкий штраф)
+    score -= Math.max(0, (20 - checkInterval) * 1); // Уменьшили с 2 до 1
+    
+    // Tick rate (более мягкий штраф)
+    score -= Math.max(0, (20 - rate) * 1.5); // Уменьшили с 3 до 1.5
+    
+    // Количество виджетов (более мягкий штраф)
+    score -= widgetCount * 1; // Уменьшили с 2 до 1
+    
+    // Ограничиваем от 0 до 100
+    score = Math.max(0, Math.min(100, score));
+    
+    // Обновляем UI
+    const scoreElement = document.getElementById('optimizationScore');
+    const barElement = document.getElementById('optimizationBar');
+    const hintElement = document.getElementById('optimizationHint');
+    
+    if (scoreElement) scoreElement.textContent = `${Math.round(score)}%`;
+    
+    // Обновляем полосу - теперь она показывает сколько скрыть справа
+    if (barElement) barElement.style.width = `${100 - score}%`;
+    
+    if (hintElement) {
+      if (score >= 85) {
+        hintElement.textContent = 'Отличная оптимизация';
+        hintElement.style.color = 'oklch(0.8 0.15 142)'; // Более насыщенный зеленый
+      } else if (score >= 70) {
+        hintElement.textContent = 'Хорошая оптимизация';
+        hintElement.style.color = 'oklch(0.8 0.12 64)'; // Желтый
+      } else if (score >= 50) {
+        hintElement.textContent = 'Средняя оптимизация';
+        hintElement.style.color = 'var(--accent)';
+      } else {
+        hintElement.textContent = 'Низкая оптимизация';
+        hintElement.style.color = 'oklch(0.7 0.15 29)'; // Красный
+      }
+    }
+  }
+  
+  // Обработчик изменения типа экрана
+  if (screenType) {
+    screenType.addEventListener('change', (e) => {
+      const isPrivate = e.target.value === 'PRIVATE';
+      
+      // Показываем/скрываем поле close_distance для PUBLIC экранов
+      if (closeDistanceGroup) {
+        closeDistanceGroup.style.display = isPrivate ? 'block' : 'none';
+      }
+      
+      // Устанавливаем дефолтные значения в зависимости от типа
+      if (interactionRadius) {
+        interactionRadius.value = isPrivate ? '3.0' : '6.0';
+      }
+      
+      // Пересчитываем оптимизацию
+      calculateOptimization();
+      
+      // Обновляем YAML
+      updateYaml();
+      
+      // Обновляем свойства виджетов (скрываем hover поля для PUBLIC)
+      if (window.ScreenGenerator && typeof window.ScreenGenerator.updateProps === 'function') {
+        window.ScreenGenerator.updateProps();
+      }
+    });
+  }
+  
+  // Обработчики для слайдеров с обновлением значений
+  if (rangeCheckInterval && rangeCheckIntervalValue) {
+    rangeCheckInterval.addEventListener('input', (e) => {
+      rangeCheckIntervalValue.textContent = e.target.value;
+      calculateOptimization();
+      updateYaml();
+    });
+  }
+  
+  if (tickRate && tickRateValue) {
+    tickRate.addEventListener('input', (e) => {
+      tickRateValue.textContent = e.target.value;
+      calculateOptimization();
+      updateYaml();
+    });
+  }
+  
+  // Обработчики для остальных полей
+  [interactionRadius, closeDistance].forEach(input => {
+    if (input) {
+      input.addEventListener('input', () => {
+        calculateOptimization();
+        updateYaml();
+      });
+    }
+  });
+  
+  // Инициализируем начальное состояние
+  if (screenType && closeDistanceGroup) {
+    const isPrivate = screenType.value === 'PRIVATE';
+    closeDistanceGroup.style.display = isPrivate ? 'block' : 'none';
+  }
+  
+  // Инициализируем значения слайдеров
+  if (rangeCheckInterval && rangeCheckIntervalValue) {
+    rangeCheckIntervalValue.textContent = rangeCheckInterval.value;
+  }
+  if (tickRate && tickRateValue) {
+    tickRateValue.textContent = tickRate.value;
+  }
+  
+  // Первоначальный расчет оптимизации
+  calculateOptimization();
+  
+  // Экспортируем функцию для использования в других местах
+  window.ScreenGenerator.calculateOptimization = calculateOptimization;
+}
+
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   fn,
   updateYaml,
   plainYaml,
   doCopy,
-  initYamlHandlers
+  initYamlHandlers,
+  initScreenSettingsHandlers
 });

@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Инициализируем YAML обработчики
     window.ScreenGenerator.initYamlHandlers();
     
+    // Инициализируем обработчики настроек экрана
+    window.ScreenGenerator.initScreenSettingsHandlers();
+    
     // Инициализируем YAML редактор
     window.ScreenGenerator.initYamlEditor();
     

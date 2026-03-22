@@ -75,6 +75,11 @@ function addWidget(type,mat,x=0,y=0){
   
   window.ScreenGenerator.selectedId = id;
   
+  // Пересчитываем оптимизацию при добавлении виджета
+  if (window.ScreenGenerator && typeof window.ScreenGenerator.calculateOptimization === 'function') {
+    window.ScreenGenerator.calculateOptimization();
+  }
+  
   // Сбрасываем состояние редактирования YAML при программном изменении
   if (window.ScreenGenerator && typeof window.ScreenGenerator.resetEditingState === 'function') {
     window.ScreenGenerator.resetEditingState();
@@ -150,6 +155,11 @@ document.getElementById('btnClear').addEventListener('click',()=>{
     window.ScreenGenerator.widgets = [];
     window.ScreenGenerator.background = null;
     window.ScreenGenerator.selectedId = null;
+    
+    // Пересчитываем оптимизацию после очистки
+    if (window.ScreenGenerator && typeof window.ScreenGenerator.calculateOptimization === 'function') {
+      window.ScreenGenerator.calculateOptimization();
+    }
     
     // Сбрасываем состояние редактирования YAML
     if (window.ScreenGenerator && typeof window.ScreenGenerator.resetEditingState === 'function') {
