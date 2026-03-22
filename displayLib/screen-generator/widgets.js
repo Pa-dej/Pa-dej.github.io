@@ -5,11 +5,44 @@
 // ═══════════════════════════════════════════════════════════════
 // ADD WIDGET
 // ═══════════════════════════════════════════════════════════════
-function addWidget(type,mat,x=0,y=0){
-  const { widgets, nextId, matCol } = window.ScreenGenerator;
+
+// Функция для поиска минимального свободного ID
+function getNextAvailableId() {
+  const { widgets } = window.ScreenGenerator;
   
-  const id=`widget_${nextId}`;
-  window.ScreenGenerator.nextId++;
+  // Извлекаем все существующие номера ID
+  const usedIds = new Set();
+  for (const widget of widgets) {
+    const match = widget.id.match(/^widget_(\d+)$/);
+    if (match) {
+      usedIds.add(parseInt(match[1]));
+    }
+  }
+  
+  // Если нет виджетов, начинаем с 0
+  if (usedIds.size === 0) {
+    return 0;
+  }
+  
+  // Находим максимальный используемый ID
+  const maxId = Math.max(...usedIds);
+  
+  // Ищем минимальный свободный ID от 0 до maxId
+  for (let i = 0; i <= maxId; i++) {
+    if (!usedIds.has(i)) {
+      return i;
+    }
+  }
+  
+  // Если все ID от 0 до maxId заняты, возвращаем maxId + 1
+  return maxId + 1;
+}
+
+function addWidget(type,mat,x=0,y=0){
+  const { widgets, matCol } = window.ScreenGenerator;
+  
+  const nextId = getNextAvailableId();
+  const id = `widget_${nextId}`;
   
   const isText=type==='TEXT_BUTTON';
   // По умолчанию translation=[0,0]:
@@ -117,7 +150,6 @@ document.getElementById('btnClear').addEventListener('click',()=>{
     window.ScreenGenerator.widgets = [];
     window.ScreenGenerator.background = null;
     window.ScreenGenerator.selectedId = null;
-    window.ScreenGenerator.nextId = 1;
     
     // Сбрасываем состояние редактирования YAML
     if (window.ScreenGenerator && typeof window.ScreenGenerator.resetEditingState === 'function') {
@@ -190,6 +222,7 @@ function updateAddBgButton() {
 
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
+  getNextAvailableId,
   addWidget,
   updateWidgetList,
   updateEmpty,

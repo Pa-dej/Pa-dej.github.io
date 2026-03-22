@@ -262,6 +262,13 @@ function updateWidgetValues(w) {
       updateField('w_bgB', w.backgroundColor[2]);
     }
     updateField('w_bgAlpha', w.backgroundAlpha !== undefined ? w.backgroundAlpha : 150);
+    
+    if (w.hoveredBackgroundColor) {
+      updateField('w_hbgR', w.hoveredBackgroundColor[0]);
+      updateField('w_hbgG', w.hoveredBackgroundColor[1]);
+      updateField('w_hbgB', w.hoveredBackgroundColor[2]);
+    }
+    updateField('w_hbgAlpha', w.hoveredBackgroundAlpha !== undefined ? w.hoveredBackgroundAlpha : 0);
   }
   
   updateField('w_act', w.onClick);
@@ -375,7 +382,7 @@ function renderBgProps(p){
 
 function renderWProps(p,w){
   const isText=w.type==='TEXT_BUTTON';
-  const yamlScaleStr=isText?`[${+(w.w*8).toFixed(2)}, ${+(w.h*4).toFixed(2)}, 1]`:`[${+w.w.toFixed(2)}, ${+w.h.toFixed(2)}, ${+w.w.toFixed(2)}]`;
+  const yamlScaleStr=isText?`[${+(w.w*8).toFixed(2)}, ${+(w.h*4).toFixed(2)}, 1]`:`[${+w.w.toFixed(2)}, ${+w.h.toFixed(2)}, 0.01]`;
   
   // Материал с визуальным селектом
   const materialSelect = !isText ? `
@@ -407,6 +414,18 @@ function renderWProps(p,w){
         ${row('BG G', numIn('w_bgG', w.backgroundColor ? w.backgroundColor[1] : 60, 1, 0, 255))}
         ${row('BG B', numIn('w_bgB', w.backgroundColor ? w.backgroundColor[2] : 80, 1, 0, 255))}
         ${row('BG Alpha', numIn('w_bgAlpha', w.backgroundAlpha || 150, 1, 0, 255))}
+      </div>
+    </div>
+    <div class="pgroup">
+      <div class="pgtitle">Фон при наведении</div>
+      <div class="pgbody">
+        <div class="phint">
+          <span class="ok">Цвет и прозрачность фона при hover</span>
+        </div>
+        ${row('Hover BG R', numIn('w_hbgR', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[0] : 60, 1, 0, 255))}
+        ${row('Hover BG G', numIn('w_hbgG', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[1] : 60, 1, 0, 255))}
+        ${row('Hover BG B', numIn('w_hbgB', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[2] : 60, 1, 0, 255))}
+        ${row('Hover BG Alpha', numIn('w_hbgAlpha', w.hoveredBackgroundAlpha || 0, 1, 0, 255))}
       </div>
     </div>
   ` : '';
@@ -533,6 +552,28 @@ function renderWProps(p,w){
     bind('w_bgAlpha',v=>{
       const alphaValue = parseInt(v);
       w.backgroundAlpha = isNaN(alphaValue) ? 150 : Math.max(0, Math.min(255, alphaValue));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    
+    // Обработчики для hoveredBackgroundColor
+    bind('w_hbgR',v=>{
+      if(!w.hoveredBackgroundColor) w.hoveredBackgroundColor = [60, 60, 60];
+      w.hoveredBackgroundColor[0] = Math.max(0, Math.min(255, parseInt(v) || 0));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    bind('w_hbgG',v=>{
+      if(!w.hoveredBackgroundColor) w.hoveredBackgroundColor = [60, 60, 60];
+      w.hoveredBackgroundColor[1] = Math.max(0, Math.min(255, parseInt(v) || 0));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    bind('w_hbgB',v=>{
+      if(!w.hoveredBackgroundColor) w.hoveredBackgroundColor = [60, 60, 60];
+      w.hoveredBackgroundColor[2] = Math.max(0, Math.min(255, parseInt(v) || 0));
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+    bind('w_hbgAlpha',v=>{
+      const alphaValue = parseInt(v);
+      w.hoveredBackgroundAlpha = isNaN(alphaValue) ? 0 : Math.max(0, Math.min(255, alphaValue));
       if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
     });
   }

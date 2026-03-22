@@ -85,7 +85,7 @@ function plainYaml(){
         
         L.push(`    scale: [${fn(w.w*8)}, ${fn(w.h*4)}, 1]`);
       } else {
-        L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, ${fn(w.w)}]`);
+        L.push(`    scale: [${fn(w.w)}, ${fn(w.h)}, 0.01]`);
       }
       L.push(`    position: [${fn(w.x)}, ${fn(w.y)}, 0]`);
       // Всегда показываем translation, даже если все компоненты равны 0
@@ -98,6 +98,14 @@ function plainYaml(){
       // Всегда показываем backgroundAlpha если он определен, даже если 0
       if(w.backgroundAlpha !== undefined) {
         L.push(`    backgroundAlpha: ${w.backgroundAlpha}`);
+      }
+      
+      // Добавляем hoveredBackgroundColor и hoveredBackgroundAlpha если они есть
+      if(w.hoveredBackgroundColor) {
+        L.push(`    hoveredBackgroundColor: [${w.hoveredBackgroundColor[0]}, ${w.hoveredBackgroundColor[1]}, ${w.hoveredBackgroundColor[2]}]`);
+      }
+      if(w.hoveredBackgroundAlpha !== undefined) {
+        L.push(`    hoveredBackgroundAlpha: ${w.hoveredBackgroundAlpha}`);
       }
       
       L.push(`    tolerance: [${w.tolerance[0]}, ${w.tolerance[1]}]`);

@@ -150,6 +150,17 @@ function parseWidgetProperty(line, widget) {
   } else if (line.startsWith('backgroundAlpha:')) {
     const alphaValue = parseInt(line.split(':')[1].trim());
     widget.backgroundAlpha = isNaN(alphaValue) ? 255 : alphaValue;
+  } else if (line.startsWith('hoveredBackgroundColor:')) {
+    const colorMatch = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);
+    if (colorMatch) {
+      const r = parseInt(colorMatch[1]);
+      const g = parseInt(colorMatch[2]);
+      const b = parseInt(colorMatch[3]);
+      widget.hoveredBackgroundColor = [r, g, b];
+    }
+  } else if (line.startsWith('hoveredBackgroundAlpha:')) {
+    const alphaValue = parseInt(line.split(':')[1].trim());
+    widget.hoveredBackgroundAlpha = isNaN(alphaValue) ? 0 : alphaValue;
   } else if (line.startsWith('scale:')) {
     const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),/);
     if (scaleMatch) {

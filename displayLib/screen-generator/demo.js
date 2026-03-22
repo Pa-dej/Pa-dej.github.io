@@ -22,9 +22,9 @@ function loadDemo(){
   };
   
   window.ScreenGenerator.widgets=[
-    // widget_11 - BARRIER кнопка (закрыть экран)
+    // widget_0 - BARRIER кнопка (закрыть экран)
     {
-      id: 'widget_11',
+      id: 'widget_0',
       type: 'ITEM_BUTTON',
       material: 'BARRIER',
       label: '',
@@ -40,9 +40,9 @@ function loadDemo(){
       onClick: 'CLOSE_SCREEN',
       tolerance: [0.2, 0.2]
     },
-    // widget_12 - TEXT_BUTTON с правильными размерами
+    // widget_1 - TEXT_BUTTON с правильными размерами
     {
-      id: 'widget_12',
+      id: 'widget_1',
       type: 'TEXT_BUTTON',
       material: '',
       label: 'Example text',
@@ -62,9 +62,9 @@ function loadDemo(){
       onClick: 'NONE',
       tolerance: [0.15, 0.15]
     },
-    // widget_13 - DIAMOND
+    // widget_2 - DIAMOND
     {
-      id: 'widget_13',
+      id: 'widget_2',
       type: 'ITEM_BUTTON',
       material: 'DIAMOND',
       label: '',
@@ -80,9 +80,9 @@ function loadDemo(){
       onClick: 'NONE',
       tolerance: [0.2, 0.2]
     },
-    // widget_14 - EMERALD
+    // widget_3 - EMERALD
     {
-      id: 'widget_14',
+      id: 'widget_3',
       type: 'ITEM_BUTTON',
       material: 'EMERALD',
       label: '',
@@ -98,9 +98,9 @@ function loadDemo(){
       onClick: 'NONE',
       tolerance: [0.2, 0.2]
     },
-    // widget_15 - GOLD_INGOT
+    // widget_4 - GOLD_INGOT
     {
-      id: 'widget_15',
+      id: 'widget_4',
       type: 'ITEM_BUTTON',
       material: 'GOLD_INGOT',
       label: '',
@@ -118,7 +118,6 @@ function loadDemo(){
     }
   ];
   
-  window.ScreenGenerator.nextId = 16; // Следующий ID после widget_15
   window.ScreenGenerator.selectedId = null;
   
   if (window.ScreenGenerator && typeof window.ScreenGenerator.render === 'function') window.ScreenGenerator.render();
