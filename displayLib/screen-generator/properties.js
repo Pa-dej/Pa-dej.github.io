@@ -71,6 +71,20 @@ const MATS = [
 
 const ACTS=['NONE','CLOSE_SCREEN','SWITCH_SCREEN','RUN_SCRIPT'];
 
+// Утилиты для работы с цветами
+function rgbToHex(r, g, b) {
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
 // Утилиты для создания элементов формы
 const row=(lbl,inp)=>`<div class="prow"><div class="plabel">${lbl}</div>${inp}</div>`;
 const numIn=(id,v,step=0.05,min='')=>`<input class="pinput" type="number" id="${id}" value="${typeof v==='number'?+v.toFixed(4):v}" step="${step}" ${min!==''?`min="${min}"`:''}  >`;
@@ -257,18 +271,21 @@ function updateWidgetValues(w) {
     updateField('w_align', w.alignment || 'CENTERED');
     
     if (w.backgroundColor) {
-      updateField('w_bgR', w.backgroundColor[0]);
-      updateField('w_bgG', w.backgroundColor[1]);
-      updateField('w_bgB', w.backgroundColor[2]);
+      updateField('w_bgColor', rgbToHex(w.backgroundColor[0], w.backgroundColor[1], w.backgroundColor[2]));
     }
     updateField('w_bgAlpha', w.backgroundAlpha !== undefined ? w.backgroundAlpha : 150);
     
     if (w.hoveredBackgroundColor) {
-      updateField('w_hbgR', w.hoveredBackgroundColor[0]);
-      updateField('w_hbgG', w.hoveredBackgroundColor[1]);
-      updateField('w_hbgB', w.hoveredBackgroundColor[2]);
+      updateField('w_hbgColor', rgbToHex(w.hoveredBackgroundColor[0], w.hoveredBackgroundColor[1], w.hoveredBackgroundColor[2]));
     }
     updateField('w_hbgAlpha', w.hoveredBackgroundAlpha !== undefined ? w.hoveredBackgroundAlpha : 0);
+    
+    // Tooltip поля
+    updateField('w_tooltip', w.tooltip || '');
+    if (w.tooltipColor) {
+      updateField('w_tooltipColor', rgbToHex(w.tooltipColor[0], w.tooltipColor[1], w.tooltipColor[2]));
+    }
+    updateField('w_tooltipDelay', w.tooltipDelay !== undefined ? w.tooltipDelay : 10);
   }
   
   updateField('w_act', w.onClick);
@@ -400,8 +417,7 @@ function renderWProps(p,w){
   const textFields = isText ? `
     ${row('Текст',txtAreaIn('w_txt',w.text))}
     ${row('Выравнивание',selIn('w_align',w.alignment||'CENTERED',['LEFT','CENTERED','RIGHT']))}
-    ${isPrivateScreen ? row('Hover текст',txtIn('w_hover',w.hoveredText||'')) : ''}
-    ${row('Цвет BG',colIn('w_col',w.color))}
+    ${isPrivateScreen ? row('Hover текст',txtAreaIn('w_hover',w.hoveredText||'')) : ''}
   ` : '';
   
   // Поля backgroundColor и backgroundAlpha для TEXT_BUTTON
@@ -412,10 +428,8 @@ function renderWProps(p,w){
         <div class="phint">
           <span class="ok">Цвет и прозрачность фона кнопки</span>
         </div>
-        ${row('BG R', numIn('w_bgR', w.backgroundColor ? w.backgroundColor[0] : 40, 1, 0, 255))}
-        ${row('BG G', numIn('w_bgG', w.backgroundColor ? w.backgroundColor[1] : 60, 1, 0, 255))}
-        ${row('BG B', numIn('w_bgB', w.backgroundColor ? w.backgroundColor[2] : 80, 1, 0, 255))}
-        ${row('BG Alpha', numIn('w_bgAlpha', w.backgroundAlpha || 150, 1, 0, 255))}
+        ${row('Цвет фона', colIn('w_bgColor', w.backgroundColor ? rgbToHex(w.backgroundColor[0], w.backgroundColor[1], w.backgroundColor[2]) : '#283c50'))}
+        ${row('Прозрачность', numIn('w_bgAlpha', w.backgroundAlpha || 150, 1, 0, 255))}
       </div>
     </div>
     ${isPrivateScreen ? `<div class="pgroup">
@@ -424,10 +438,8 @@ function renderWProps(p,w){
         <div class="phint">
           <span class="ok">Цвет и прозрачность фона при hover</span>
         </div>
-        ${row('Hover BG R', numIn('w_hbgR', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[0] : 60, 1, 0, 255))}
-        ${row('Hover BG G', numIn('w_hbgG', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[1] : 60, 1, 0, 255))}
-        ${row('Hover BG B', numIn('w_hbgB', w.hoveredBackgroundColor ? w.hoveredBackgroundColor[2] : 60, 1, 0, 255))}
-        ${row('Hover BG Alpha', numIn('w_hbgAlpha', w.hoveredBackgroundAlpha || 0, 1, 0, 255))}
+        ${row('Цвет hover', colIn('w_hbgColor', w.hoveredBackgroundColor ? rgbToHex(w.hoveredBackgroundColor[0], w.hoveredBackgroundColor[1], w.hoveredBackgroundColor[2]) : '#3c3c3c'))}
+        ${row('Прозрачность hover', numIn('w_hbgAlpha', w.hoveredBackgroundAlpha || 0, 1, 0, 255))}
       </div>
     </div>` : ''}
   ` : '';
@@ -509,6 +521,17 @@ function renderWProps(p,w){
           ${w.onClick === 'RUN_SCRIPT' ? '<span class="hl">Требует Lua скрипт и секцию scripts: в YAML</span>' : ''}
         </div>
       </div>
+    </div>
+    <div class="pgroup">
+      <div class="pgtitle">Подсказка (Tooltip)</div>
+      <div class="pgbody">
+        <div class="phint">
+          <span class="ok">Всплывающая подсказка при наведении</span>
+        </div>
+        ${row('Текст подсказки',txtAreaIn('w_tooltip',w.tooltip||''))}
+        ${row('Цвет подсказки', colIn('w_tooltipColor', w.tooltipColor ? rgbToHex(w.tooltipColor[0], w.tooltipColor[1], w.tooltipColor[2]) : '#90ee90'))}
+        ${row('Задержка (тики)', numIn('w_tooltipDelay', w.tooltipDelay || 10, 1, 0, 100))}
+      </div>
     </div>`;
 
   bind('w_id',v=>{w.id=v||w.id;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
@@ -533,23 +556,16 @@ function renderWProps(p,w){
       if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
     });
     bind('w_hover',v=>{w.hoveredText=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();});
-    bind('w_col',v=>{w.color=v;if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
     
-    // Обработчики для backgroundColor
-    bind('w_bgR',v=>{
-      if(!w.backgroundColor) w.backgroundColor = [40, 60, 80];
-      w.backgroundColor[0] = Math.max(0, Math.min(255, parseInt(v) || 0));
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
-    });
-    bind('w_bgG',v=>{
-      if(!w.backgroundColor) w.backgroundColor = [40, 60, 80];
-      w.backgroundColor[1] = Math.max(0, Math.min(255, parseInt(v) || 0));
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
-    });
-    bind('w_bgB',v=>{
-      if(!w.backgroundColor) w.backgroundColor = [40, 60, 80];
-      w.backgroundColor[2] = Math.max(0, Math.min(255, parseInt(v) || 0));
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    // Обработчики для backgroundColor (колорпикер)
+    bind('w_bgColor',v=>{
+      const rgb = hexToRgb(v);
+      if (rgb) {
+        w.backgroundColor = [rgb.r, rgb.g, rgb.b];
+        w.color = v; // Обновляем и старое поле color для совместимости
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();
+      }
     });
     bind('w_bgAlpha',v=>{
       const alphaValue = parseInt(v);
@@ -557,21 +573,13 @@ function renderWProps(p,w){
       if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
     });
     
-    // Обработчики для hoveredBackgroundColor
-    bind('w_hbgR',v=>{
-      if(!w.hoveredBackgroundColor) w.hoveredBackgroundColor = [60, 60, 60];
-      w.hoveredBackgroundColor[0] = Math.max(0, Math.min(255, parseInt(v) || 0));
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
-    });
-    bind('w_hbgG',v=>{
-      if(!w.hoveredBackgroundColor) w.hoveredBackgroundColor = [60, 60, 60];
-      w.hoveredBackgroundColor[1] = Math.max(0, Math.min(255, parseInt(v) || 0));
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
-    });
-    bind('w_hbgB',v=>{
-      if(!w.hoveredBackgroundColor) w.hoveredBackgroundColor = [60, 60, 60];
-      w.hoveredBackgroundColor[2] = Math.max(0, Math.min(255, parseInt(v) || 0));
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    // Обработчики для hoveredBackgroundColor (колорпикер)
+    bind('w_hbgColor',v=>{
+      const rgb = hexToRgb(v);
+      if (rgb) {
+        w.hoveredBackgroundColor = [rgb.r, rgb.g, rgb.b];
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      }
     });
     bind('w_hbgAlpha',v=>{
       const alphaValue = parseInt(v);
@@ -606,6 +614,24 @@ function renderWProps(p,w){
   });
   bind('w_tolH',v=>{w.tolerance[0]=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
   bind('w_tolV',v=>{w.tolerance[1]=parseFloat(v)||0;if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();if(window.ScreenGenerator && typeof window.ScreenGenerator.render==='function')window.ScreenGenerator.render();});
+  
+  // Обработчики для tooltip
+  bind('w_tooltip',v=>{
+    w.tooltip = v;
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+  });
+  bind('w_tooltipColor',v=>{
+    const rgb = hexToRgb(v);
+    if (rgb) {
+      w.tooltipColor = [rgb.r, rgb.g, rgb.b];
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    }
+  });
+  bind('w_tooltipDelay',v=>{
+    const delayValue = parseInt(v);
+    w.tooltipDelay = isNaN(delayValue) ? 10 : Math.max(0, Math.min(100, delayValue));
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+  });
 }
 
 // Функция для показа уведомления о копировании

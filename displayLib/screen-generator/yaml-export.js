@@ -127,6 +127,25 @@ function plainYaml(){
         }
       }
       
+      // Добавляем tooltip поля если они есть
+      if(w.tooltip) {
+        const tooltipContent = w.tooltip;
+        if (tooltipContent.trim().startsWith('[')) {
+          // JSON массив для tooltip
+          L.push(`    tooltip: ${tooltipContent}`);
+        } else {
+          // Обычный текст
+          const escapedTooltip = tooltipContent.replace(/\n/g, '\\n');
+          L.push(`    tooltip: "${escapedTooltip}"`);
+        }
+      }
+      if(w.tooltipColor) {
+        L.push(`    tooltipColor: [${w.tooltipColor[0]}, ${w.tooltipColor[1]}, ${w.tooltipColor[2]}]`);
+      }
+      if(w.tooltipDelay !== undefined) {
+        L.push(`    tooltipDelay: ${w.tooltipDelay}`);
+      }
+      
       L.push(`    tolerance: [${w.tolerance[0]}, ${w.tolerance[1]}]`);
       L.push(`    onClick:`);
       L.push(`      action: ${w.onClick}`);

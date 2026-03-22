@@ -1595,13 +1595,15 @@ pre.ycode {
 
 /* Выделение выбранного виджета в YAML */
 .yaml-block-selected {
-  display: block !important;
+  display: inline-block !important;
+  width: 100% !important;
   border-left: 3px solid #5fb3d4 !important; /* Голубая полоска слева */
   padding-left: 9px !important; /* Компенсируем ширину полоски */
   margin-left: -12px !important; /* Выравниваем с остальным текстом */
   white-space: pre !important; /* Сохраняем форматирование */
   position: relative !important;
   z-index: 1 !important;
+  box-sizing: border-box !important;
 }
 
 .yaml-block-selected::before {
@@ -1850,12 +1852,14 @@ pre.ycode {
 
 /* Выделение выбранного виджета в Lua */
 .lua-block-selected {
-  display: block !important; /* Занимаем всю ширину строки */
+  display: inline-block !important; /* Не создаем перенос строки */
+  width: 100% !important;
   border-left: 3px solid #2ED9FF !important; /* Голубая полоска слева */
   padding-left: 9px !important; /* Компенсируем ширину полоски */
   margin-left: -12px !important; /* Выравниваем с остальным текстом */
   position: relative !important;
   z-index: 1 !important;
+  box-sizing: border-box !important;
 }
 
 .lua-block-selected::before {

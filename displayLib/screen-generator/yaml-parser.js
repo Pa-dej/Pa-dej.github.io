@@ -161,6 +161,27 @@ function parseWidgetProperty(line, widget) {
   } else if (line.startsWith('hoveredBackgroundAlpha:')) {
     const alphaValue = parseInt(line.split(':')[1].trim());
     widget.hoveredBackgroundAlpha = isNaN(alphaValue) ? 0 : alphaValue;
+  } else if (line.startsWith('tooltip:')) {
+    // Аналогично для tooltip
+    const tooltipPart = line.substring(8).trim(); // Убираем 'tooltip:'
+    
+    if (tooltipPart.startsWith('[')) {
+      widget.tooltip = tooltipPart;
+    } else {
+      const tooltipValue = tooltipPart.replace(/^["']|["']$/g, '');
+      widget.tooltip = tooltipValue.replace(/\\n/g, '\n');
+    }
+  } else if (line.startsWith('tooltipColor:')) {
+    const colorMatch = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);
+    if (colorMatch) {
+      const r = parseInt(colorMatch[1]);
+      const g = parseInt(colorMatch[2]);
+      const b = parseInt(colorMatch[3]);
+      widget.tooltipColor = [r, g, b];
+    }
+  } else if (line.startsWith('tooltipDelay:')) {
+    const delayValue = parseInt(line.split(':')[1].trim());
+    widget.tooltipDelay = isNaN(delayValue) ? 10 : delayValue;
   } else if (line.startsWith('scale:')) {
     const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),/);
     if (scaleMatch) {
