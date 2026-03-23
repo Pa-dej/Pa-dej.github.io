@@ -7,6 +7,8 @@ let isUpdatingFromCanvas = false;
 let updateTimeout = null;
 let highlightTimeout = null;
 let currentTab = 'yaml'; // 'yaml' или 'lua'
+let lastGeneratedLua = ''; // Последний сгенерированный шаблон
+let luaManuallyEdited = false; // Флаг ручного редактирования
 
 // Система мгновенного применения изменений (только для YAML)
 let lastValidYaml = ''; // Последний валидный YAML
@@ -652,10 +654,16 @@ function switchTab(tabType) {
     }
   }
   
-  // Обновляем заголовок
+  // Обновляем заголовок и видимость кнопки сброса
   const editorTitle = document.getElementById('editorTitle');
+  
   if (editorTitle) {
     editorTitle.textContent = tabType === 'yaml' ? 'YAML Editor' : 'Lua Editor';
+  }
+  
+  // Обновляем видимость кнопки сброса
+  if (window.ScreenGenerator && window.ScreenGenerator.updateResetLuaButton) {
+    window.ScreenGenerator.updateResetLuaButton();
   }
   
   // Обновляем содержимое редактора
@@ -824,6 +832,15 @@ function setupEditor() {
         validateAndApplyYaml();
       }, 300); // Увеличено до 300ms для лучшей производительности
     } else if (currentTab === 'lua') {
+      // Помечаем Lua как отредактированный пользователем
+      if (!isUpdatingFromCanvas) {
+        luaManuallyEdited = true;
+        // Обновляем видимость кнопки сброса
+        if (window.ScreenGenerator && window.ScreenGenerator.updateResetLuaButton) {
+          window.ScreenGenerator.updateResetLuaButton();
+        }
+      }
+      
       // Для Lua сохраняем в историю изменения
       clearTimeout(window.ScreenGenerator._luaChangeTimeout);
       window.ScreenGenerator._luaChangeTimeout = setTimeout(() => {
@@ -1006,42 +1023,59 @@ function updateLuaContent() {
     return;
   }
   
-  isUpdatingFromCanvas = true;
+  // Генерируем новый Lua код
+  const newLuaCode = window.ScreenGenerator.generateLua();
   
-  // Сохраняем позицию скролла
-  const scrollTop = codeEditor.scrollTop;
-  
-  // ВСЕГДА регенерируем Lua код из текущего состояния canvas
-  const luaCode = window.ScreenGenerator.generateLua();
-  tabContents.lua = luaCode; // Обновляем кэш
-  
-  codeEditor.value = luaCode;
-  
-  // Обновляем подсветку
-  const yamlHighlight = document.getElementById('yamlHighlight');
-  if (yamlHighlight) {
-    yamlHighlight.innerHTML = highlightLua(luaCode);
+  // Проверяем, был ли код отредактирован пользователем
+  if (luaManuallyEdited) {
+    // Если код был отредактирован, не перезаписываем его
+    console.log('Lua code was manually edited, skipping auto-regeneration');
+    return;
   }
   
-  // Восстанавливаем скролл
-  setTimeout(() => {
-    if (codeEditor) {
-      codeEditor.scrollTop = scrollTop;
-      
-      const yamlHighlight = document.getElementById('yamlHighlight');
-      if (yamlHighlight) {
-        yamlHighlight.scrollTop = scrollTop;
-        yamlHighlight.scrollLeft = codeEditor.scrollLeft;
-        
-        // Дополнительная синхронизация через RAF
-        requestAnimationFrame(() => {
-          if (window.syncScroll) window.syncScroll();
-        });
-      }
-      
-      isUpdatingFromCanvas = false;
+  // Если это первая генерация или код не изменился с момента последней генерации
+  if (!lastGeneratedLua || tabContents.lua === lastGeneratedLua) {
+    isUpdatingFromCanvas = true;
+    
+    // Сохраняем позицию скролла
+    const scrollTop = codeEditor.scrollTop;
+    
+    // Обновляем код
+    tabContents.lua = newLuaCode;
+    lastGeneratedLua = newLuaCode; // Запоминаем сгенерированный код
+    
+    codeEditor.value = newLuaCode;
+    
+    // Обновляем подсветку
+    const yamlHighlight = document.getElementById('yamlHighlight');
+    if (yamlHighlight) {
+      yamlHighlight.innerHTML = highlightLua(newLuaCode);
     }
-  }, 10);
+    
+    // Восстанавливаем скролл
+    setTimeout(() => {
+      if (codeEditor) {
+        codeEditor.scrollTop = scrollTop;
+        
+        const yamlHighlight = document.getElementById('yamlHighlight');
+        if (yamlHighlight) {
+          yamlHighlight.scrollTop = scrollTop;
+          yamlHighlight.scrollLeft = codeEditor.scrollLeft;
+          
+          // Дополнительная синхронизация через RAF
+          requestAnimationFrame(() => {
+            if (window.syncScroll) window.syncScroll();
+          });
+        }
+        
+        isUpdatingFromCanvas = false;
+      }
+    }, 10);
+  } else {
+    // Код был изменен пользователем, помечаем как отредактированный
+    luaManuallyEdited = true;
+    console.log('Lua code differs from template, marking as manually edited');
+  }
 }
 
 // Универсальная функция обновления редактора

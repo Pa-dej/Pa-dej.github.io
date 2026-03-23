@@ -185,15 +185,59 @@ function doCopy(){
   });
 }
 
+// Функция для обновления видимости кнопки сброса Lua
+function updateResetLuaButton() {
+  const btnResetLua = document.getElementById('btnResetLua');
+  if (btnResetLua) {
+    btnResetLua.style.display = (currentTab === 'lua' && luaManuallyEdited) ? 'block' : 'none';
+  }
+}
+
 // Инициализация обработчиков YAML
 function initYamlHandlers() {
   const btnCopy = document.getElementById('btnCopy');
   const btnCopy2 = document.getElementById('btnCopy2');
+  const btnResetLua = document.getElementById('btnResetLua');
   const screenId = document.getElementById('screenId');
   
   if (btnCopy) btnCopy.addEventListener('click', doCopy);
   if (btnCopy2) btnCopy2.addEventListener('click', doCopy);
   if (screenId) screenId.addEventListener('input', updateYaml);
+  
+  // Обработчик кнопки сброса Lua
+  if (btnResetLua) {
+    btnResetLua.addEventListener('click', () => {
+      if (confirm('Сбросить Lua код к автоматически сгенерированному шаблону? Все ваши изменения будут потеряны.')) {
+        // Сбрасываем флаги
+        luaManuallyEdited = false;
+        lastGeneratedLua = '';
+        
+        // Принудительно регенерируем код
+        if (window.ScreenGenerator.generateLua) {
+          const newLuaCode = window.ScreenGenerator.generateLua();
+          tabContents.lua = newLuaCode;
+          lastGeneratedLua = newLuaCode;
+          
+          // Если сейчас активна Lua вкладка, обновляем редактор
+          if (currentTab === 'lua' && codeEditor) {
+            codeEditor.value = newLuaCode;
+            
+            // Обновляем подсветку
+            const yamlHighlight = document.getElementById('yamlHighlight');
+            if (yamlHighlight) {
+              yamlHighlight.innerHTML = highlightLua(newLuaCode);
+            }
+          }
+          
+          // Скрываем кнопку сброса
+          btnResetLua.style.display = 'none';
+          
+          console.log('Lua code reset to template');
+        }
+      }
+    });
+  }
+}
 }
 
 // Инициализация обработчиков настроек экрана
@@ -347,5 +391,6 @@ Object.assign(window.ScreenGenerator, {
   plainYaml,
   doCopy,
   initYamlHandlers,
-  initScreenSettingsHandlers
+  initScreenSettingsHandlers,
+  updateResetLuaButton
 });
