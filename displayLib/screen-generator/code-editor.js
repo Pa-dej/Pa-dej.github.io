@@ -1164,6 +1164,9 @@ function getCurrentTabContent() {
   return '';
 }
 
+// Экспорт функции highlightLua в глобальную область для использования в других модулях
+window.highlightLua = highlightLua;
+
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   initYamlEditor,
@@ -1176,7 +1179,16 @@ Object.assign(window.ScreenGenerator, {
   syncLuaWithCanvas,
   getCurrentTabContent,
   get currentTab() { return currentTab; },
-  get tabContents() { return tabContents; }
+  get tabContents() { return tabContents; },
+  // Функции для работы с состоянием Lua редактирования
+  getCurrentTab() { return currentTab; },
+  getTabContents() { return tabContents; },
+  isLuaManuallyEdited() { return luaManuallyEdited; },
+  setLastGeneratedLua(code) { lastGeneratedLua = code; },
+  resetLuaEditingFlags() { 
+    luaManuallyEdited = false; 
+    lastGeneratedLua = ''; 
+  }
 });
 /*
 ТЕСТ ПОДСВЕТКИ LUA:

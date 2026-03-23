@@ -46,11 +46,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Инициализируем все обработчики событий
     window.ScreenGenerator.initAllEventHandlers();
     
+    // Отладочная информация
+    console.log('ScreenGenerator functions:', Object.keys(window.ScreenGenerator));
+    
     // Инициализируем YAML обработчики
-    window.ScreenGenerator.initYamlHandlers();
+    if (window.ScreenGenerator.initYamlHandlers) {
+      window.ScreenGenerator.initYamlHandlers();
+    } else {
+      console.error('initYamlHandlers function not found');
+    }
     
     // Инициализируем обработчики настроек экрана
-    window.ScreenGenerator.initScreenSettingsHandlers();
+    if (window.ScreenGenerator.initScreenSettingsHandlers) {
+      window.ScreenGenerator.initScreenSettingsHandlers();
+    } else {
+      console.error('initScreenSettingsHandlers function not found');
+    }
     
     // Инициализируем YAML редактор
     window.ScreenGenerator.initYamlEditor();

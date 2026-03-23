@@ -1,3 +1,33 @@
+:root {
+    /* === Основа тёмная (Igor / Craft) === */
+    --bg: #1A1713;
+    --surface: #221E1A;
+    --surface-2: #2E2922;
+    --border: #3D3630;
+    --text: #F0EBE3;
+    --text-muted: #8A8178;
+    --text-hint: #4F4842;
+    /* Акцент: Сталь — Десктоп / C# */
+    --accent: #6A9EC4;
+    --accent-bg: #0A1E2E;
+    --accent-on: #1A1713;
+}
+
+[data-theme="light"] {
+    /* === Основа светлая === */
+    --bg: #F5F2ED;
+    --surface: #EDE9E2;
+    --surface-2: #E0DCD4;
+    --border: #CCC7BE;
+    --text: #1A1713;
+    --text-muted: #6B6560;
+    --text-hint: #A8A39C;
+    /* Акцент: Сталь */
+    --accent: #3E7AA8;
+    --accent-bg: #E8F2FB;
+    --accent-on: #fff;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,7 +35,7 @@
 }
 
 body {
-    background: #393939;
+    background: var(--bg);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -30,7 +60,7 @@ body {
     position: absolute;
     width: 350px;
     height: 550px;
-    background: #2a2a2a;
+    background: var(--surface);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     padding: 25px;
@@ -169,7 +199,7 @@ body {
 .card-avatar {
     width: 80px;
     height: 80px;
-    background: #4a4a4a;
+    background: var(--surface-2);
     border-radius: 50%;
     margin: 0 auto 15px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -179,7 +209,7 @@ body {
 .card-name {
     font-size: 1.6rem;
     font-weight: 600;
-    color: #e8e8e8;
+    color: var(--text);
     margin-bottom: 15px;
     text-align: center;
     flex-shrink: 0;
@@ -206,7 +236,7 @@ body {
 }
 
 .card-section:not(:last-child) {
-    border-bottom: 1px solid #3a3a3a;
+    border-bottom: 1px solid var(--border);
 }
 
 /* Иконки */
@@ -257,12 +287,12 @@ body {
 
 /* Цветовые схемы для секций */
 .card.focused .card-section[data-color="discord"] {
-    background: linear-gradient(135deg, rgba(86, 98, 246, 0.1), rgba(86, 98, 246, 0.05));
-    border-color: rgba(86, 98, 246, 0.3);
+    background: linear-gradient(135deg, rgba(106, 158, 196, 0.1), rgba(106, 158, 196, 0.05));
+    border-color: rgba(106, 158, 196, 0.3);
 }
 
 .card.focused .card-section[data-color="discord"] .card-text strong {
-    color: #5662f6;
+    color: var(--accent);
 }
 
 .card.focused .card-section[data-color="discord"] .card-icon {
@@ -338,12 +368,12 @@ body {
 }
 
 .card.focused .card-section[data-color="web"] {
-    background: linear-gradient(135deg, rgba(100, 150, 255, 0.1), rgba(100, 150, 255, 0.05));
-    border-color: rgba(100, 150, 255, 0.3);
+    background: linear-gradient(135deg, rgba(106, 158, 196, 0.1), rgba(106, 158, 196, 0.05));
+    border-color: rgba(106, 158, 196, 0.3);
 }
 
 .card.focused .card-section[data-color="web"] .card-text strong {
-    color: #6496ff;
+    color: var(--accent);
 }
 
 .card.focused .card-section[data-color="web"] .card-icon {
@@ -369,12 +399,13 @@ body {
 
 /* Цвет кнопок в зависимости от секции */
 .card.focused .card-section[data-color="discord"] .card-button {
-    background: #5662f6;
-    color: white;
+    background: var(--accent);
+    color: var(--accent-on);
 }
 
 .card.focused .card-section[data-color="discord"] .card-button:hover {
-    background: #6b77f7;
+    background: var(--accent);
+    opacity: 0.9;
 }
 
 .card.focused .card-section[data-color="modrinth"] .card-button {
@@ -387,22 +418,23 @@ body {
 }
 
 .card.focused .card-section[data-color="github"] .card-button {
-    background: #e8e8e8;
-    color: #1a1a1a;
+    background: var(--text);
+    color: var(--bg);
 }
 
 .card.focused .card-section[data-color="github"] .card-button:hover {
-    background: #ffffff;
+    background: var(--text);
+    opacity: 0.9;
 }
 
 /* Цвета для главной карты */
 .card.focused .card-section[data-color="code"] {
-    background: linear-gradient(135deg, rgba(100, 150, 255, 0.1), rgba(100, 150, 255, 0.05));
-    border-color: rgba(100, 150, 255, 0.3);
+    background: linear-gradient(135deg, rgba(106, 158, 196, 0.1), rgba(106, 158, 196, 0.05));
+    border-color: rgba(106, 158, 196, 0.3);
 }
 
 .card.focused .card-section[data-color="code"] .card-text strong {
-    color: #6496ff;
+    color: var(--accent);
 }
 
 .card.focused .card-section[data-color="code"] .card-icon {
@@ -464,12 +496,12 @@ body {
 }
 
 .card.focused .card-section[data-color="layers"] {
-    background: linear-gradient(135deg, rgba(100, 150, 255, 0.1), rgba(100, 150, 255, 0.05));
-    border-color: rgba(100, 150, 255, 0.3);
+    background: linear-gradient(135deg, rgba(106, 158, 196, 0.1), rgba(106, 158, 196, 0.05));
+    border-color: rgba(106, 158, 196, 0.3);
 }
 
 .card.focused .card-section[data-color="layers"] .card-text {
-    color: #6496ff;
+    color: var(--accent);
 }
 
 .card.focused .card-section[data-color="layers"] .card-icon {
@@ -503,22 +535,22 @@ body {
 }
 
 .card-text {
-    color: #a8a8a8;
+    color: var(--text-muted);
     font-size: 0.85rem;
     line-height: 1.4;
     text-align: center;
 }
 
 .card-text strong {
-    color: #e8e8e8;
+    color: var(--text);
     display: block;
     margin-bottom: 4px;
     font-size: 0.9rem;
 }
 
 .card-button {
-    background: #4a4a4a;
-    color: #e8e8e8;
+    background: var(--surface-2);
+    color: var(--text);
     border: none;
     padding: 6px 14px;
     border-radius: 6px;
@@ -532,7 +564,7 @@ body {
 }
 
 .card-button:hover {
-    background: #5a5a5a;
+    background: var(--border);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -737,21 +769,21 @@ body {
 
 /* CSS Variables for DisplayLib - Updated to match main theme */
 .displaylib-body {
-  --bg: #1a1a1a;
-  --bg2: #2a2a2a;
-  --bg3: #3a3a3a;
-  --bg4: #4a4a4a;
-  --border: #3a3a3a;
-  --border2: #4a4a4a;
-  --accent: #6496ff;
-  --accent2: #7c3aed;
-  --accent3: #1cee72;
+  --bg: #1A1713;
+  --bg2: #221E1A;
+  --bg3: #2E2922;
+  --bg4: #3D3630;
+  --border: #3D3630;
+  --border2: #4F4842;
+  --accent: #6A9EC4;
+  --accent2: #3E7AA8;
+  --accent3: #6A9EC4;
   --warn: #f59e0b;
   --danger: #ef4444;
-  --text: #e8e8e8;
-  --text2: #a8a8a8;
-  --text3: #888888;
-  --glow: 0 0 20px rgba(100,150,255,0.3);
+  --text: #F0EBE3;
+  --text2: #8A8178;
+  --text3: #4F4842;
+  --glow: 0 0 20px rgba(106,158,196,0.3);
 }
 
 /* Reset and base styles for DisplayLib */
@@ -1471,9 +1503,9 @@ pre.ycode {
   border: none;
   outline: none;
   background: transparent;
-  color: rgba(229, 231, 235, 0.02); /* Почти прозрачный светло-серый */
-  caret-color: #5fb3d4; /* Голубой курсор */
-  selection-color: rgba(95, 179, 212, 0.3); /* Голубое выделение */
+  color: transparent; /* Делаем текст полностью прозрачным */
+  caret-color: #5fb3d4; /* Оригинальный голубой курсор */
+  selection-color: rgba(95, 179, 212, 0.3); /* Оригинальное голубое выделение */
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -1489,7 +1521,7 @@ pre.ycode {
 }
 
 .yaml-textarea::selection {
-  background: rgba(95, 179, 212, 0.3); /* Голубое выделение */
+  background: rgba(95, 179, 212, 0.3); /* Оригинальное голубое выделение */
 }
 
 .yaml-textarea::-webkit-scrollbar {
@@ -1519,8 +1551,8 @@ pre.ycode {
   padding: 8px 12px;
   margin: 0;
   border: none;
-  background: #2a2a2a; /* Серый фон */
-  color: #e5e7eb; /* Светло-серый основной текст */
+  background: #2a2a2a; /* Оригинальный серый фон */
+  color: #e5e7eb; /* Оригинальный светло-серый основной текст */
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -1535,56 +1567,56 @@ pre.ycode {
   -moz-tab-size: 2;
 }
 
-/* YAML Syntax Highlighting - Raindrop Theme */
+/* YAML Syntax Highlighting - Original Raindrop Theme */
 .yk { 
-  color: #5fb3d4; /* Голубой для обычных ключей */
+  color: #5fb3d4; /* Оригинальный голубой для обычных ключей */
   font-weight: 400;
 }
 
 .yk-special { 
-  color: #5fb3d4; /* Тот же голубой для специальных ключей */
+  color: #5fb3d4; /* Тот же оригинальный голубой для специальных ключей */
   font-weight: 400; 
 }
 
 .yv { 
-  color: #a2bfcd; /* Светло-голубой для значений типов */
+  color: #a2bfcd; /* Оригинальный светло-голубой для значений типов */
 }
 
 .yn { 
-  color: #a2bfcd; /* Светло-голубой для чисел */
+  color: #a2bfcd; /* Оригинальный светло-голубой для чисел */
   font-weight: 400;
 }
 
 .yl { 
-  color: #5fb3d4; /* Голубой для маркеров списков */
+  color: #5fb3d4; /* Оригинальный голубой для маркеров списков */
   font-weight: 400;
 }
 
 .yc { 
-  color: #6b7d86; /* Приглушенный серо-голубой для комментариев */
+  color: #6b7d86; /* Оригинальный приглушенный серо-голубой для комментариев */
   font-style: italic; 
 }
 
 .ys { 
-  color: #a2bfcd; /* Светло-голубой для строк */
+  color: #a2bfcd; /* Оригинальный светло-голубой для строк */
 }
 
 .yb { 
-  color: #a2bfcd; /* Светло-голубой для булевых значений */
+  color: #a2bfcd; /* Оригинальный светло-голубой для булевых значений */
   font-weight: 400;
 }
 
 .ye { 
-  color: #a2bfcd; /* Светло-голубой для эмодзи */
+  color: #a2bfcd; /* Оригинальный светло-голубой для эмодзи */
 }
 
 /* JSON Syntax Highlighting */
 .yj { 
-  color: #a2bfcd; /* Базовый цвет для JSON блоков */
+  color: #a2bfcd; /* Оригинальный базовый цвет для JSON блоков */
 }
 
 .yp { 
-  color: #5fb3d4; /* Голубой для скобок и запятых в JSON */
+  color: #5fb3d4; /* Оригинальный голубой для скобок и запятых в JSON */
   font-weight: 500;
 }
 
@@ -1597,7 +1629,7 @@ pre.ycode {
 .yaml-block-selected {
   display: inline-block !important;
   width: 100% !important;
-  border-left: 3px solid #5fb3d4 !important; /* Голубая полоска слева */
+  border-left: 3px solid #5fb3d4 !important; /* Оригинальная голубая полоска слева */
   padding-left: 9px !important; /* Компенсируем ширину полоски */
   margin-left: -12px !important; /* Выравниваем с остальным текстом */
   white-space: pre !important; /* Сохраняем форматирование */
@@ -1613,7 +1645,7 @@ pre.ycode {
   left: -12px !important;
   right: -9999px !important; /* Растягиваем далеко вправо */
   bottom: 0 !important;
-  background: rgba(95, 179, 212, 0.15) !important; /* Полупрозрачный голубой фон */
+  background: rgba(95, 179, 212, 0.15) !important; /* Оригинальный полупрозрачный голубой фон */
   z-index: -1 !important;
 }
 
@@ -1691,13 +1723,13 @@ pre.ycode {
   opacity: 0.1;
 }
 
-/* Lua Syntax Highlighting - Ray Theme */
+/* Lua Syntax Highlighting - Original Ray Theme */
 .lk { 
-  color: #2ED9FF; /* Голубой для ключевых слов */
+  color: #2ED9FF; /* Оригинальный голубой для ключевых слов */
 }
 
 .ls { 
-  color: #9DD8EB; /* Светло-голубой для строк */
+  color: #9DD8EB; /* Оригинальный светло-голубой для строк */
 }
 
 .ln { 
@@ -1709,15 +1741,15 @@ pre.ycode {
 }
 
 .lpr { 
-  color: #008BB7; /* Синий для свойств */
+  color: #008BB7; /* Оригинальный синий для свойств */
 }
 
 .lp { 
-  color: #2ED9FF; /* Голубой для пунктуации */
+  color: #2ED9FF; /* Оригинальный голубой для пунктуации */
 }
 
 .lc { 
-  color: #6C808B; /* Серый для комментариев */
+  color: #6C808B; /* Оригинальный серый для комментариев */
 }
 
 /* DisplayLib API objects: player, screen, widget, storage, timer, log */
@@ -1854,7 +1886,7 @@ pre.ycode {
 .lua-block-selected {
   display: inline-block !important; /* Не создаем перенос строки */
   width: 100% !important;
-  border-left: 3px solid #2ED9FF !important; /* Голубая полоска слева */
+  border-left: 3px solid #2ED9FF !important; /* Оригинальная голубая полоска слева */
   padding-left: 9px !important; /* Компенсируем ширину полоски */
   margin-left: -12px !important; /* Выравниваем с остальным текстом */
   position: relative !important;
@@ -1869,7 +1901,7 @@ pre.ycode {
   left: -12px !important;
   right: -9999px !important; /* Растягиваем далеко вправо */
   bottom: 0 !important;
-  background: rgba(46, 217, 255, 0.15) !important; /* Полупрозрачный голубой фон */
+  background: rgba(46, 217, 255, 0.15) !important; /* Оригинальный полупрозрачный голубой фон */
   z-index: -1 !important;
 }
 
@@ -2087,8 +2119,8 @@ height:100vh;
 
 .toolbar{
 
-background:#2a2a2a;
-border-bottom:1px solid #3a3a3a;
+background:var(--surface);
+border-bottom:1px solid var(--border);
 
 padding:10px;
 
@@ -2099,12 +2131,12 @@ gap:10px;
 
 .toolbar button{
 
-background:#3a3a3a;
+background:var(--surface-2);
 border:none;
 
 padding:8px 14px;
 
-color:#e8e8e8;
+color:var(--text);
 
 border-radius:6px;
 
@@ -2116,7 +2148,7 @@ font-family:'Cascadia Code', monospace;
 
 .toolbar button:hover{
 
-background:#4a4a4a;
+background:var(--border);
 
 }
 
@@ -2130,7 +2162,7 @@ display:flex;
 #canvas{
 
 flex:1;
-background:#1a1a1a;
+background:var(--bg);
 
 }
 
@@ -2138,9 +2170,9 @@ background:#1a1a1a;
 
 width:260px;
 
-background:#2a2a2a;
+background:var(--surface);
 
-border-left:1px solid #3a3a3a;
+border-left:1px solid var(--border);
 
 padding:15px;
 
@@ -2153,18 +2185,18 @@ gap:8px;
 .sidebar h3{
 
 margin-bottom:5px;
-color:#e8e8e8;
+color:var(--text);
 
 }
 
 .sidebar input{
 
-background:#1a1a1a;
-border:1px solid #3a3a3a;
+background:var(--bg);
+border:1px solid var(--border);
 
 padding:6px;
 
-color:#e8e8e8;
+color:var(--text);
 
 border-radius:4px;
 
@@ -2176,11 +2208,11 @@ margin-top:10px;
 
 height:200px;
 
-background:#1a1a1a;
+background:var(--bg);
 
-border:1px solid #3a3a3a;
+border:1px solid var(--border);
 
-color:#e8e8e8;
+color:var(--text);
 
 padding:8px;
 
@@ -2192,12 +2224,12 @@ font-family:'Cascadia Code', monospace;
 
 .sidebar button{
 
-background:#4a4a4a;
+background:var(--surface-2);
 border:none;
 
 padding:8px;
 
-color:#e8e8e8;
+color:var(--text);
 
 border-radius:6px;
 
@@ -2207,6 +2239,6 @@ cursor:pointer;
 
 .sidebar button:hover{
 
-background:#5a5a5a;
+background:var(--border);
 
 }

@@ -189,6 +189,9 @@ function doCopy(){
 function updateResetLuaButton() {
   const btnResetLua = document.getElementById('btnResetLua');
   if (btnResetLua) {
+    // Получаем переменные из глобального объекта
+    const currentTab = window.ScreenGenerator.getCurrentTab ? window.ScreenGenerator.getCurrentTab() : 'yaml';
+    const luaManuallyEdited = window.ScreenGenerator.isLuaManuallyEdited ? window.ScreenGenerator.isLuaManuallyEdited() : false;
     btnResetLua.style.display = (currentTab === 'lua' && luaManuallyEdited) ? 'block' : 'none';
   }
 }
@@ -208,24 +211,33 @@ function initYamlHandlers() {
   if (btnResetLua) {
     btnResetLua.addEventListener('click', () => {
       if (confirm('Сбросить Lua код к автоматически сгенерированному шаблону? Все ваши изменения будут потеряны.')) {
-        // Сбрасываем флаги
-        luaManuallyEdited = false;
-        lastGeneratedLua = '';
+        // Сбрасываем флаги через глобальные функции
+        if (window.ScreenGenerator.resetLuaEditingFlags) {
+          window.ScreenGenerator.resetLuaEditingFlags();
+        }
         
         // Принудительно регенерируем код
         if (window.ScreenGenerator.generateLua) {
           const newLuaCode = window.ScreenGenerator.generateLua();
+          const tabContents = window.ScreenGenerator.getTabContents ? window.ScreenGenerator.getTabContents() : {};
           tabContents.lua = newLuaCode;
-          lastGeneratedLua = newLuaCode;
+          
+          if (window.ScreenGenerator.setLastGeneratedLua) {
+            window.ScreenGenerator.setLastGeneratedLua(newLuaCode);
+          }
           
           // Если сейчас активна Lua вкладка, обновляем редактор
-          if (currentTab === 'lua' && codeEditor) {
-            codeEditor.value = newLuaCode;
-            
-            // Обновляем подсветку
-            const yamlHighlight = document.getElementById('yamlHighlight');
-            if (yamlHighlight) {
-              yamlHighlight.innerHTML = highlightLua(newLuaCode);
+          const currentTab = window.ScreenGenerator.getCurrentTab ? window.ScreenGenerator.getCurrentTab() : 'yaml';
+          if (currentTab === 'lua') {
+            const codeEditor = document.querySelector('.yaml-textarea');
+            if (codeEditor) {
+              codeEditor.value = newLuaCode;
+              
+              // Обновляем подсветку
+              const yamlHighlight = document.getElementById('yamlHighlight');
+              if (yamlHighlight && window.highlightLua) {
+                yamlHighlight.innerHTML = window.highlightLua(newLuaCode);
+              }
             }
           }
           
@@ -237,7 +249,6 @@ function initYamlHandlers() {
       }
     });
   }
-}
 }
 
 // Инициализация обработчиков настроек экрана
