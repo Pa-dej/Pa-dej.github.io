@@ -70,6 +70,9 @@ const MATS = [
 ];
 
 const ACTS=['NONE','CLOSE_SCREEN','SWITCH_SCREEN','RUN_SCRIPT'];
+const PRESET_OPTIONS=['SCALE','LIFT'];
+const HOVER_ANIMATION_TYPES=['NONE','PRESET','SCALE','TRANSLATE','ROTATE','COMBINED','PULSE_CONTINUOUS'];
+const COMBINED_EFFECT_TYPES=['SCALE','TRANSLATE','ROTATE','PRESET'];
 
 // Утилиты для работы с цветами
 function rgbToHex(r, g, b) {
@@ -282,9 +285,6 @@ function updateWidgetValues(w) {
     
     // Tooltip поля
     updateField('w_tooltip', w.tooltip || '');
-    if (w.tooltipColor) {
-      updateField('w_tooltipColor', rgbToHex(w.tooltipColor[0], w.tooltipColor[1], w.tooltipColor[2]));
-    }
     updateField('w_tooltipDelay', w.tooltipDelay !== undefined ? w.tooltipDelay : 10);
   }
   
@@ -401,6 +401,20 @@ function renderWProps(p,w){
   const isText=w.type==='TEXT_BUTTON';
   const screenType = document.getElementById('screenType')?.value || 'PRIVATE';
   const isPrivateScreen = screenType === 'PRIVATE';
+
+  // В текущем плагине TRANSFORM не применяется в hover, поэтому конвертируем старые конфиги в SCALE.
+  if (w.hoverAnimation?.type === 'TRANSFORM') {
+    const legacyScale = Array.isArray(w.hoverAnimation.scaleVector) && w.hoverAnimation.scaleVector.length === 3
+      ? w.hoverAnimation.scaleVector
+      : [1.1, 1.1, 1.0];
+    w.hoverAnimation.type = 'SCALE';
+    w.hoverAnimation.scale = [legacyScale[0], legacyScale[1], legacyScale[2]];
+    delete w.hoverAnimation.translation;
+    delete w.hoverAnimation.leftRotation;
+    delete w.hoverAnimation.scaleVector;
+    delete w.hoverAnimation.rightRotation;
+  }
+
   const yamlScaleStr=isText?`[${+(w.w*8).toFixed(2)}, ${+(w.h*4).toFixed(2)}, 1]`:`[${+w.w.toFixed(2)}, ${+w.h.toFixed(2)}, 0.01]`;
   
   // Материал с визуальным селектом
@@ -529,8 +543,18 @@ function renderWProps(p,w){
           <span class="ok">Всплывающая подсказка при наведении</span>
         </div>
         ${row('Текст подсказки',txtAreaIn('w_tooltip',w.tooltip||''))}
-        ${row('Цвет подсказки', colIn('w_tooltipColor', w.tooltipColor ? rgbToHex(w.tooltipColor[0], w.tooltipColor[1], w.tooltipColor[2]) : '#90ee90'))}
         ${row('Задержка (тики)', numIn('w_tooltipDelay', w.tooltipDelay || 10, 1, 0, 100))}
+      </div>
+    </div>
+    <div class="pgroup">
+      <div class="pgtitle">Hover анимация</div>
+      <div class="pgbody">
+        <div class="phint">
+          <span class="ok">Анимация при наведении курсора</span><br>
+          Поддерживает масштабирование, перемещение, поворот и комбинации
+        </div>
+        ${row('Тип анимации', selIn('w_animType', w.hoverAnimation?.type || 'NONE', HOVER_ANIMATION_TYPES))}
+        <div id="hoverAnimationFields"></div>
       </div>
     </div>`;
 
@@ -620,18 +644,60 @@ function renderWProps(p,w){
     w.tooltip = v;
     if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
   });
-  bind('w_tooltipColor',v=>{
-    const rgb = hexToRgb(v);
-    if (rgb) {
-      w.tooltipColor = [rgb.r, rgb.g, rgb.b];
-      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
-    }
-  });
   bind('w_tooltipDelay',v=>{
     const delayValue = parseInt(v);
     w.tooltipDelay = isNaN(delayValue) ? 10 : Math.max(0, Math.min(100, delayValue));
     if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
   });
+  
+  // Обработчик для типа hover анимации
+  bind('w_animType',v=>{
+    if (v === 'NONE') {
+      delete w.hoverAnimation;
+    } else {
+      if (!w.hoverAnimation) w.hoverAnimation = {};
+      w.hoverAnimation.type = v;
+      // Устанавливаем значения по умолчанию
+      w.hoverAnimation.duration = w.hoverAnimation.duration || 10;
+      delete w.hoverAnimation.easing;
+      w.hoverAnimation.reverseOnExit = w.hoverAnimation.reverseOnExit !== false;
+      
+      // Устанавливаем специфичные значения по умолчанию
+      switch (v) {
+        case 'PRESET':
+          w.hoverAnimation.preset = w.hoverAnimation.preset || 'SCALE';
+          w.hoverAnimation.intensity = w.hoverAnimation.intensity || 1.2;
+          break;
+        case 'SCALE':
+          w.hoverAnimation.scale = w.hoverAnimation.scale || [1.1, 1.1, 1.0];
+          break;
+        case 'TRANSLATE':
+          w.hoverAnimation.offset = w.hoverAnimation.offset || [0.0, 0.02, 0.0];
+          break;
+        case 'ROTATE':
+          w.hoverAnimation.rotation = w.hoverAnimation.rotation || [0.0, 15.0, 0.0];
+          w.hoverAnimation.axis = w.hoverAnimation.axis || [0.0, 1.0, 0.0];
+          break;
+        case 'PULSE_CONTINUOUS':
+          w.hoverAnimation.intensity = w.hoverAnimation.intensity || 1.4;
+          break;
+        case 'COMBINED':
+          w.hoverAnimation.effects = w.hoverAnimation.effects || [
+            { type: 'SCALE', scale: [1.05, 1.05, 1.0] },
+            { type: 'TRANSLATE', offset: [0.0, 0.01, 0.0] }
+          ];
+          break;
+      }
+    }
+    
+    // Обновляем поля анимации
+    updateHoverAnimationFields(w);
+    
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+  });
+  
+  // Инициализируем поля анимации
+  updateHoverAnimationFields(w);
 }
 
 // Функция для показа уведомления о копировании
@@ -683,6 +749,416 @@ function showCopyToast() {
 // Делаем функцию глобально доступной
 window.showCopyToast = showCopyToast;
 
+function createDefaultCombinedEffect(type = 'SCALE') {
+  switch (type) {
+    case 'TRANSLATE':
+      return { type: 'TRANSLATE', offset: [0.0, 0.01, 0.0] };
+    case 'ROTATE':
+      return { type: 'ROTATE', rotation: [0.0, 15.0, 0.0], axis: [0.0, 1.0, 0.0] };
+    case 'PRESET':
+      return { type: 'PRESET', preset: 'SCALE', intensity: 1.2 };
+    default:
+      return { type: 'SCALE', scale: [1.05, 1.05, 1.0] };
+  }
+}
+
+function normalizeCombinedEffects(anim) {
+  if (!Array.isArray(anim.effects)) anim.effects = [];
+
+  anim.effects = anim.effects
+    .filter(effect => effect && typeof effect === 'object')
+    .map(effect => {
+      const effectType = COMBINED_EFFECT_TYPES.includes(effect.type) ? effect.type : 'SCALE';
+      const normalized = { ...effect, type: effectType };
+
+      switch (effectType) {
+        case 'SCALE':
+          if (!Array.isArray(normalized.scale) || normalized.scale.length !== 3) {
+            normalized.scale = [1.05, 1.05, 1.0];
+          }
+          break;
+        case 'TRANSLATE':
+          if (!Array.isArray(normalized.offset) || normalized.offset.length !== 3) {
+            normalized.offset = [0.0, 0.01, 0.0];
+          }
+          break;
+        case 'ROTATE':
+          if (!Array.isArray(normalized.rotation) || normalized.rotation.length !== 3) {
+            normalized.rotation = [0.0, 15.0, 0.0];
+          }
+          if (!Array.isArray(normalized.axis) || normalized.axis.length !== 3) {
+            normalized.axis = [0.0, 1.0, 0.0];
+          }
+          break;
+        case 'PRESET':
+          if (!PRESET_OPTIONS.includes(normalized.preset)) {
+            normalized.preset = 'SCALE';
+          }
+          if (typeof normalized.intensity !== 'number' || Number.isNaN(normalized.intensity)) {
+            normalized.intensity = 1.2;
+          }
+          break;
+      }
+
+      return normalized;
+    });
+
+  if (anim.effects.length === 0) {
+    anim.effects.push(createDefaultCombinedEffect('SCALE'));
+  }
+}
+
+function renderCombinedEffectsEditor(anim) {
+  normalizeCombinedEffects(anim);
+
+  const effectsHtml = anim.effects.map((effect, index) => {
+    let specificFields = '';
+
+    switch (effect.type) {
+      case 'SCALE':
+        specificFields = `
+          ${row('Scale X', numIn(`w_combScaleX_${index}`, effect.scale?.[0] ?? 1.05, 0.05, 0.1))}
+          ${row('Scale Y', numIn(`w_combScaleY_${index}`, effect.scale?.[1] ?? 1.05, 0.05, 0.1))}
+          ${row('Scale Z', numIn(`w_combScaleZ_${index}`, effect.scale?.[2] ?? 1.0, 0.05, 0.1))}
+        `;
+        break;
+      case 'TRANSLATE':
+        specificFields = `
+          ${row('Offset X', numIn(`w_combOffsetX_${index}`, effect.offset?.[0] ?? 0.0, 0.01))}
+          ${row('Offset Y', numIn(`w_combOffsetY_${index}`, effect.offset?.[1] ?? 0.01, 0.01))}
+          ${row('Offset Z', numIn(`w_combOffsetZ_${index}`, effect.offset?.[2] ?? 0.0, 0.01))}
+        `;
+        break;
+      case 'ROTATE':
+        specificFields = `
+          ${row('Rotation X', numIn(`w_combRotX_${index}`, effect.rotation?.[0] ?? 0.0, 1))}
+          ${row('Rotation Y', numIn(`w_combRotY_${index}`, effect.rotation?.[1] ?? 15.0, 1))}
+          ${row('Rotation Z', numIn(`w_combRotZ_${index}`, effect.rotation?.[2] ?? 0.0, 1))}
+          ${row('Axis X', numIn(`w_combAxisX_${index}`, effect.axis?.[0] ?? 0.0, 0.1))}
+          ${row('Axis Y', numIn(`w_combAxisY_${index}`, effect.axis?.[1] ?? 1.0, 0.1))}
+          ${row('Axis Z', numIn(`w_combAxisZ_${index}`, effect.axis?.[2] ?? 0.0, 0.1))}
+        `;
+        break;
+      case 'PRESET':
+        specificFields = `
+          ${row('Preset', selIn(`w_combPreset_${index}`, effect.preset || 'SCALE', PRESET_OPTIONS))}
+          ${row('Intensity', numIn(`w_combIntensity_${index}`, effect.intensity ?? 1.2, 0.1, 0.1))}
+        `;
+        break;
+    }
+
+    return `
+      <div class="pgroup" style="margin-top:8px;">
+        <div class="pgtitle">Эффект #${index + 1}</div>
+        <div class="pgbody">
+          ${row('Тип', selIn(`w_combType_${index}`, effect.type, COMBINED_EFFECT_TYPES))}
+          ${specificFields}
+          <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+            <button type="button" class="btn" id="w_combRemove_${index}" style="font-size:10px;padding:3px 8px;">Удалить</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="phint">
+      <span class="ok">Комбинированная анимация: несколько эффектов подряд</span>
+    </div>
+    ${effectsHtml}
+    <div style="display:flex;justify-content:flex-start;margin-top:8px;">
+      <button type="button" class="btn primary" id="w_combAdd" style="font-size:10px;padding:3px 8px;">+ Добавить эффект</button>
+    </div>
+  `;
+}
+
+// Функция для обновления полей hover анимации
+function updateHoverAnimationFields(w) {
+  const fieldsContainer = document.getElementById('hoverAnimationFields');
+  if (!fieldsContainer) return;
+  
+  const anim = w.hoverAnimation;
+  if (!anim || !anim.type || anim.type === 'NONE') {
+    fieldsContainer.innerHTML = '';
+    return;
+  }
+  
+  let fieldsHTML = `
+    ${row('Длительность (тики)', numIn('w_animDuration', anim.duration || 10, 1, 1, 100))}
+    ${row('Возврат при выходе', `<input type="checkbox" id="w_animReverse" ${anim.reverseOnExit !== false ? 'checked' : ''}>`)}
+    ${row('Задержка (тики)', numIn('w_animDelay', anim.delay || 0, 1, 0, 50))}
+  `;
+  
+  // Добавляем специфичные поля в зависимости от типа
+  switch (anim.type) {
+    case 'PRESET':
+      fieldsHTML += `
+        ${row('Пресет', selIn('w_animPreset', anim.preset || 'SCALE', PRESET_OPTIONS))}
+        ${row('Интенсивность', numIn('w_animIntensity', anim.intensity || 1.2, 0.1, 0.1, 3.0))}
+      `;
+      break;
+      
+    case 'SCALE':
+      fieldsHTML += `
+        ${row('Масштаб X', numIn('w_animScaleX', anim.scale?.[0] || 1.1, 0.05, 0.1, 3.0))}
+        ${row('Масштаб Y', numIn('w_animScaleY', anim.scale?.[1] || 1.1, 0.05, 0.1, 3.0))}
+        ${row('Масштаб Z', numIn('w_animScaleZ', anim.scale?.[2] || 1.0, 0.05, 0.1, 3.0))}
+      `;
+      break;
+      
+    case 'TRANSLATE':
+      fieldsHTML += `
+        ${row('Смещение X', numIn('w_animOffsetX', anim.offset?.[0] || 0.0, 0.01, -2.0, 2.0))}
+        ${row('Смещение Y', numIn('w_animOffsetY', anim.offset?.[1] || 0.02, 0.01, -2.0, 2.0))}
+        ${row('Смещение Z', numIn('w_animOffsetZ', anim.offset?.[2] || 0.0, 0.01, -2.0, 2.0))}
+      `;
+      break;
+      
+    case 'ROTATE':
+      fieldsHTML += `
+        ${row('Поворот X (°)', numIn('w_animRotX', anim.rotation?.[0] || 0.0, 1, -180, 180))}
+        ${row('Поворот Y (°)', numIn('w_animRotY', anim.rotation?.[1] || 15.0, 1, -180, 180))}
+        ${row('Поворот Z (°)', numIn('w_animRotZ', anim.rotation?.[2] || 0.0, 1, -180, 180))}
+        ${row('Ось X', numIn('w_animAxisX', anim.axis?.[0] || 0.0, 0.1, -1.0, 1.0))}
+        ${row('Ось Y', numIn('w_animAxisY', anim.axis?.[1] || 1.0, 0.1, -1.0, 1.0))}
+        ${row('Ось Z', numIn('w_animAxisZ', anim.axis?.[2] || 0.0, 0.1, -1.0, 1.0))}
+      `;
+      break;
+      
+    case 'PULSE_CONTINUOUS':
+      fieldsHTML += `
+        ${row('Интенсивность', numIn('w_animIntensity', anim.intensity || 1.4, 0.1, 0.1, 3.0))}
+        <div class="phint"><span class="ok">Непрерывная пульсация во время hover</span></div>
+      `;
+      break;
+      
+    case 'COMBINED':
+      fieldsHTML += renderCombinedEffectsEditor(anim);
+      break;
+  }
+  
+  fieldsContainer.innerHTML = fieldsHTML;
+  
+  // Привязываем обработчики для новых полей
+  bindHoverAnimationHandlers(w);
+}
+
+// Функция для привязки обработчиков hover анимации
+function bindHoverAnimationHandlers(w) {
+  const anim = w.hoverAnimation;
+  if (!anim) return;
+  
+  // Общие поля
+  bind('w_animDuration', v => {
+    anim.duration = Math.max(1, parseInt(v) || 10);
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+  });
+  
+  const reverseCheckbox = document.getElementById('w_animReverse');
+  if (reverseCheckbox) {
+    reverseCheckbox.addEventListener('change', () => {
+      anim.reverseOnExit = reverseCheckbox.checked;
+      if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+    });
+  }
+  
+  bind('w_animDelay', v => {
+    anim.delay = Math.max(0, parseInt(v) || 0);
+    if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+  });
+  
+  // Специфичные поля
+  switch (anim.type) {
+    case 'PRESET':
+      bind('w_animPreset', v => {
+        anim.preset = PRESET_OPTIONS.includes(v) ? v : 'SCALE';
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animIntensity', v => {
+        anim.intensity = Math.max(0.1, parseFloat(v) || 1.2);
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      break;
+      
+    case 'SCALE':
+      bind('w_animScaleX', v => {
+        if (!anim.scale) anim.scale = [1.1, 1.1, 1.0];
+        anim.scale[0] = Math.max(0.1, parseFloat(v) || 1.1);
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animScaleY', v => {
+        if (!anim.scale) anim.scale = [1.1, 1.1, 1.0];
+        anim.scale[1] = Math.max(0.1, parseFloat(v) || 1.1);
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animScaleZ', v => {
+        if (!anim.scale) anim.scale = [1.1, 1.1, 1.0];
+        anim.scale[2] = Math.max(0.1, parseFloat(v) || 1.0);
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      break;
+      
+    case 'TRANSLATE':
+      bind('w_animOffsetX', v => {
+        if (!anim.offset) anim.offset = [0.0, 0.02, 0.0];
+        anim.offset[0] = parseFloat(v) || 0.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animOffsetY', v => {
+        if (!anim.offset) anim.offset = [0.0, 0.02, 0.0];
+        anim.offset[1] = parseFloat(v) || 0.02;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animOffsetZ', v => {
+        if (!anim.offset) anim.offset = [0.0, 0.02, 0.0];
+        anim.offset[2] = parseFloat(v) || 0.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      break;
+      
+    case 'ROTATE':
+      bind('w_animRotX', v => {
+        if (!anim.rotation) anim.rotation = [0.0, 15.0, 0.0];
+        anim.rotation[0] = parseFloat(v) || 0.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animRotY', v => {
+        if (!anim.rotation) anim.rotation = [0.0, 15.0, 0.0];
+        anim.rotation[1] = parseFloat(v) || 15.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animRotZ', v => {
+        if (!anim.rotation) anim.rotation = [0.0, 15.0, 0.0];
+        anim.rotation[2] = parseFloat(v) || 0.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animAxisX', v => {
+        if (!anim.axis) anim.axis = [0.0, 1.0, 0.0];
+        anim.axis[0] = parseFloat(v) || 0.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animAxisY', v => {
+        if (!anim.axis) anim.axis = [0.0, 1.0, 0.0];
+        anim.axis[1] = parseFloat(v) || 1.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      bind('w_animAxisZ', v => {
+        if (!anim.axis) anim.axis = [0.0, 1.0, 0.0];
+        anim.axis[2] = parseFloat(v) || 0.0;
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      break;
+      
+    case 'COMBINED': {
+      normalizeCombinedEffects(anim);
+
+      const addEffectBtn = document.getElementById('w_combAdd');
+      if (addEffectBtn) {
+        addEffectBtn.addEventListener('click', () => {
+          anim.effects.push(createDefaultCombinedEffect('SCALE'));
+          updateHoverAnimationFields(w);
+          if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+        });
+      }
+
+      anim.effects.forEach((effect, index) => {
+        bind(`w_combType_${index}`, value => {
+          anim.effects[index] = createDefaultCombinedEffect(value);
+          updateHoverAnimationFields(w);
+          if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+        });
+
+        const removeBtn = document.getElementById(`w_combRemove_${index}`);
+        if (removeBtn) {
+          removeBtn.addEventListener('click', () => {
+            anim.effects.splice(index, 1);
+            if (anim.effects.length === 0) {
+              anim.effects.push(createDefaultCombinedEffect('SCALE'));
+            }
+            updateHoverAnimationFields(w);
+            if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+          });
+        }
+
+        switch (effect.type) {
+          case 'SCALE':
+            bind(`w_combScaleX_${index}`, v => {
+              effect.scale[0] = Math.max(0.1, parseFloat(v) || 1.05);
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combScaleY_${index}`, v => {
+              effect.scale[1] = Math.max(0.1, parseFloat(v) || 1.05);
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combScaleZ_${index}`, v => {
+              effect.scale[2] = Math.max(0.1, parseFloat(v) || 1.0);
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            break;
+          case 'TRANSLATE':
+            bind(`w_combOffsetX_${index}`, v => {
+              effect.offset[0] = parseFloat(v) || 0.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combOffsetY_${index}`, v => {
+              effect.offset[1] = parseFloat(v) || 0.01;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combOffsetZ_${index}`, v => {
+              effect.offset[2] = parseFloat(v) || 0.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            break;
+          case 'ROTATE':
+            bind(`w_combRotX_${index}`, v => {
+              effect.rotation[0] = parseFloat(v) || 0.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combRotY_${index}`, v => {
+              effect.rotation[1] = parseFloat(v) || 15.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combRotZ_${index}`, v => {
+              effect.rotation[2] = parseFloat(v) || 0.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combAxisX_${index}`, v => {
+              effect.axis[0] = parseFloat(v) || 0.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combAxisY_${index}`, v => {
+              effect.axis[1] = parseFloat(v) || 1.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combAxisZ_${index}`, v => {
+              effect.axis[2] = parseFloat(v) || 0.0;
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            break;
+          case 'PRESET':
+            bind(`w_combPreset_${index}`, v => {
+              effect.preset = PRESET_OPTIONS.includes(v) ? v : 'SCALE';
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            bind(`w_combIntensity_${index}`, v => {
+              effect.intensity = Math.max(0.1, parseFloat(v) || 1.2);
+              if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+            });
+            break;
+        }
+      });
+      break;
+    }
+
+    case 'PULSE_CONTINUOUS':
+      bind('w_animIntensity', v => {
+        anim.intensity = Math.max(0.1, parseFloat(v) || 1.4);
+        if(window.ScreenGenerator && typeof window.ScreenGenerator.updateYaml==='function')window.ScreenGenerator.updateYaml();
+      });
+      break;
+  }
+}
+
 // Экспорт функций
 Object.assign(window.ScreenGenerator, {
   updateProps,
@@ -692,6 +1168,8 @@ Object.assign(window.ScreenGenerator, {
   createMaterialSelect,
   filterMaterials,
   showCopyToast,
+  updateHoverAnimationFields,
+  bindHoverAnimationHandlers,
   MATS,
   ACTS
 });

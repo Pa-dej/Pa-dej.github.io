@@ -98,7 +98,7 @@ function loadDemo(){
       onClick: 'NONE',
       tolerance: [0.2, 0.2]
     },
-    // widget_4 - GOLD_INGOT
+    // widget_4 - GOLD_INGOT с hover анимацией
     {
       id: 'widget_4',
       type: 'ITEM_BUTTON',
@@ -114,7 +114,50 @@ function loadDemo(){
       h: 0.5,      // 0.5/1 = 0.5
       color: '#ddaa00',
       onClick: 'NONE',
-      tolerance: [0.2, 0.2]
+      tolerance: [0.2, 0.2],
+      // Пример hover анимации
+      hoverAnimation: {
+        type: 'COMBINED',
+        duration: 8,
+        reverseOnExit: true,
+        effects: [
+          {
+            type: 'SCALE',
+            scale: [1.2, 1.2, 1.0]
+          },
+          {
+            type: 'TRANSLATE',
+            offset: [0.0, 0.03, 0.0]
+          }
+        ]
+      }
+    },
+    // widget_5 - TEXT_BUTTON с пульсирующей анимацией
+    {
+      id: 'widget_5',
+      type: 'TEXT_BUTTON',
+      material: '',
+      label: 'Animated!',
+      text: 'Animated!',
+      alignment: 'CENTERED',
+      x: -1.0,
+      y: -0.5,
+      transX: 0.0,
+      transY: -0.25,
+      transZ: 0.001,
+      w: 0.25,    // 2.0/8 = 0.25
+      h: 0.25,    // 1.0/4 = 0.25
+      color: '#4a90e2',
+      backgroundColor: [74, 144, 226],
+      backgroundAlpha: 100,
+      onClick: 'NONE',
+      tolerance: [0.15, 0.15],
+      // Пример непрерывной пульсации
+      hoverAnimation: {
+        type: 'PULSE_CONTINUOUS',
+        duration: 12,
+        intensity: 1.3,
+      }
     }
   ];
   

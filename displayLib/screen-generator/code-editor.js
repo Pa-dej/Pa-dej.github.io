@@ -177,7 +177,7 @@ function processYamlKeyValue(line) {
     let keyClass = 'yk';
     
     // Специальные ключи (розовые) - как в VS Code
-    if (['type', 'text', 'material', 'action', 'hoveredText', 'backgroundColor', 'backgroundAlpha', 'hoveredBackgroundColor', 'hoveredBackgroundAlpha', 'tooltip', 'tooltipColor', 'tooltipDelay'].includes(key)) {
+    if (['type', 'text', 'material', 'action', 'hoveredText', 'backgroundColor', 'backgroundAlpha', 'hoveredBackgroundColor', 'hoveredBackgroundAlpha', 'tooltip', 'tooltipDelay'].includes(key)) {
       keyClass = 'yk-special';
     }
     

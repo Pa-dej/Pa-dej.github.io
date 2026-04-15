@@ -139,9 +139,6 @@ function plainYaml(){
           L.push(`    tooltip: "${escapedTooltip}"`);
         }
       }
-      if(w.tooltipColor) {
-        L.push(`    tooltipColor: [${w.tooltipColor[0]}, ${w.tooltipColor[1]}, ${w.tooltipColor[2]}]`);
-      }
       if(w.tooltipDelay !== undefined) {
         L.push(`    tooltipDelay: ${w.tooltipDelay}`);
       }
@@ -157,6 +154,100 @@ function plainYaml(){
       } else if (w.onClick === 'SWITCH_SCREEN') {
         const target = w.switchTarget || 'target_screen_id';
         L.push(`      target: ${target}`);
+      }
+      
+      // Добавляем hoverAnimation если она настроена
+      if (w.hoverAnimation && w.hoverAnimation.type) {
+        const hoverType = w.hoverAnimation.type === 'TRANSFORM' ? 'SCALE' : w.hoverAnimation.type;
+        L.push(`    hoverAnimation:`);
+        L.push(`      type: ${hoverType}`);
+        L.push(`      duration: ${w.hoverAnimation.duration || 10}`);
+        
+        // Добавляем опциональные общие поля
+        if (w.hoverAnimation.reverseOnExit === false) {
+          L.push(`      reverseOnExit: false`);
+        }
+        if (w.hoverAnimation.delay && w.hoverAnimation.delay > 0) {
+          L.push(`      delay: ${w.hoverAnimation.delay}`);
+        }
+        if (w.hoverAnimation.loop === true) {
+          L.push(`      loop: true`);
+        }
+        if (w.hoverAnimation.loopCount && w.hoverAnimation.loopCount !== -1) {
+          L.push(`      loopCount: ${w.hoverAnimation.loopCount}`);
+        }
+        
+        // Добавляем специфичные поля в зависимости от типа анимации
+        switch (hoverType) {
+          case 'PRESET':
+            {
+              const preset = ['SCALE', 'LIFT'].includes(w.hoverAnimation.preset) ? w.hoverAnimation.preset : 'SCALE';
+              L.push(`      preset: ${preset}`);
+            }
+            if (w.hoverAnimation.intensity && w.hoverAnimation.intensity !== 1.2) {
+              L.push(`      intensity: ${w.hoverAnimation.intensity}`);
+            }
+            break;
+            
+          case 'SCALE':
+            {
+              const scaleSource = w.hoverAnimation.type === 'TRANSFORM' ? w.hoverAnimation.scaleVector : w.hoverAnimation.scale;
+              if (scaleSource) {
+                L.push(`      scale: [${scaleSource[0]}, ${scaleSource[1]}, ${scaleSource[2]}]`);
+              }
+            }
+            break;
+            
+          case 'TRANSLATE':
+            if (w.hoverAnimation.offset) {
+              L.push(`      offset: [${w.hoverAnimation.offset[0]}, ${w.hoverAnimation.offset[1]}, ${w.hoverAnimation.offset[2]}]`);
+            }
+            break;
+            
+          case 'ROTATE':
+            if (w.hoverAnimation.rotation) {
+              L.push(`      rotation: [${w.hoverAnimation.rotation[0]}, ${w.hoverAnimation.rotation[1]}, ${w.hoverAnimation.rotation[2]}]`);
+            }
+            if (w.hoverAnimation.axis) {
+              L.push(`      axis: [${w.hoverAnimation.axis[0]}, ${w.hoverAnimation.axis[1]}, ${w.hoverAnimation.axis[2]}]`);
+            }
+            break;
+            
+          case 'COMBINED':
+            if (w.hoverAnimation.effects && w.hoverAnimation.effects.length > 0) {
+              L.push(`      effects:`);
+              for (const effect of w.hoverAnimation.effects) {
+                const effectType = ['SCALE', 'TRANSLATE', 'ROTATE', 'PRESET'].includes(effect.type) ? effect.type : 'SCALE';
+                L.push(`        - type: ${effectType}`);
+                if (effect.preset) {
+                  const effectPreset = ['SCALE', 'LIFT'].includes(effect.preset) ? effect.preset : 'SCALE';
+                  L.push(`          preset: ${effectPreset}`);
+                }
+                if (effectType === 'PRESET' && effect.intensity !== undefined) {
+                  L.push(`          intensity: ${effect.intensity}`);
+                }
+                if (effect.scale) {
+                  L.push(`          scale: [${effect.scale[0]}, ${effect.scale[1]}, ${effect.scale[2]}]`);
+                }
+                if (effect.offset) {
+                  L.push(`          offset: [${effect.offset[0]}, ${effect.offset[1]}, ${effect.offset[2]}]`);
+                }
+                if (effect.rotation) {
+                  L.push(`          rotation: [${effect.rotation[0]}, ${effect.rotation[1]}, ${effect.rotation[2]}]`);
+                }
+                if (effect.axis) {
+                  L.push(`          axis: [${effect.axis[0]}, ${effect.axis[1]}, ${effect.axis[2]}]`);
+                }
+              }
+            }
+            break;
+            
+          case 'PULSE_CONTINUOUS':
+            if (w.hoverAnimation.intensity && w.hoverAnimation.intensity !== 1.4) {
+              L.push(`      intensity: ${w.hoverAnimation.intensity}`);
+            }
+            break;
+        }
       }
     }
   }
@@ -405,3 +496,4 @@ Object.assign(window.ScreenGenerator, {
   initScreenSettingsHandlers,
   updateResetLuaButton
 });
+

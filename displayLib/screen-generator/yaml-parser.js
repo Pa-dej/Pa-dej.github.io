@@ -11,6 +11,9 @@ function parseYamlToCanvas(yamlText) {
     let currentSection = null;
     let currentWidget = null;
     let inOnClick = false;
+    let inHoverAnimation = false;
+    let inHoverAnimationEffects = false;
+    let currentHoverEffect = null;
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -26,6 +29,9 @@ function parseYamlToCanvas(yamlText) {
         currentSection = null;
         currentWidget = null;
         inOnClick = false;
+        inHoverAnimation = false;
+        inHoverAnimationEffects = false;
+        currentHoverEffect = null;
       }
       
       // Парсим основные секции
@@ -52,20 +58,38 @@ function parseYamlToCanvas(yamlText) {
         };
         result.widgets.push(currentWidget);
         inOnClick = false;
+        inHoverAnimation = false;
+        inHoverAnimationEffects = false;
+        currentHoverEffect = null;
       } else if (currentSection === 'background' && indent > 0) {
         parseBackgroundProperty(trimmedLine, result.background);
       } else if (currentWidget && indent > 0) {
         if (trimmedLine.startsWith('onClick:')) {
           inOnClick = true;
+          inHoverAnimation = false;
+        } else if (trimmedLine.startsWith('hoverAnimation:')) {
+          inHoverAnimation = true;
+          inOnClick = false;
+          currentWidget.hoverAnimation = {};
         } else if (inOnClick && trimmedLine.startsWith('action:')) {
           currentWidget.onClick = trimmedLine.split(':')[1].trim();
           inOnClick = false;
+        } else if (inHoverAnimation) {
+          parseHoverAnimationProperty(trimmedLine, currentWidget.hoverAnimation, indent, lines, i);
         } else if (!inOnClick) {
           parseWidgetProperty(trimmedLine, currentWidget);
         }
       }
     }
     
+    result.widgets.forEach(widget => {
+      if (widget.hoverAnimation) {
+        delete widget.hoverAnimation._inEffects;
+        delete widget.hoverAnimation._currentEffect;
+        delete widget.hoverAnimation._legacyTransform;
+      }
+    });
+
     return result;
   } catch (error) {
     console.error('YAML parsing error:', error);
@@ -171,14 +195,6 @@ function parseWidgetProperty(line, widget) {
       const tooltipValue = tooltipPart.replace(/^["']|["']$/g, '');
       widget.tooltip = tooltipValue.replace(/\\n/g, '\n');
     }
-  } else if (line.startsWith('tooltipColor:')) {
-    const colorMatch = line.match(/\[(\d+),\s*(\d+),\s*(\d+)\]/);
-    if (colorMatch) {
-      const r = parseInt(colorMatch[1]);
-      const g = parseInt(colorMatch[2]);
-      const b = parseInt(colorMatch[3]);
-      widget.tooltipColor = [r, g, b];
-    }
   } else if (line.startsWith('tooltipDelay:')) {
     const delayValue = parseInt(line.split(':')[1].trim());
     widget.tooltipDelay = isNaN(delayValue) ? 10 : delayValue;
@@ -210,6 +226,198 @@ function parseWidgetProperty(line, widget) {
     const tolMatch = line.match(/\[([^,]+),\s*([^,]+)\]/);
     if (tolMatch) {
       widget.tolerance = [parseFloat(tolMatch[1]) || 0, parseFloat(tolMatch[2]) || 0];
+    }
+  }
+}
+
+// Функция для парсинга hoverAnimation
+function parseHoverAnimationProperty(line, hoverAnimation, indent = 0) {
+  if (line.startsWith('effects:')) {
+    hoverAnimation.effects = [];
+    hoverAnimation._inEffects = true;
+    hoverAnimation._currentEffect = null;
+    return;
+  }
+
+  if (hoverAnimation._inEffects && indent >= 8) {
+    if (line.startsWith('- type:')) {
+      const rawType = line.split(':')[1].trim();
+      const allowedEffectTypes = ['SCALE', 'TRANSLATE', 'ROTATE', 'PRESET'];
+      const effectType = allowedEffectTypes.includes(rawType) ? rawType : 'SCALE';
+      const effect = { type: effectType };
+      hoverAnimation.effects.push(effect);
+      hoverAnimation._currentEffect = effect;
+      parseHoverEffectProperty('', effect);
+      return;
+    }
+
+    if (hoverAnimation._currentEffect) {
+      parseHoverEffectProperty(line, hoverAnimation._currentEffect);
+      return;
+    }
+  }
+
+  if (indent <= 6) {
+    hoverAnimation._inEffects = false;
+    hoverAnimation._currentEffect = null;
+  }
+
+  if (line.startsWith('type:')) {
+    const parsedType = line.split(':')[1].trim();
+    if (parsedType === 'TRANSFORM') {
+      hoverAnimation.type = 'SCALE';
+      hoverAnimation._legacyTransform = true;
+    } else {
+      hoverAnimation.type = parsedType;
+    }
+  } else if (line.startsWith('duration:')) {
+    hoverAnimation.duration = parseInt(line.split(':')[1].trim()) || 10;
+  } else if (line.startsWith('reverseOnExit:')) {
+    hoverAnimation.reverseOnExit = line.split(':')[1].trim() === 'true';
+  } else if (line.startsWith('delay:')) {
+    hoverAnimation.delay = parseInt(line.split(':')[1].trim()) || 0;
+  } else if (line.startsWith('loop:')) {
+    hoverAnimation.loop = line.split(':')[1].trim() === 'true';
+  } else if (line.startsWith('loopCount:')) {
+    hoverAnimation.loopCount = parseInt(line.split(':')[1].trim()) || -1;
+  } else if (line.startsWith('preset:')) {
+    const preset = line.split(':')[1].trim();
+    hoverAnimation.preset = ['SCALE', 'LIFT'].includes(preset) ? preset : 'SCALE';
+  } else if (line.startsWith('intensity:')) {
+    hoverAnimation.intensity = parseFloat(line.split(':')[1].trim()) || 1.2;
+  } else if (line.startsWith('scale:')) {
+    const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (scaleMatch) {
+      hoverAnimation.scale = [
+        parseFloat(scaleMatch[1]) || 1.0,
+        parseFloat(scaleMatch[2]) || 1.0,
+        parseFloat(scaleMatch[3]) || 1.0
+      ];
+    }
+  } else if (line.startsWith('offset:')) {
+    const offsetMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (offsetMatch) {
+      hoverAnimation.offset = [
+        parseFloat(offsetMatch[1]) || 0.0,
+        parseFloat(offsetMatch[2]) || 0.0,
+        parseFloat(offsetMatch[3]) || 0.0
+      ];
+    }
+  } else if (line.startsWith('rotation:')) {
+    const rotMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (rotMatch) {
+      hoverAnimation.rotation = [
+        parseFloat(rotMatch[1]) || 0.0,
+        parseFloat(rotMatch[2]) || 0.0,
+        parseFloat(rotMatch[3]) || 0.0
+      ];
+    }
+  } else if (line.startsWith('axis:')) {
+    const axisMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (axisMatch) {
+      hoverAnimation.axis = [
+        parseFloat(axisMatch[1]) || 0.0,
+        parseFloat(axisMatch[2]) || 1.0,
+        parseFloat(axisMatch[3]) || 0.0
+      ];
+    }
+  } else if (line.startsWith('translation:')) {
+    const transMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (transMatch) {
+      hoverAnimation.translation = [
+        parseFloat(transMatch[1]) || 0.0,
+        parseFloat(transMatch[2]) || 0.0,
+        parseFloat(transMatch[3]) || 0.0
+      ];
+    }
+  } else if (line.startsWith('leftRotation:')) {
+    const leftRotMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (leftRotMatch) {
+      hoverAnimation.leftRotation = [
+        parseFloat(leftRotMatch[1]) || 0.0,
+        parseFloat(leftRotMatch[2]) || 0.0,
+        parseFloat(leftRotMatch[3]) || 0.0,
+        parseFloat(leftRotMatch[4]) || 1.0
+      ];
+    }
+  } else if (line.startsWith('scaleVector:')) {
+    const scaleVecMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (scaleVecMatch) {
+      const scaleVector = [
+        parseFloat(scaleVecMatch[1]) || 1.0,
+        parseFloat(scaleVecMatch[2]) || 1.0,
+        parseFloat(scaleVecMatch[3]) || 1.0
+      ];
+      if (hoverAnimation._legacyTransform) {
+        hoverAnimation.scale = scaleVector;
+      } else {
+        hoverAnimation.scaleVector = scaleVector;
+      }
+    }
+  } else if (line.startsWith('rightRotation:')) {
+    const rightRotMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (rightRotMatch) {
+      hoverAnimation.rightRotation = [
+        parseFloat(rightRotMatch[1]) || 0.0,
+        parseFloat(rightRotMatch[2]) || 0.0,
+        parseFloat(rightRotMatch[3]) || 0.0,
+        parseFloat(rightRotMatch[4]) || 1.0
+      ];
+    }
+  }
+}
+
+function parseHoverEffectProperty(line, effect) {
+  if (!line) {
+    if (effect.type === 'SCALE' && !effect.scale) effect.scale = [1.05, 1.05, 1.0];
+    if (effect.type === 'TRANSLATE' && !effect.offset) effect.offset = [0.0, 0.01, 0.0];
+    if (effect.type === 'ROTATE' && !effect.rotation) effect.rotation = [0.0, 15.0, 0.0];
+    if (effect.type === 'ROTATE' && !effect.axis) effect.axis = [0.0, 1.0, 0.0];
+    if (effect.type === 'PRESET' && !effect.preset) effect.preset = 'SCALE';
+    if (effect.type === 'PRESET' && effect.intensity === undefined) effect.intensity = 1.2;
+    return;
+  }
+
+  if (line.startsWith('preset:')) {
+    const preset = line.split(':')[1].trim();
+    effect.preset = ['SCALE', 'LIFT'].includes(preset) ? preset : 'SCALE';
+  } else if (line.startsWith('intensity:')) {
+    effect.intensity = parseFloat(line.split(':')[1].trim()) || 1.2;
+  } else if (line.startsWith('scale:')) {
+    const scaleMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (scaleMatch) {
+      effect.scale = [
+        parseFloat(scaleMatch[1]) || 1.0,
+        parseFloat(scaleMatch[2]) || 1.0,
+        parseFloat(scaleMatch[3]) || 1.0
+      ];
+    }
+  } else if (line.startsWith('offset:')) {
+    const offsetMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (offsetMatch) {
+      effect.offset = [
+        parseFloat(offsetMatch[1]) || 0.0,
+        parseFloat(offsetMatch[2]) || 0.0,
+        parseFloat(offsetMatch[3]) || 0.0
+      ];
+    }
+  } else if (line.startsWith('rotation:')) {
+    const rotMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (rotMatch) {
+      effect.rotation = [
+        parseFloat(rotMatch[1]) || 0.0,
+        parseFloat(rotMatch[2]) || 0.0,
+        parseFloat(rotMatch[3]) || 0.0
+      ];
+    }
+  } else if (line.startsWith('axis:')) {
+    const axisMatch = line.match(/\[([^,]+),\s*([^,]+),\s*([^,\]]+)/);
+    if (axisMatch) {
+      effect.axis = [
+        parseFloat(axisMatch[1]) || 0.0,
+        parseFloat(axisMatch[2]) || 1.0,
+        parseFloat(axisMatch[3]) || 0.0
+      ];
     }
   }
 }
