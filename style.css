@@ -2112,19 +2112,29 @@ body.displaylib-body .litem .mc-item {
 body.displaylib-body {
   --font-display: 'Fraunces', Georgia, serif;
   --font-mono: 'DM Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  --r-sm: 4px;
+  --r-md: 8px;
   --bg: #17130f;
   --bg2: #221e1a;
   --bg3: #2c2620;
   --bg4: #393128;
+  --surface: #221e1a;
+  --surface-2: #2e2922;
   --border: #3e3830;
+  --border-soft: #2e2922;
   --border2: #595145;
   --accent: #6a9ec4;
   --accent2: #3e7aa8;
   --accent3: #84bddf;
+  --accent-bg: #0a1e2e;
+  --accent-on: #17130f;
   --text: #f0ebe3;
+  --text-muted: #9e9489;
+  --text-hint: #62594f;
   --text2: #9e9489;
   --text3: #62594f;
   --accent-glow: 0 0 0 1px rgba(106, 158, 196, 0.34), 0 0 24px rgba(106, 158, 196, 0.18);
+  --accent-glow-soft: rgba(106, 158, 196, 0.2);
   position: relative !important;
   isolation: isolate !important;
   font-family: var(--font-mono) !important;
@@ -2205,54 +2215,34 @@ body.displaylib-body .topbar > *:nth-child(5) { animation-delay: 0.12s; }
 body.displaylib-body .logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: var(--text);
   text-shadow: none;
 }
 
 body.displaylib-body .logo-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(106, 158, 196, 0.45);
-  background:
-    radial-gradient(circle at 28% 22%, rgba(106, 158, 196, 0.25), rgba(106, 158, 196, 0)),
-    linear-gradient(160deg, rgba(20, 34, 48, 0.62), rgba(18, 22, 29, 0.7));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--accent-glow);
+  color: var(--accent);
+  line-height: 0;
 }
 
 body.displaylib-body .logo-mark svg {
-  width: 18px;
-  height: 18px;
-  color: var(--accent3);
-}
-
-body.displaylib-body .logo-stack {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  width: 20px;
+  height: 20px;
+  color: inherit;
 }
 
 body.displaylib-body .logo-title {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 400;
   font-style: italic;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1;
   color: var(--text);
-}
-
-body.displaylib-body .logo-sub {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--accent3);
+  white-space: nowrap;
 }
 
 body.displaylib-body .tsep {
@@ -2267,38 +2257,235 @@ body.displaylib-body .pselect {
 }
 
 body.displaylib-body .btn {
-  border-radius: 8px;
-  border-color: rgba(98, 89, 79, 0.58);
-  color: var(--text2);
-  background: linear-gradient(180deg, rgba(47, 41, 34, 0.98), rgba(36, 31, 26, 0.98));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: var(--r-md);
+  border: 0.5px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 body.displaylib-body .btn:hover {
-  border-color: rgba(106, 158, 196, 0.64);
-  color: var(--accent3);
-  box-shadow: var(--accent-glow);
+  background: var(--border);
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+body.displaylib-body .btn:active {
+  transform: scale(0.97);
 }
 
 body.displaylib-body .btn.primary {
-  color: #131820;
-  background: linear-gradient(160deg, #84bddf 0%, #6a9ec4 62%, #4d86b1 100%);
-  border-color: rgba(106, 158, 196, 0.7);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
 }
 
 body.displaylib-body .btn.primary:hover {
-  box-shadow: 0 0 0 1px rgba(132, 189, 223, 0.72), 0 0 26px rgba(106, 158, 196, 0.26);
+  opacity: 0.88;
+  background: var(--accent);
+}
+
+body.displaylib-body .btn.secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+body.displaylib-body .btn.secondary:hover {
+  background: var(--border);
 }
 
 body.displaylib-body .tl {
-  color: var(--text2);
-  font-size: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+body.displaylib-body .tinput,
+body.displaylib-body .pinput,
+body.displaylib-body .pselect,
+body.displaylib-body .input-group .form-control {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+body.displaylib-body .topbar .tinput {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+body.displaylib-body .tinput:hover,
+body.displaylib-body .pinput:hover,
+body.displaylib-body .pselect:hover,
+body.displaylib-body .input-group .form-control:hover {
+  border-color: var(--text-hint);
 }
 
 body.displaylib-body .tinput:focus,
 body.displaylib-body .pinput:focus,
 body.displaylib-body .pselect:focus {
-  border-color: rgba(106, 158, 196, 0.72);
-  box-shadow: 0 0 0 2px rgba(106, 158, 196, 0.14);
+  border-color: var(--accent);
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+body.displaylib-body select.tinput,
+body.displaylib-body select.pselect {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-hint) 50%),
+    linear-gradient(135deg, var(--text-hint) 50%, transparent 50%);
+  background-position:
+    calc(100% - 13px) calc(50% + 1px),
+    calc(100% - 8px) calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+body.displaylib-body select.tinput:focus,
+body.displaylib-body select.pselect:focus {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+}
+
+body.displaylib-body .ptextarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+body.displaylib-body input[type=checkbox] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-sm);
+  border: 0.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  vertical-align: middle;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+body.displaylib-body input[type=checkbox]::before {
+  content: "";
+  width: 10px;
+  height: 7px;
+  border-left: 1.5px solid var(--accent-on);
+  border-bottom: 1.5px solid var(--accent-on);
+  transform: rotate(-45deg) translateY(-1px) scale(0);
+  transform-origin: center;
+  transition: transform 0.15s ease;
+}
+
+body.displaylib-body input[type=checkbox]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+body.displaylib-body input[type=checkbox]:checked::before {
+  transform: rotate(-45deg) translateY(-1px) scale(1);
+}
+
+body.displaylib-body input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+}
+
+body.displaylib-body input[type=range]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+body.displaylib-body input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  background: var(--accent);
+  margin-top: -6px;
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+body.displaylib-body input[type=range]:hover::-webkit-slider-thumb,
+body.displaylib-body input[type=range]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px var(--accent-glow-soft);
+}
+
+body.displaylib-body input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+body.displaylib-body input[type=range]::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  border: none;
+  background: var(--border);
+}
+
+body.displaylib-body input[type=range]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  background: var(--accent);
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+body.displaylib-body input[type=range]:hover::-moz-range-thumb,
+body.displaylib-body input[type=range]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 5px var(--accent-glow-soft);
+}
+
+body.displaylib-body input[type=range]:active::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+body.displaylib-body .input-group-addon {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-right: none;
+  color: var(--text-hint);
+}
+
+body.displaylib-body .input-group .form-control {
+  border-left: none;
+}
+
+body.displaylib-body .input-group .form-control:focus {
+  border-color: var(--accent);
+}
+
+body.displaylib-body .input-group.focused .input-group-addon,
+body.displaylib-body .input-group .form-control:focus ~ .input-group-addon,
+body.displaylib-body .input-group .input-group-addon:has(+ .form-control:focus) {
+  border-color: var(--accent);
 }
 
 body.displaylib-body .pleft,
