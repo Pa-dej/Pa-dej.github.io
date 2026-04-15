@@ -11,11 +11,26 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cascadia+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:opsz,wght@9..144,300;9..144,400&display=swap" rel="stylesheet">
 </head>
 <body class="displaylib-body">
 <div class="app-container">
   <div class="topbar">
-    <div class="logo">Display<span>Lib</span></div>
+    <div class="logo">
+      <span class="logo-mark" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24">
+          <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <path d="m20 13.7l-2.1-2.1a2 2 0 0 0-2.8 0L9.7 17"/>
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+            <circle cx="10" cy="8" r="2"/>
+          </g>
+        </svg>
+      </span>
+      <span class="logo-stack">
+        <span class="logo-title">DisplayLib</span>
+        <span class="logo-sub">Screen Generator</span>
+      </span>
+    </div>
     <div class="tsep"></div>
     <button class="btn" id="btnClear">× Очистить</button>
     <div class="tsep"></div>
