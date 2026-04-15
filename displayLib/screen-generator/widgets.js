@@ -45,10 +45,16 @@ function addWidget(type,mat,x=0,y=0){
   const id = `widget_${nextId}`;
   
   const isText=type==='TEXT_BUTTON';
+  const isValidMaterialId = window.ScreenGenerator?.isValidMinecraftMaterialId ||
+    ((id) => /^[A-Z0-9_]+$/.test(String(id || '').trim().toUpperCase()));
+  const safeMaterial = isText
+    ? ''
+    : (isValidMaterialId(mat) ? String(mat).trim().toUpperCase() : 'RED_STAINED_GLASS_PANE');
+
   // По умолчанию translation=[0,0]:
   // для TEXT чтобы центрировать по Y нужно transY=-h/2, но оставим 0 — пользователь настроит
   const widget = {
-    id,type,material:mat||(isText?'':'RED_STAINED_GLASS_PANE'),
+    id,type,material:safeMaterial,
     label:isText?'Button':'',text:isText?'Button':'',
     x, y,
     transX:0,
@@ -56,7 +62,7 @@ function addWidget(type,mat,x=0,y=0){
     transZ: isText ? 0.001 : 0, // смещение по Z для текстовых кнопок
     w: isText ? 0.125 : 1, // TEXT_BUTTON: 0.125 (scale=[1,1,1]), ITEM_BUTTON: 1
     h: isText ? 0.25 : 1,  // TEXT_BUTTON: 0.25 (scale=[1,1,1]), ITEM_BUTTON: 1
-    color:isText?'#2a4d6e':matCol(mat),
+    color:isText?'#2a4d6e':matCol(safeMaterial),
     onClick: isText ? 'NONE' : 'CLOSE_SCREEN', // TEXT_BUTTON: NONE, ITEM_BUTTON: CLOSE_SCREEN
     clickFunction: '', // Имя функции для RUN_SCRIPT
     switchTarget: '', // Целевой экран для SWITCH_SCREEN

@@ -2,6 +2,23 @@
 // MATERIAL SEARCH UI - только для панели свойств
 // ═══════════════════════════════════════════════════════════════
 
+function isSelectableWidgetMaterial(materialId) {
+  const validator = window.ScreenGenerator?.isValidMinecraftMaterialId;
+  if (typeof validator === 'function') {
+    return validator(materialId);
+  }
+  return /^[A-Z0-9_]+$/.test(String(materialId || '').trim().toUpperCase());
+}
+
+function filterWidgetMaterialResults(results) {
+  return (Array.isArray(results) ? results : []).filter(result => isSelectableWidgetMaterial(result?.id));
+}
+
+function getSafeWidgetMaterial(materialId) {
+  const normalized = String(materialId || '').trim().toUpperCase();
+  return isSelectableWidgetMaterial(normalized) ? normalized : 'RED_STAINED_GLASS_PANE';
+}
+
 // Функция для инициализации поиска материала в панели свойств
 function initMaterialSearchForWidget(id, widget) {
   const { searchMaterials, getMinecraftRender } = window.ScreenGenerator;
@@ -12,6 +29,22 @@ function initMaterialSearchForWidget(id, widget) {
   const inputGroup = searchInput?.closest('.input-group');
   
   if (!searchInput || !searchResults || !hiddenInput) return;
+
+  if (widget?.type === 'ITEM_BUTTON') {
+    const safeMaterial = getSafeWidgetMaterial(widget.material);
+    if (widget.material !== safeMaterial) {
+      widget.material = safeMaterial;
+      if (window.ScreenGenerator?.matCol) {
+        widget.color = window.ScreenGenerator.matCol(safeMaterial);
+      }
+    }
+    hiddenInput.value = safeMaterial;
+
+    const preview = document.getElementById(`${id}_preview`);
+    if (preview && typeof getMinecraftRender === 'function') {
+      preview.innerHTML = getMinecraftRender(safeMaterial, 24);
+    }
+  }
   
   let searchTimeout;
   
@@ -96,11 +129,7 @@ function displaySearchResultsForWidget(results, query, id, widget) {
   const searchResults = document.getElementById(`${id}_results`);
   const searchInput = document.getElementById(`${id}_search`);
   
-  // Проверяем, что results является массивом
-  if (!Array.isArray(results)) {
-    console.warn('displaySearchResultsForWidget: results is not an array:', results);
-    results = [];
-  }
+  results = filterWidgetMaterialResults(results);
   
   if (results.length === 0) {
     searchResults.innerHTML = '<div class="search-more">Ничего не найдено</div>';
@@ -138,7 +167,12 @@ function displaySearchResultsForWidget(results, query, id, widget) {
       searchResults.querySelectorAll('a[data-v]').forEach(item => {
         item.addEventListener('click', (e) => {
           e.preventDefault();
-          const material = item.dataset.v;
+          const material = String(item.dataset.v || '').trim().toUpperCase();
+          if (!isSelectableWidgetMaterial(material)) {
+            console.warn('Blocked non-material selection:', material);
+            searchResults.style.display = 'none';
+            return;
+          }
           
           // Обновляем виджет
           widget.material = material;
@@ -182,6 +216,7 @@ function displaySearchResultsWidgetSync(results, query, id, widget) {
   const searchResults = document.getElementById(`${id}_results`);
   const searchInput = document.getElementById(`${id}_search`);
   
+  results = filterWidgetMaterialResults(results);
   let html = '';
   
   for (const result of results) {
@@ -209,7 +244,12 @@ function displaySearchResultsWidgetSync(results, query, id, widget) {
   searchResults.querySelectorAll('a[data-v]').forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
-      const material = item.dataset.v;
+      const material = String(item.dataset.v || '').trim().toUpperCase();
+      if (!isSelectableWidgetMaterial(material)) {
+        console.warn('Blocked non-material selection:', material);
+        searchResults.style.display = 'none';
+        return;
+      }
       
       // Обновляем виджет
       widget.material = material;

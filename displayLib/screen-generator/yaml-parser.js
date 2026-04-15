@@ -458,6 +458,23 @@ function applyYamlToCanvas(parsedData) {
   
   // Применяем виджеты
   parsedData.widgets.forEach(widgetData => {
+    if (widgetData.type === 'ITEM_BUTTON') {
+      const isValidMaterialId = ScreenGenerator.isValidMinecraftMaterialId ||
+        ((id) => /^[A-Z0-9_]+$/.test(String(id || '').trim().toUpperCase()));
+      const fallbackMaterial = 'RED_STAINED_GLASS_PANE';
+      const normalizedMaterial = String(widgetData.material || '').trim().toUpperCase();
+
+      if (!isValidMaterialId(normalizedMaterial)) {
+        widgetData.material = fallbackMaterial;
+      } else {
+        widgetData.material = normalizedMaterial;
+      }
+
+      if (typeof ScreenGenerator.matCol === 'function') {
+        widgetData.color = ScreenGenerator.matCol(widgetData.material);
+      }
+    }
+
     ScreenGenerator.widgets.push(widgetData);
   });
   

@@ -76,6 +76,22 @@ const CORE_MATERIALS = [
   { id: 'BARRIER', name: 'Barrier', icon: 'barrier', tags: ['barrier'] }
 ];
 
+const MATERIAL_ID_PATTERN = /^[A-Z0-9_]+$/;
+
+function normalizeMaterialId(materialId) {
+  return String(materialId || '').trim().toUpperCase();
+}
+
+function isValidMinecraftMaterialId(materialId) {
+  const normalized = normalizeMaterialId(materialId);
+  return MATERIAL_ID_PATTERN.test(normalized);
+}
+
+function filterToValidMinecraftMaterials(materials) {
+  if (!Array.isArray(materials)) return [];
+  return materials.filter(material => isValidMinecraftMaterialId(material?.id));
+}
+
 // Маппинг основных материалов к CSS классам иконок
 const CORE_MATERIAL_TO_ICON = {
   'STONE': 'stone',
@@ -135,7 +151,10 @@ let fullMapping = {};
 
 // Функция для получения иконки материала
 async function getMaterialIcon(materialId) {
-  const upperMaterialId = materialId.toUpperCase();
+  const upperMaterialId = normalizeMaterialId(materialId);
+  if (!isValidMinecraftMaterialId(upperMaterialId)) {
+    return null;
+  }
   
   // Сначала ищем в основном маппинге
   if (CORE_MATERIAL_TO_ICON[upperMaterialId]) {
@@ -199,7 +218,7 @@ async function searchMaterials(query, limit = 20) {
   const lowerQuery = query.toLowerCase();
   
   // Сначала ищем в основных материалах
-  let results = CORE_MATERIALS.filter(material => 
+  let results = filterToValidMinecraftMaterials(CORE_MATERIALS).filter(material => 
     material.id.toLowerCase().includes(lowerQuery) ||
     material.name.toLowerCase().includes(lowerQuery) ||
     material.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
@@ -208,7 +227,7 @@ async function searchMaterials(query, limit = 20) {
   // Если нужно больше результатов, загружаем полную базу
   if (results.length < limit && query.length > 1) {
     const fullDb = await loadFullMaterialsDatabase();
-    const additionalResults = fullDb.filter(material => 
+    const additionalResults = filterToValidMinecraftMaterials(fullDb).filter(material => 
       !CORE_MATERIALS.find(core => core.id === material.id) && (
         material.id.toLowerCase().includes(lowerQuery) ||
         material.name.toLowerCase().includes(lowerQuery) ||
@@ -224,13 +243,16 @@ async function searchMaterials(query, limit = 20) {
 
 // Получение материала по ID
 async function getMaterialById(id) {
+  if (!isValidMinecraftMaterialId(id)) return null;
+
   // Сначала ищем в основных
-  let material = CORE_MATERIALS.find(m => m.id === id);
+  const normalizedId = normalizeMaterialId(id);
+  let material = CORE_MATERIALS.find(m => m.id === normalizedId);
   if (material) return material;
   
   // Если не найден, ищем в полной базе
   const fullDb = await loadFullMaterialsDatabase();
-  return fullDb.find(m => m.id === id);
+  return filterToValidMinecraftMaterials(fullDb).find(m => m.id === normalizedId);
 }
 
 // Экспорт функций
@@ -241,7 +263,10 @@ if (typeof window !== 'undefined') {
     searchMaterials,
     getMaterialById,
     getMaterialIcon,
-    loadFullMaterialsDatabase
+    loadFullMaterialsDatabase,
+    isValidMinecraftMaterialId,
+    normalizeMaterialId,
+    filterToValidMinecraftMaterials
   });
   
   // Глобальные переменные для обратной совместимости

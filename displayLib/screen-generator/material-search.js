@@ -38,14 +38,20 @@ async function searchMaterials(query) {
   if (!query || query.length < 1) return [];
   
   console.log('Searching for:', query);
+
+  const isValidMaterialId = window.ScreenGenerator?.isValidMinecraftMaterialId ||
+    ((id) => /^[A-Z0-9_]+$/.test(String(id || '').trim().toUpperCase()));
+  const filterResults = (results) =>
+    (Array.isArray(results) ? results : []).filter(result => isValidMaterialId(result?.id));
   
   // Проверяем доступность функции из materials-core.js
   if (window.ScreenGenerator && window.ScreenGenerator.searchMaterials && window.ScreenGenerator.searchMaterials !== searchMaterials) {
     console.log('Using materials-core.js search');
     try {
       const results = await window.ScreenGenerator.searchMaterials(query, 15);
-      console.log('Search results from materials-core:', results);
-      return results;
+      const filteredResults = filterResults(results);
+      console.log('Search results from materials-core:', filteredResults);
+      return filteredResults;
     } catch (error) {
       console.warn('Error in materials-core search:', error);
     }
@@ -54,11 +60,12 @@ async function searchMaterials(query) {
   // Fallback если materials-core.js не загружен - используем CORE_MATERIALS
   console.log('Using fallback search with CORE_MATERIALS');
   const lowerQuery = query.toLowerCase();
-  const coreResults = window.ScreenGenerator?.CORE_MATERIALS?.filter(material => 
+  const coreResults = (window.ScreenGenerator?.CORE_MATERIALS || []).filter(material =>
+    isValidMaterialId(material?.id) && (
     material.id.toLowerCase().includes(lowerQuery) ||
     material.name.toLowerCase().includes(lowerQuery) ||
     material.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
-  ) || [];
+  ));
   
   console.log('Fallback search results:', coreResults);
   return coreResults.slice(0, 15);
