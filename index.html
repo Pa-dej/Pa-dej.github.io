@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en" data-lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Padej_ · Проекты</title>
-<meta name="description" content="Padej_ — плагины для Minecraft, свой язык Jumper и инструменты вокруг них.">
+<title>Padej_ · Projects</title>
+<meta name="description" content="Padej_ — plugins and tools for Minecraft servers: the Jumper scripting language, DisplayLib, Lodestone and Vex.">
 <link rel="icon" type="image/png" href="assets/icons/padej_bg_32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -264,7 +264,7 @@ html.fit body { padding-block: 20px; display: grid; align-content: center; }
       <div class="info panel pxbox">
         <span class="kind pxcut green"><span data-l="ru">Плагин</span><span data-l="en">Plugin</span></span>
         <h3>DisplayLib</h3>
-        <p class="desc pxcut"><span><span data-l="ru">Плагин для Paper 1.21: интерфейсы прямо в мире из display-сущностей. Экраны собираются в визуальном редакторе в браузере.</span><span data-l="en">A Paper 1.21 plugin for in-world interfaces made of display entities. Screens are assembled in a browser-based visual editor.</span></span></p>
+        <p class="desc pxcut"><span><span data-l="ru">Плагин для Paper 1.21.11: интерфейсы прямо в мире из display-сущностей. Экраны собираются в визуальном редакторе в браузере.</span><span data-l="en">A Paper 1.21.11 plugin for in-world interfaces made of display entities. Screens are assembled in a browser-based visual editor.</span></span></p>
         <span class="stack">Java 21 · Vue 3 · Three.js</span>
         <a class="btn sm blue pxbox" href="https://github.com/Pa-dej/DisplayLib">GitHub</a>
       </div>
@@ -393,7 +393,7 @@ document.querySelectorAll('img').forEach((i) => i.setAttribute('draggable', 'fal
   const titles = { ru: 'Padej_ · Проекты', en: 'Padej_ · Projects' };
   let lang;
   try { lang = localStorage.getItem('lang'); } catch (e) {}
-  if (lang !== 'ru' && lang !== 'en') lang = /^ru|^uk|^be|^kk/i.test(navigator.language || '') ? 'ru' : 'en';
+  if (lang !== 'ru' && lang !== 'en') lang = 'en'; // по умолчанию английский
   const btns = document.querySelectorAll('.lang button');
   function set(l) {
     lang = l; root.dataset.lang = l; root.lang = l; document.title = titles[l];
