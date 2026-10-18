@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Padej_ · Проекты</title>
+<meta name="description" content="Padej_ — плагины для Minecraft, свой язык Jumper и инструменты вокруг них.">
+<link rel="icon" type="image/png" href="assets/icons/padej_bg_32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap">
+<style>
+
+/* Сукно Balatro + пиксельные панели ElementalWar. Один пиксель интерфейса = --px. */
+:root {
+  --felt-1: #2b6b5c; --felt-2: #1b4a41; --felt-3: #0d2622;
+  --panel: #2f3d43; --panel-in: #1a2428; --panel-edge: #5b6f76;
+  --ink: #fffaf0; --ink-dim: #a9b8b4; --ink-mute: #6f7d79; --ink-dark: #1b1410;
+  --card: #f4ecd8; --card-edge: #b9a982; --paper: #ffffff;
+  --red: #fe5f55; --red-d: #a8322b;
+  --blue: #009dff; --blue-d: #005fa3;
+  --orange: #ff9d2e; --orange-d: #ad5a06;
+  --gold: #f5c542; --gold-d: #9a7a1c;
+  --green: #35bd86; --green-d: #19734e;
+  --purple: #a66bdc; --purple-d: #5b2f86;
+  --px: 3px;
+  --drop: rgba(0, 0, 0, 0.55);
+  /* Tiny5 нарисован на сетке 8×8 — кегли кратны 8 */
+  --fs-s: 16px; --fs-m: 24px; --fs-l: 32px; --fs-xl: 48px; --fs-xxl: 64px;
+  color-scheme: dark;
+  font-family: 'Tiny5', ui-monospace, 'Courier New', monospace;
+  font-size: var(--fs-s);
+  line-height: 1.5;
+  color: var(--ink);
+}
+@media (max-width: 560px) {
+  :root { --px: 2px; --fs-xl: 40px; --fs-xxl: 48px; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--felt-3);
+  overflow-x: hidden;
+  -webkit-font-smoothing: none;
+  padding-block: 32px 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+img { image-rendering: pixelated; max-width: 100%; }
+/* как в игре: текст не выделяется, картинки и ссылки не перетаскиваются,
+   долгое нажатие на телефоне не открывает меню картинки */
+html { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+img, a { -webkit-user-drag: none; user-drag: none; }
+h1, h2, h3 { font-weight: normal; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+button { font: inherit; }
+
+/* пиксельная рамка: контур со ступенчатыми углами + жёсткая тень снизу */
+.pxbox {
+  --edge: var(--panel-edge);
+  --lift: calc(var(--px) * 2);
+  box-shadow:
+    0 calc(-1 * var(--px)) 0 0 var(--edge),
+    0 var(--px) 0 0 var(--edge),
+    calc(-1 * var(--px)) 0 0 0 var(--edge),
+    var(--px) 0 0 0 var(--edge),
+    0 calc(var(--px) + var(--lift)) 0 0 var(--drop),
+    inset 0 var(--px) 0 0 var(--hi, rgba(255, 255, 255, 0.07)),
+    inset 0 calc(-1 * var(--px)) 0 0 var(--lo, rgba(0, 0, 0, 0.25));
+}
+.pxcut {
+  clip-path: polygon(0 var(--px), var(--px) var(--px), var(--px) 0, calc(100% - var(--px)) 0,
+    calc(100% - var(--px)) var(--px), 100% var(--px), 100% calc(100% - var(--px)),
+    calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%,
+    var(--px) calc(100% - var(--px)), 0 calc(100% - var(--px)));
+}
+.panel { background: var(--panel); padding: 15px; }
+.inner { background: var(--panel-in); padding: 9px 12px; box-shadow: inset 0 var(--px) 0 rgba(0, 0, 0, 0.35); }
+.label { color: var(--ink-dim); font-size: var(--fs-s); }
+.num { line-height: 1; text-shadow: 0 var(--px) 0 rgba(0, 0, 0, 0.55); font-variant-numeric: tabular-nums; }
+.headline {
+  line-height: 1;
+  text-shadow: -2px 0 rgba(255, 70, 90, 0.45), 2px 0 rgba(70, 200, 255, 0.45),
+    0 calc(var(--px) * 2) 0 rgba(0, 0, 0, 0.6);
+}
+
+/* кнопка из ElementalWar: цветная плашка, при наведении «дрожит», при нажатии проседает */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: var(--fs-m); line-height: 1.25; color: var(--ink);
+  border: 0; padding: 9px 14px; cursor: pointer; text-decoration: none;
+  background: var(--b); --edge: var(--bd);
+  --hi: rgba(255, 255, 255, 0.28); --lo: rgba(0, 0, 0, 0.22);
+  text-shadow: 0 var(--px) 0 rgba(0, 0, 0, 0.4);
+  transition: transform 0.06s;
+}
+.btn.sm { font-size: var(--fs-s); padding: 6px 10px; }
+.btn:hover { animation: jiggle 0.32s ease-out; filter: brightness(1.08); }
+.btn:active { transform: translateY(calc(var(--px) * 2)); --lift: 0px; animation: none; }
+.btn:focus-visible, a:focus-visible { outline: var(--px) solid var(--gold); outline-offset: calc(var(--px) * 2); }
+.blue { --b: var(--blue); --bd: var(--blue-d); }
+.red { --b: var(--red); --bd: var(--red-d); }
+.orange { --b: var(--orange); --bd: var(--orange-d); }
+.green { --b: var(--green); --bd: var(--green-d); }
+.gold { --b: var(--gold); --bd: var(--gold-d); }
+.purple { --b: var(--purple); --bd: var(--purple-d); }
+@keyframes jiggle {
+  30% { transform: rotate(-2deg) scale(1.04); }
+  60% { transform: rotate(1.5deg) scale(1.03); }
+  100% { transform: none; }
+}
+
+/* фон-шейдер: рисуется крупными пикселями под всем */
+#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; image-rendering: pixelated; }
+
+/* ЭЛТ: сканлайны, RGB-маска, виньетка. Клики проходят насквозь. */
+.crt { display: none; position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,40,40,.03) 0 1px, rgba(40,255,80,.02) 1px 2px, rgba(40,90,255,.035) 2px 3px);
+  box-shadow: inset 0 0 160px rgba(0,0,0,.6);
+  animation: flicker .12s steps(2) infinite; }
+.crt-on .crt { display: block; }
+@keyframes flicker { to { opacity: .93; } }
+.crt-toggle { position: fixed; z-index: 1001;
+  right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+
+/* ключевые слова в описаниях, как в Balatro */
+.k-blue { color: var(--blue); } .k-red { color: var(--red); } .k-gold { color: var(--gold-d); }
+.k-green { color: var(--green-d); } .k-orange { color: var(--orange-d); }
+
+.foot { margin-top: 56px; text-align: center; color: var(--ink-mute); }
+.foot a { color: var(--ink-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* язык: показываем только выбранный */
+html:not([data-lang="en"]) [data-l="en"], html[data-lang="en"] [data-l="ru"] { display: none; }
+
+.wrap { max-width: 1200px; margin: 0 auto; display: grid; gap: 36px; }
+/* шапка — один блок по центру оси страницы */
+.hero { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 28px; }
+.avatar { line-height: 0; filter: drop-shadow(0 calc(var(--px) * 3) 0 var(--drop)); }
+.avatar img { width: 128px; height: 128px; display: block; }
+.who { display: grid; gap: 12px; min-width: 0; max-width: 640px; }
+.who h1 { font-size: var(--fs-xxl); }
+.who p { color: var(--ink-dim); font-size: var(--fs-m); line-height: 1.25; text-wrap: balance; }
+.row { display: flex; flex-wrap: wrap; gap: 16px; padding-bottom: 6px; }
+@media (max-width: 560px) { .hero { flex-direction: column; text-align: center; } .row { justify-content: center; } }
+
+/* подпись раздела по центру, линии расходятся в обе стороны */
+.sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+.sec-head::before, .sec-head::after { content: ""; flex: 1; height: var(--px); background: rgba(0,0,0,.35); }
+.sec-head h2 { font-size: var(--fs-m); }
+
+.hand { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 28px 24px; }
+/* все таблички одной высоты; дугой поднимаются только карты, низ ровный */
+.joker { width: 216px; display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 22px; }
+.joker:nth-child(1) { --rot: -3deg; --arc: 6px; }
+.joker:nth-child(2) { --rot: -1deg; --arc: 0px; }
+.joker:nth-child(3) { --rot: 1deg; --arc: 0px; }
+.joker:nth-child(4) { --rot: 3deg; --arc: 6px; }
+@media (max-width: 760px) { .joker:nth-child(n) { --rot: 0deg; --arc: 0px; } }
+
+/* наклейка «бета» на карте */
+.sticker { position: absolute; right: -10px; top: -8px; z-index: 1; line-height: 1.2;
+  padding: 2px 8px; background: var(--gold); color: var(--ink-dark); transform: rotate(12deg);
+  box-shadow: 0 var(--px) 0 var(--gold-d), 0 calc(var(--px) * 2) 0 var(--drop); }
+
+/* карта — сама иконка: плавает (обёртка) и наклоняется за курсором */
+.float { translate: 0 var(--arc, 0px); animation: bob 3.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes bob { 50% { transform: translateY(-6px) rotate(.6deg); } }
+.card {
+  display: block; position: relative; width: 160px; line-height: 0;
+  filter: drop-shadow(0 calc(var(--px) * 3) 0 var(--drop));
+  transform: perspective(520px) rotate(var(--rot, 0deg)) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .12s ease-out, filter .12s ease-out;
+}
+.card img { width: 160px; height: 160px; display: block; }
+.card .shine { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.6) 45%, transparent 60%);
+  background-size: 250% 100%; background-position: var(--sx, 120%) 0; mix-blend-mode: soft-light;
+  -webkit-mask: var(--icon) center / 100% 100% no-repeat; mask: var(--icon) center / 100% 100% no-repeat; }
+.card:hover { filter: drop-shadow(0 calc(var(--px) * 6) 0 var(--drop)); }
+
+/* табличка проекта: тип, название, описание, стек, ссылка */
+.info { width: 100%; display: grid; grid-template-rows: auto auto 1fr auto auto; gap: 10px; justify-items: center; text-align: center; }
+.kind { padding: 2px 12px; color: var(--ink); background: var(--b); text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.info h3 { font-size: var(--fs-m); line-height: 1; font-weight: normal; margin: 0; }
+.desc { background: var(--paper); color: var(--ink-dark); padding: 10px 12px; width: 100%; line-height: 1.35;
+  display: grid; place-content: center; }
+.stack { color: var(--ink-dim); }
+
+.wrap .foot { margin-top: 0; }
+.foot .sep { margin-inline: 8px; }
+
+/* переключатель языка — правый верхний угол */
+.lang { position: fixed; z-index: 1001; display: flex; gap: 0; padding: 4px; background: var(--panel-in);
+  top: calc(16px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); }
+.lang button { font: inherit; font-size: var(--fs-s); color: var(--ink-dim); background: transparent; border: 0;
+  padding: 2px 10px; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--blue); color: var(--ink); text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.lang button:focus-visible { outline: var(--px) solid var(--gold); }
+
+
+/* страница целиком влезает в экран: см. fit() в скрипте */
+html.fit, html.fit body { height: 100%; overflow: hidden; }
+html.fit body { padding-block: 20px; display: grid; align-content: center; }
+
+</style>
+</head>
+<body>
+<canvas id="bg" data-c1="#0d2622" data-c2="#1b4a41" data-c3="#2b6b5c" aria-hidden="true"></canvas>
+<div class="crt" aria-hidden="true"></div>
+<button class="btn sm purple pxbox crt-toggle" id="crtToggle" type="button" aria-pressed="true">ЭЛТ: вкл</button>
+
+<div class="lang pxbox" role="group" aria-label="Язык / Language">
+  <button type="button" data-set="ru" aria-pressed="true">RU</button>
+  <button type="button" data-set="en" aria-pressed="false">EN</button>
+</div>
+<main class="wrap">
+  <header class="hero">
+    <div class="avatar"><img src="assets/icons/padej_bg_32.png" width="128" height="128" alt="Padej_"></div>
+    <div class="who">
+      <h1 class="headline">PADEJ_</h1>
+      <p><span data-l="ru">Пишу плагины и инструменты для Minecraft-серверов: свой скриптовый язык, библиотеку интерфейсов, лаунчер и прокси.</span><span data-l="en">I build plugins and tools for Minecraft servers: a scripting language, a UI library, a server launcher and a proxy.</span></p>
+      <div class="row">
+        <a class="btn red pxbox" href="https://github.com/Pa-dej">GitHub</a>
+        <a class="btn orange pxbox" href="https://github.com/Pa-dej?tab=repositories"><span data-l="ru">Все репозитории</span><span data-l="en">All repositories</span></a>
+      </div>
+    </div>
+  </header>
+
+  <section aria-labelledby="pj">
+    <div class="sec-head"><h2 id="pj"><span data-l="ru">Проекты</span><span data-l="en">Projects</span></h2></div>
+    <div class="hand">
+      
+    <article class="joker">
+      <div class="float" style="--d:0s">
+        <a class="card" href="https://github.com/jumper-lang/jumper" aria-label="Jumper — GitHub" style="--icon:url('assets/icons/jumper_bg_32.png')">
+          <img src="assets/icons/jumper_bg_32.png" width="160" height="160" alt="">
+          <span class="shine"></span>
+        </a>
+      </div>
+      <div class="info panel pxbox">
+        <span class="kind pxcut red"><span data-l="ru">Язык</span><span data-l="en">Language</span></span>
+        <h3>Jumper</h3>
+        <p class="desc pxcut"><span><span data-l="ru">Скриптовый язык на JVM. В DisplayLib на нём описывают разметку экранов (.jmc) и их поведение (.jmp).</span><span data-l="en">A scripting language on the JVM. DisplayLib uses it for screen layouts (.jmc) and their behaviour (.jmp).</span></span></p>
+        <span class="stack">JVM · Gradle</span>
+        <a class="btn sm blue pxbox" href="https://github.com/jumper-lang/jumper">GitHub</a>
+      </div>
+    </article>
+      
+    <article class="joker">
+      <div class="float" style="--d:0.4s">
+        <a class="card" href="https://github.com/Pa-dej/DisplayLib" aria-label="DisplayLib — GitHub" style="--icon:url('assets/icons/display-lib_bg_32.png')">
+          <img src="assets/icons/display-lib_bg_32.png" width="160" height="160" alt="">
+          <span class="shine"></span>
+        </a>
+      </div>
+      <div class="info panel pxbox">
+        <span class="kind pxcut green"><span data-l="ru">Плагин</span><span data-l="en">Plugin</span></span>
+        <h3>DisplayLib</h3>
+        <p class="desc pxcut"><span><span data-l="ru">Плагин для Paper 1.21: интерфейсы прямо в мире из display-сущностей. Экраны собираются в визуальном редакторе в браузере.</span><span data-l="en">A Paper 1.21 plugin for in-world interfaces made of display entities. Screens are assembled in a browser-based visual editor.</span></span></p>
+        <span class="stack">Java 21 · Vue 3 · Three.js</span>
+        <a class="btn sm blue pxbox" href="https://github.com/Pa-dej/DisplayLib">GitHub</a>
+      </div>
+    </article>
+      
+    <article class="joker">
+      <div class="float" style="--d:0.8s">
+        <a class="card" href="https://github.com/Pa-dej/Lodestone" aria-label="Lodestone — GitHub" style="--icon:url('assets/icons/lodestone_bg_32.png')">
+          <img src="assets/icons/lodestone_bg_32.png" width="160" height="160" alt="">
+          <span class="shine"></span>
+        </a>
+      </div>
+      <div class="info panel pxbox">
+        <span class="kind pxcut blue"><span data-l="ru">Приложение</span><span data-l="en">Desktop app</span></span>
+        <h3>Lodestone</h3>
+        <p class="desc pxcut"><span><span data-l="ru">Простой лаунчер для серверов Minecraft: десктоп-приложение, чтобы запускать сервер без командной строки.</span><span data-l="en">A simple launcher for Minecraft servers: a desktop app that starts a server without the command line.</span></span></p>
+        <span class="stack">Tauri · Rust · Svelte</span>
+        <a class="btn sm blue pxbox" href="https://github.com/Pa-dej/Lodestone">GitHub</a>
+      </div>
+    </article>
+      
+    <article class="joker">
+      <div class="float" style="--d:1.2s">
+        <a class="card" href="https://github.com/Pa-dej/Vex" aria-label="Vex — GitHub" style="--icon:url('assets/icons/vex_bg_32.png')">
+          <img src="assets/icons/vex_bg_32.png" width="160" height="160" alt="">
+          <span class="shine"></span><span class="sticker"><span data-l="ru">бета</span><span data-l="en">beta</span></span>
+        </a>
+      </div>
+      <div class="info panel pxbox">
+        <span class="kind pxcut orange"><span data-l="ru">Прокси</span><span data-l="en">Proxy</span></span>
+        <h3>Vex</h3>
+        <p class="desc pxcut"><span><span data-l="ru">Прокси-сервер для Minecraft на Rust: авторизация, защита от ботов, плагины с горячей перезагрузкой и метрики.</span><span data-l="en">A Minecraft proxy written in Rust: authentication, anti-bot protection, hot-reloadable plugins and metrics.</span></span></p>
+        <span class="stack">Rust · Tokio · Prometheus</span>
+        <a class="btn sm blue pxbox" href="https://github.com/Pa-dej/Vex">GitHub</a>
+      </div>
+    </article>
+    </div>
+  </section>
+  <footer class="foot">Padej_<span class="sep">·</span><a href="https://github.com/Pa-dej">github.com/Pa-dej</a></footer>
+</main>
+<script>
+// Фон в духе Balatro: закрученная «краска», WebGL в низком разрешении.
+(function () {
+  const c = document.getElementById('bg');
+  const gl = c.getContext('webgl', { antialias: false });
+  if (!gl) { c.hidden = true; return; }
+  const PIXEL = 6, FPS = 30;
+  const hex = (v) => { const m = v.trim().match(/^#?(..)(..)(..)$/); return m ? [1, 2, 3].map((i) => parseInt(m[i], 16) / 255) : [0, 0, 0]; };
+  const [c1, c2, c3] = ['c1', 'c2', 'c3'].map((k) => hex(c.dataset[k]));
+  const VERT = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
+  const FRAG = `precision mediump float;
+    uniform vec2 u_res; uniform float u_t; uniform vec3 u_c1, u_c2, u_c3;
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_res) / length(u_res);
+      float r = length(uv);
+      float a = u_t * 0.07 - 3.2 * r;
+      vec2 p = mat2(cos(a), -sin(a), sin(a), cos(a)) * uv * 9.0;
+      for (int i = 0; i < 5; i++) {
+        float fi = float(i);
+        p += 0.55 * vec2(sin(p.y * 0.9 + u_t * 0.21 + fi * 1.3), cos(p.x * 0.8 - u_t * 0.17 + fi * 2.1));
+      }
+      float v = 0.5 + 0.5 * sin(p.x * 0.7 + p.y * 0.5);
+      float w = 0.5 + 0.5 * sin(length(p) * 0.8 - u_t * 0.35);
+      vec3 col = mix(u_c1, u_c2, smoothstep(0.3, 0.7, v));
+      col = mix(col, u_c3, smoothstep(0.62, 0.9, w * v + 0.15 * w));
+      col *= 1.0 - 0.9 * r * r;
+      col = floor(col * 14.0 + 0.5) / 14.0;
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { c.hidden = true; return; }
+  gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const u = (n) => gl.getUniformLocation(prog, n);
+  const uRes = u('u_res'), uT = u('u_t');
+  gl.uniform3fv(u('u_c1'), c1); gl.uniform3fv(u('u_c2'), c2); gl.uniform3fv(u('u_c3'), c3);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  let t = 7, last = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (now - last < 1000 / FPS) return;
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+    last = now;
+    if (!reduce.matches && !document.hidden) t += dt;
+    const w = Math.max(1, Math.ceil(innerWidth / PIXEL)), h = Math.max(1, Math.ceil(innerHeight / PIXEL));
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; gl.viewport(0, 0, w, h); }
+    gl.uniform2f(uRes, w, h); gl.uniform1f(uT, t);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+})();
+
+// Запрет перетаскивания картинок и меню «Сохранить картинку».
+document.addEventListener('dragstart', (e) => e.preventDefault());
+document.addEventListener('contextmenu', (e) => { if (e.target.closest('img, .card')) e.preventDefault(); });
+document.querySelectorAll('img').forEach((i) => i.setAttribute('draggable', 'false'));
+
+// Переключатель ЭЛТ, выбор запоминается в браузере.
+(function () {
+  const b = document.getElementById('crtToggle'), root = document.documentElement;
+  let on = true;
+  try { on = localStorage.getItem('crt') !== 'off'; } catch (e) {}
+  const set = (v) => {
+    on = v; root.classList.toggle('crt-on', v);
+    const en = root.dataset.lang === 'en';
+    b.textContent = en ? 'CRT: ' + (v ? 'on' : 'off') : 'ЭЛТ: ' + (v ? 'вкл' : 'выкл');
+    b.setAttribute('aria-pressed', String(v));
+    try { localStorage.setItem('crt', v ? 'on' : 'off'); } catch (e) {}
+  };
+  set(on);
+  b.addEventListener('click', () => set(!on));
+  addEventListener('langchange', () => set(on));
+})();
+
+// Язык: сохранённый выбор, иначе язык браузера.
+(function () {
+  const root = document.documentElement;
+  const titles = { ru: 'Padej_ · Проекты', en: 'Padej_ · Projects' };
+  let lang;
+  try { lang = localStorage.getItem('lang'); } catch (e) {}
+  if (lang !== 'ru' && lang !== 'en') lang = /^ru|^uk|^be|^kk/i.test(navigator.language || '') ? 'ru' : 'en';
+  const btns = document.querySelectorAll('.lang button');
+  function set(l) {
+    lang = l; root.dataset.lang = l; root.lang = l; document.title = titles[l];
+    btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.set === l)));
+    try { localStorage.setItem('lang', l); } catch (e) {}
+    dispatchEvent(new Event('langchange'));
+  }
+  btns.forEach((b) => b.addEventListener('click', () => set(b.dataset.set)));
+  set(lang);
+})();
+
+// Подгоняем страницу под окно, чтобы не появлялась полоса прокрутки.
+// Сначала по ширине (четыре карты в один ряд), потом по высоте. Если пришлось бы
+// ужать сильнее чем до 60 % или экран узкий (телефон) — обычная прокрутка.
+(function () {
+  const wrap = document.querySelector('.wrap'), root = document.documentElement;
+  const ROW = 4 * 216 + 3 * 24;
+  function fit() {
+    root.classList.remove('fit'); wrap.style.zoom = '';
+    let k = 1;
+    if (innerWidth > 760) {
+      root.classList.add('fit');
+      const cs = getComputedStyle(document.body);
+      const availW = innerWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const availH = innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 12;
+      k = Math.min(1, availW / ROW);
+      wrap.style.zoom = k;
+      k *= Math.min(1, availH / wrap.getBoundingClientRect().height);
+      if (k < 0.6) { root.classList.remove('fit'); k = 1; }
+      wrap.style.zoom = k < 1 ? k.toFixed(3) : '';
+    }
+  }
+  addEventListener('resize', fit);
+  document.fonts && document.fonts.ready.then(fit);
+  addEventListener('load', fit);
+  fit();
+})();
+
+// Наклон карты за курсором и блик.
+document.querySelectorAll('.card').forEach((card) => {
+  card.addEventListener('pointermove', (e) => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    card.style.setProperty('--ry', (x * 18).toFixed(2) + 'deg');
+    card.style.setProperty('--rx', (-y * 18).toFixed(2) + 'deg');
+    card.style.setProperty('--sx', (100 - (x + 0.5) * 100).toFixed(1) + '%');
+  });
+  card.addEventListener('pointerleave', () => {
+    ['--rx', '--ry', '--sx'].forEach((v) => card.style.removeProperty(v));
+  });
+});
+
+</script>
+</body>
+</html>
